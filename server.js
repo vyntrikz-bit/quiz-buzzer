@@ -110,19 +110,35 @@ io.on("connection", (socket) => {
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    if (
-      state.activeQuestionIndex !== null &&
-      !state.usedCells.includes(state.activeQuestionIndex)
-    ) {
-      state.usedCells.push(state.activeQuestionIndex);
+    socket.on("timerStart", (seconds) => {
+  const secs = Number(seconds) || 0;
+  if (!state.activeQuestion) return;
+
+  if (state.timer.remaining > 0) {
+    state.timer.running = true;
+  } else {
+    if (secs <= 0) return;
+    state.timer.total = secs;
+    state.timer.remaining = secs;
+    state.timer.running = true;
+  }
+
+  stopTimer();
+  state.timer.running = true;
+
+  emitState();
+
+  timerInterval = setInterval(() => {
+    state.timer.remaining -= 1;
+
+    if (state.timer.remaining <= 0) {
+      state.timer.remaining = 0;
+      stopTimer();
     }
 
-    stopTimer();
-    state.timer.total = 0;
-    state.timer.remaining = 0;
-
     emitState();
-  });
+  }, 1000);
+});
 
   socket.on("closeQuestion", () => {
     state.activeQuestion = null;
