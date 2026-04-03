@@ -52,6 +52,7 @@ const state = {
   scores: {},
   lastAction: null,
   usedCells: [],
+  lobbyPlayers: [],
   timer: {
     total: 0,
     remaining: 0,
@@ -76,6 +77,14 @@ function getCurrentQuestionMultiplier() {
   return getRemainingCellCount() <= 5 ? 2 : 1;
 }
 
+function getFreeSlot() {
+  const usedSlots = state.lobbyPlayers.map(p => p.slot);
+  for (let i = 1; i <= 4; i++) {
+    if (!usedSlots.includes(i)) return i;
+  }
+  return null;
+}
+
 let timerInterval = null;
 
 function stopTimer() {
@@ -94,8 +103,39 @@ function emitState() {
   });
 }
 
+function emitLobby() {
+  io.emit("lobbyUpdate", state.lobbyPlayers);
+}
+
 io.on("connection", (socket) => {
   emitState();
+  emitLobby();
+
+  socket.on("joinLobby", (playerName) => {
+    const name = String(playerName || "").trim().slice(0, 20);
+    if (!name) return;
+
+    let existing = state.lobbyPlayers.find(p => p.socketId === socket.id);
+    if (existing) {
+      existing.name = name;
+      emitLobby();
+      return;
+    }
+
+    const freeSlot = getFreeSlot();
+    if (!freeSlot) {
+      socket.emit("lobbyFull");
+      return;
+    }
+
+    state.lobbyPlayers.push({
+      socketId: socket.id,
+      name,
+      slot: freeSlot
+    });
+
+    emitLobby();
+  });
 
   socket.on("updateCategories", (categories) => {
     if (!Array.isArray(categories) || categories.length !== 5) return;
@@ -281,6 +321,14 @@ io.on("connection", (socket) => {
 
     io.emit("playerBuzzed", state.firstBuzz);
     emitState();
+  });
+
+  socket.on("disconnect", () => {
+    const before = state.lobbyPlayers.length;
+    state.lobbyPlayers = state.lobbyPlayers.filter(p => p.socketId !== socket.id);
+    if (state.lobbyPlayers.length !== before) {
+      emitLobby();
+    }
   });
 });
 
