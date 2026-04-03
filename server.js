@@ -42,6 +42,10 @@ const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("Ein Nutzer ist verbunden");
 
+  socket.on("buzz", () => {
+    io.emit("playerBuzzed");
+  });
+
   socket.on("disconnect", () => {
     console.log("Ein Nutzer hat getrennt");
   });
