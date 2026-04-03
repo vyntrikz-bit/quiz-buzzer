@@ -46,8 +46,18 @@ const state = {
   firstBuzz: null,
   buzzLocked: false,
   eliminatedPlayers: [],
-  scores: {}
+  scores: {},
+  lastAction: null
 };
+
+function saveLastAction() {
+  state.lastAction = {
+    firstBuzz: state.firstBuzz,
+    buzzLocked: state.buzzLocked,
+    eliminatedPlayers: [...state.eliminatedPlayers],
+    scores: { ...state.scores }
+  };
+}
 
 io.on("connection", (socket) => {
   socket.emit("syncState", state);
@@ -64,6 +74,8 @@ io.on("connection", (socket) => {
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
+    state.lastAction = null;
+
     io.emit("syncState", state);
   });
 
@@ -73,13 +85,17 @@ io.on("connection", (socket) => {
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
+    state.lastAction = null;
+
     io.emit("syncState", state);
   });
 
   socket.on("resetBuzzer", () => {
     if (!state.activeQuestion) return;
+
     state.firstBuzz = null;
     state.buzzLocked = false;
+
     io.emit("syncState", state);
   });
 
@@ -87,8 +103,14 @@ io.on("connection", (socket) => {
     if (!state.activeQuestion) return;
     if (!state.firstBuzz) return;
 
+    saveLastAction();
+
     const name = state.firstBuzz;
-    if (!state.scores[name]) state.scores[name] = 0;
+
+    if (!state.scores[name]) {
+      state.scores[name] = 0;
+    }
+
     state.scores[name] += state.activeQuestionValue;
 
     io.emit("syncState", state);
@@ -98,8 +120,14 @@ io.on("connection", (socket) => {
     if (!state.activeQuestion) return;
     if (!state.firstBuzz) return;
 
+    saveLastAction();
+
     const name = state.firstBuzz;
-    if (!state.scores[name]) state.scores[name] = 0;
+
+    if (!state.scores[name]) {
+      state.scores[name] = 0;
+    }
+
     state.scores[name] -= state.activeQuestionValue;
 
     if (!state.eliminatedPlayers.includes(name)) {
@@ -108,6 +136,19 @@ io.on("connection", (socket) => {
 
     state.firstBuzz = null;
     state.buzzLocked = false;
+
+    io.emit("syncState", state);
+  });
+
+  socket.on("undoLastAction", () => {
+    if (!state.lastAction) return;
+
+    state.firstBuzz = state.lastAction.firstBuzz;
+    state.buzzLocked = state.lastAction.buzzLocked;
+    state.eliminatedPlayers = [...state.lastAction.eliminatedPlayers];
+    state.scores = { ...state.lastAction.scores };
+
+    state.lastAction = null;
 
     io.emit("syncState", state);
   });
