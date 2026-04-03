@@ -40,44 +40,96 @@ const server = http.createServer((req, res) => {
 const io = new Server(server);
 
 const state = {
+  categories: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
   activeQuestion: null,
+  activeQuestionValue: 0,
   firstBuzz: null,
-  buzzLocked: false
+  buzzLocked: false,
+  eliminatedPlayers: [],
+  scores: {}
 };
 
 io.on("connection", (socket) => {
   socket.emit("syncState", state);
 
-  socket.on("openQuestion", (questionText) => {
+  socket.on("updateCategories", (categories) => {
+    if (!Array.isArray(categories) || categories.length !== 5) return;
+    state.categories = categories.map((x) => String(x || "").slice(0, 30));
+    io.emit("syncState", state);
+  });
+
+  socket.on("openQuestion", ({ questionText, value }) => {
     state.activeQuestion = questionText;
+    state.activeQuestionValue = Number(value) || 0;
     state.firstBuzz = null;
     state.buzzLocked = false;
+    state.eliminatedPlayers = [];
     io.emit("syncState", state);
   });
 
   socket.on("closeQuestion", () => {
     state.activeQuestion = null;
+    state.activeQuestionValue = 0;
     state.firstBuzz = null;
     state.buzzLocked = false;
+    state.eliminatedPlayers = [];
     io.emit("syncState", state);
   });
 
   socket.on("resetBuzzer", () => {
+    if (!state.activeQuestion) return;
     state.firstBuzz = null;
     state.buzzLocked = false;
     io.emit("syncState", state);
   });
 
+  socket.on("markCorrect", () => {
+    if (!state.activeQuestion) return;
+    if (!state.firstBuzz) return;
+
+    const name = state.firstBuzz;
+    if (!state.scores[name]) state.scores[name] = 0;
+    state.scores[name] += state.activeQuestionValue;
+
+    io.emit("syncState", state);
+  });
+
+  socket.on("markWrong", () => {
+    if (!state.activeQuestion) return;
+    if (!state.firstBuzz) return;
+
+    const name = state.firstBuzz;
+    if (!state.scores[name]) state.scores[name] = 0;
+    state.scores[name] -= state.activeQuestionValue;
+
+    if (!state.eliminatedPlayers.includes(name)) {
+      state.eliminatedPlayers.push(name);
+    }
+
+    state.firstBuzz = null;
+    state.buzzLocked = false;
+
+    io.emit("syncState", state);
+  });
+
   socket.on("buzz", (playerName) => {
-  if (!state.activeQuestion) return;
-  if (state.buzzLocked) return;
+    const name = String(playerName || "").trim().slice(0, 20);
 
-  state.firstBuzz = playerName || "Ein Spieler";
-  state.buzzLocked = true;
+    if (!name) return;
+    if (!state.activeQuestion) return;
+    if (state.buzzLocked) return;
+    if (state.eliminatedPlayers.includes(name)) return;
 
-  io.emit("syncState", state);
-  io.emit("playerBuzzed", state.firstBuzz);
-});
+    state.firstBuzz = name;
+    state.buzzLocked = true;
+
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
+
+    io.emit("syncState", state);
+    io.emit("playerBuzzed", state.firstBuzz);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
