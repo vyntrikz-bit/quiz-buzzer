@@ -57,7 +57,61 @@ body {
 
 <div class="board" id="board"></div>
 
-<script>
+<<script>
+const values = [100,200,300,400,500];
+const board = document.getElementById("board");
+
+// Fragen (einfach erstmal Test)
+const questions = [
+  "Frage 1", "Frage 2", "Frage 3", "Frage 4", "Frage 5",
+  "Frage 6", "Frage 7", "Frage 8", "Frage 9", "Frage 10",
+  "Frage 11", "Frage 12", "Frage 13", "Frage 14", "Frage 15",
+  "Frage 16", "Frage 17", "Frage 18", "Frage 19", "Frage 20",
+  "Frage 21", "Frage 22", "Frage 23", "Frage 24", "Frage 25"
+];
+
+// Overlay erstellen
+const overlay = document.createElement("div");
+overlay.style.position = "fixed";
+overlay.style.top = "0";
+overlay.style.left = "0";
+overlay.style.width = "100%";
+overlay.style.height = "100%";
+overlay.style.background = "black";
+overlay.style.display = "none";
+overlay.style.alignItems = "center";
+overlay.style.justifyContent = "center";
+overlay.style.fontSize = "40px";
+overlay.style.textAlign = "center";
+overlay.style.padding = "40px";
+
+document.body.appendChild(overlay);
+
+let index = 0;
+
+for (let row=0; row<5; row++){
+  for (let col=0; col<5; col++){
+    let div = document.createElement("div");
+    div.className="cell";
+    div.innerText = values[row];
+
+    let currentIndex = index;
+
+    div.onclick = () => {
+      overlay.innerText = questions[currentIndex];
+      overlay.style.display = "flex";
+    };
+
+    board.appendChild(div);
+    index++;
+  }
+}
+
+// Overlay schließen (Host klickt irgendwo)
+overlay.onclick = () => {
+  overlay.style.display = "none";
+};
+</script>>
 const values = [100,200,300,400,500];
 const board = document.getElementById("board");
 
