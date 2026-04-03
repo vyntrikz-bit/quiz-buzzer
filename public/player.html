@@ -90,22 +90,22 @@
       status.innerText = "Name gespeichert";
     };
 
-    socket.on("syncState", (state) => {
-      if (!state.activeQuestion) {
-        status.innerText = "Warte auf die nächste Frage";
-        return;
-      }
+   socket.on("syncState", (state) => {
+  if (!state.activeQuestion) {
+    status.innerText = "Warte auf die nächste Frage";
+    return;
+  }
 
-      if (state.firstBuzz) {
-        if (state.firstBuzz === playerName) {
-          status.innerText = "Du warst zuerst!";
-        } else {
-          status.innerText = state.firstBuzz + " war zuerst";
-        }
-      } else {
-        status.innerText = "Frage offen – Leertaste drücken!";
-      }
-    });
+  if (state.firstBuzz) {
+    if (state.firstBuzz === playerName) {
+      status.innerText = "Du warst zuerst! Warte auf Host-Reset";
+    } else {
+      status.innerText = state.firstBuzz + " war zuerst – warte auf Host-Reset";
+    }
+  } else {
+    status.innerText = "Frage offen – Leertaste drücken!";
+  }
+});
 
     window.addEventListener("keydown", (event) => {
       if (event.code !== "Space") return;
