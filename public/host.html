@@ -402,7 +402,8 @@
           if (cell.classList.contains("used")) return;
 
           socket.emit("openQuestion", {
-            questionText: questions[currentIndex],
+            questionText: questions[currentIndex].q,
+answer: questions[currentIndex].a,
             value: currentValue,
             index: currentIndex
           });
