@@ -1,141 +1,216 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Quiz Host</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Host</title>
   <script src="/socket.io/socket.io.js"></script>
-  
+  <style>
+    body {
+      margin: 0;
+      background: #0b0f1a;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-<style>
-body {
-  margin: 0;
-  background: #0b0f1a;
-  color: white;
-  font-family: Arial;
-}
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      padding: 10px;
+    }
 
-.categories {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-  padding: 10px;
-}
+    .category {
+      background: #1e2a5a;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
 
-.category {
-  background: #1e2a5a;
-  padding: 15px;
-  text-align: center;
-  font-weight: bold;
-}
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      padding: 10px;
+    }
 
-.board {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-  padding: 10px;
-}
+    .cell {
+      background: #2b3c8f;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      cursor: pointer;
+      user-select: none;
+    }
 
-.cell {
-  background: #2b3c8f;
-  height: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 28px;
-  cursor: pointer;
-}
-</style>
+    .cell:hover {
+      background: #3d52c4;
+    }
 
+    .used {
+      background: #111 !important;
+      color: #555;
+      cursor: default;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: black;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 40px;
+      z-index: 999;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .question-text {
+      font-size: 42px;
+      max-width: 1100px;
+      margin-bottom: 30px;
+    }
+
+    .buzzed-text {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #ffd54a;
+    }
+
+    .host-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .reset-btn {
+      background: #e67e22;
+      color: white;
+    }
+
+    .close-btn {
+      background: #c0392b;
+      color: white;
+    }
+  </style>
 </head>
 <body>
+  <div class="categories">
+    <div class="category">Thema 1</div>
+    <div class="category">Thema 2</div>
+    <div class="category">Thema 3</div>
+    <div class="category">Thema 4</div>
+    <div class="category">Thema 5</div>
+  </div>
 
-<div class="categories">
-  <div class="category">Thema 1</div>
-  <div class="category">Thema 2</div>
-  <div class="category">Thema 3</div>
-  <div class="category">Thema 4</div>
-  <div class="category">Thema 5</div>
-</div>
+  <div class="board" id="board"></div>
 
-<div class="board" id="board"></div>
+  <div class="overlay" id="overlay">
+    <div class="host-controls">
+      <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
+      <button class="close-btn" id="closeBtn">Frage schließen</button>
+    </div>
 
-<script>
-const values = [100,200,300,400,500];
-  const socket = io();
-let alreadyBuzzed = false;
-  
-const board = document.getElementById("board");
+    <div class="question-text" id="questionText"></div>
+    <div class="buzzed-text" id="buzzedText"></div>
+  </div>
 
-// Fragen (einfach erstmal Test)
-const questions = [
-  "Frage 1", "Frage 2", "Frage 3", "Frage 4", "Frage 5",
-  "Frage 6", "Frage 7", "Frage 8", "Frage 9", "Frage 10",
-  "Frage 11", "Frage 12", "Frage 13", "Frage 14", "Frage 15",
-  "Frage 16", "Frage 17", "Frage 18", "Frage 19", "Frage 20",
-  "Frage 21", "Frage 22", "Frage 23", "Frage 24", "Frage 25"
-];
+  <audio id="buzzSound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
 
-// Overlay erstellen
-const overlay = document.createElement("div");
-overlay.style.position = "fixed";
-overlay.style.top = "0";
-overlay.style.left = "0";
-overlay.style.width = "100%";
-overlay.style.height = "100%";
-overlay.style.background = "black";
-overlay.style.display = "none";
-overlay.style.alignItems = "center";
-overlay.style.justifyContent = "center";
-overlay.style.fontSize = "40px";
-overlay.style.textAlign = "center";
-overlay.style.padding = "40px";
+  <script>
+    const socket = io();
 
-document.body.appendChild(overlay);
+    const values = [100, 200, 300, 400, 500];
+    const board = document.getElementById("board");
+    const overlay = document.getElementById("overlay");
+    const questionText = document.getElementById("questionText");
+    const buzzedText = document.getElementById("buzzedText");
+    const buzzSound = document.getElementById("buzzSound");
 
-let index = 0;
+    const questions = [
+      "Frage 1", "Frage 2", "Frage 3", "Frage 4", "Frage 5",
+      "Frage 6", "Frage 7", "Frage 8", "Frage 9", "Frage 10",
+      "Frage 11", "Frage 12", "Frage 13", "Frage 14", "Frage 15",
+      "Frage 16", "Frage 17", "Frage 18", "Frage 19", "Frage 20",
+      "Frage 21", "Frage 22", "Frage 23", "Frage 24", "Frage 25"
+    ];
 
-for (let row=0; row<5; row++){
-  for (let col=0; col<5; col++){
-    let div = document.createElement("div");
-    div.className="cell";
-    div.innerText = values[row];
+    const usedCells = [];
 
-    let currentIndex = index;
+    let index = 0;
 
-    div.onclick = () => {
-      overlay.innerText = questions[currentIndex];
-      overlay.style.display = "flex";
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.innerText = values[row];
+
+        const currentIndex = index;
+
+        div.onclick = () => {
+          if (usedCells.includes(currentIndex)) return;
+
+          usedCells.push(currentIndex);
+          div.classList.add("used");
+
+          socket.emit("openQuestion", questions[currentIndex]);
+        };
+
+        board.appendChild(div);
+        index++;
+      }
+    }
+
+    socket.on("syncState", (state) => {
+      if (state.activeQuestion) {
+        questionText.innerText = state.activeQuestion;
+        overlay.classList.add("show");
+      } else {
+        overlay.classList.remove("show");
+        buzzedText.innerText = "";
+      }
+
+      if (state.firstBuzz) {
+        buzzedText.innerText = state.firstBuzz + " hat gebuzzert!";
+      } else if (state.activeQuestion) {
+        buzzedText.innerText = "Noch niemand hat gebuzzert";
+      }
+    });
+
+    socket.on("playerBuzzed", (name) => {
+      buzzedText.innerText = name + " hat gebuzzert!";
+      buzzSound.currentTime = 0;
+      buzzSound.play().catch(() => {});
+    });
+
+    document.getElementById("resetBtn").onclick = () => {
+      socket.emit("resetBuzzer");
     };
 
-    board.appendChild(div);
-    index++;
-  }
-}
-
-// Overlay schließen (Host klickt irgendwo)
-overlay.onclick = () => {
-  overlay.style.display = "none";
-};
-
-const values = [100,200,300,400,500];
-const board = document.getElementById("board");
-
-for (let row=0; row<5; row++){
-  for (let col=0; col<5; col++){
-    let div = document.createElement("div");
-    div.className="cell";
-    div.innerText = values[row];
-    board.appendChild(div);
-  }
-}
-socket.on("playerBuzzed", () => {
-  if (alreadyBuzzed) return;
-
-  alreadyBuzzed = true;
-  overlay.innerText = "🔔 Gebuzzert!";
-  overlay.style.display = "flex";
-});
+    document.getElementById("closeBtn").onclick = () => {
+      socket.emit("closeQuestion");
+    };
   </script>
-
 </body>
 </html>
