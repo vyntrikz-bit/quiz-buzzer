@@ -270,10 +270,18 @@ const questions = [
 });
 
     socket.on("playerBuzzed", (name) => {
-      buzzedText.textContent = name + " hat gebuzzert!";
-      playBuzzSound();
-    });
+  buzzedText.innerHTML = `
+    <span style="font-size:50px; color:#ffd54a;">
+      🔔 ${name}
+    </span>
+    <br>
+    <span style="font-size:22px; color:white;">
+      hat gebuzzert!
+    </span>
+  `;
 
+  playBuzzSound();
+});
     unlockSoundBtn.addEventListener("click", unlockAudio);
 
     resetBtn.addEventListener("click", () => {
