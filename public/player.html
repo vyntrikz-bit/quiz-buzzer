@@ -11,110 +11,275 @@
       background: #0b0f1a;
       color: white;
       font-family: Arial, sans-serif;
+    }
+
+    .topbar {
+      padding: 12px;
       display: flex;
+      gap: 10px;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    .box {
-      text-align: center;
-      max-width: 700px;
-      padding: 30px;
-    }
-
-    h1 {
-      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     input {
       padding: 12px;
-      font-size: 18px;
+      font-size: 16px;
       border-radius: 10px;
       border: none;
-      width: 260px;
-      margin-bottom: 16px;
+      width: 220px;
     }
 
     button {
-      padding: 12px 18px;
-      font-size: 16px;
+      padding: 12px 16px;
+      font-size: 15px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
       background: #3b82f6;
       color: white;
-      margin-left: 8px;
+      font-weight: bold;
     }
 
-    #status {
-      margin-top: 20px;
+    .info-row {
+      display: flex;
+      gap: 10px;
+      padding: 0 12px 12px;
+      flex-wrap: wrap;
+    }
+
+    .info-box {
+      background: #162038;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: bold;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+
+    .category {
+      background: #1e2a5a;
+      padding: 16px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+
+    .cell {
+      background: #2b3c8f;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 26px;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    .cell.used {
+      background: #111;
+      color: #555;
+    }
+
+    .question-box {
+      margin: 10px;
+      background: #111827;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      min-height: 140px;
+    }
+
+    .question-text {
+      font-size: 34px;
+      line-height: 1.25;
+      margin-bottom: 14px;
+    }
+
+    .timer-text {
+      font-size: 28px;
+      color: #60a5fa;
+      font-weight: bold;
+      min-height: 34px;
+      margin-bottom: 10px;
+    }
+
+    .status {
       font-size: 24px;
-      min-height: 60px;
+      min-height: 40px;
+      margin-top: 10px;
+      color: #ffd54a;
+    }
+
+    .substatus {
+      font-size: 18px;
+      color: #cbd5e1;
+      min-height: 24px;
+      margin-top: 8px;
     }
 
     .hint {
-      margin-top: 16px;
+      text-align: center;
       color: #cbd5e1;
+      padding: 0 12px 16px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Spieler-Buzzer</h1>
+  <div class="topbar">
+    <input type="text" id="playerName" placeholder="Dein Name">
+    <button id="saveName">Name speichern</button>
+  </div>
 
-    <div>
-      <input type="text" id="playerName" placeholder="Dein Name">
-      <button id="saveName">Name speichern</button>
-    </div>
+  <div class="info-row">
+    <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
+    <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
+  </div>
 
-    <div id="status">Warte auf die nächste Frage</div>
+  <div class="categories" id="categories">
+    <div class="category">Thema 1</div>
+    <div class="category">Thema 2</div>
+    <div class="category">Thema 3</div>
+    <div class="category">Thema 4</div>
+    <div class="category">Thema 5</div>
+  </div>
 
-    <div class="hint">
-      Drücke die <strong>Leertaste</strong>, wenn eine Frage offen ist.
-    </div>
+  <div class="board" id="board"></div>
+
+  <div class="question-box">
+    <div class="question-text" id="questionText">Warte auf die nächste Frage</div>
+    <div class="timer-text" id="timerText"></div>
+    <div class="status" id="status"></div>
+    <div class="substatus" id="substatus"></div>
+  </div>
+
+  <div class="hint">
+    Drücke die <strong>Leertaste</strong>, wenn eine Frage offen ist.
   </div>
 
   <script>
     const socket = io();
 
+    const values = [100, 200, 300, 400, 500];
     const playerNameInput = document.getElementById("playerName");
     const saveNameBtn = document.getElementById("saveName");
+    const remainingInfo = document.getElementById("remainingInfo");
+    const multiplierInfo = document.getElementById("multiplierInfo");
+    const questionText = document.getElementById("questionText");
+    const timerText = document.getElementById("timerText");
     const status = document.getElementById("status");
+    const substatus = document.getElementById("substatus");
+    const board = document.getElementById("board");
 
     let playerName = localStorage.getItem("playerName") || "";
     playerNameInput.value = playerName;
 
+    const cells = [];
+
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = values[row];
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+    }
+
     saveNameBtn.onclick = () => {
       playerName = playerNameInput.value.trim().slice(0, 20);
       localStorage.setItem("playerName", playerName);
-      status.innerText = "Name gespeichert";
+      status.textContent = playerName ? "Name gespeichert" : "Bitte Namen eingeben";
     };
 
     socket.on("syncState", (state) => {
+      if (state.categories && state.categories.length === 5) {
+        const categoryNodes = document.querySelectorAll(".category");
+        state.categories.forEach((cat, i) => {
+          if (categoryNodes[i]) {
+            categoryNodes[i].textContent = cat;
+          }
+        });
+      }
+
+      cells.forEach((cell, i) => {
+        cell.classList.toggle("used", (state.usedCells || []).includes(i));
+      });
+
+      remainingInfo.textContent = "Offene Felder: " + (state.remainingCells ?? 25);
+      multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
+
+      if (state.activeQuestion) {
+        questionText.textContent = state.activeQuestion;
+      } else {
+        questionText.textContent = "Warte auf die nächste Frage";
+      }
+
+      if (state.timer && state.timer.total > 0) {
+        timerText.textContent = "Timer: " + state.timer.remaining + "s";
+      } else {
+        timerText.textContent = "";
+      }
+
       if (!state.activeQuestion) {
-        status.innerText = "Warte auf die nächste Frage";
+        status.textContent = "";
+        substatus.textContent = "";
         return;
       }
 
       if (!playerName) {
-        status.innerText = "Bitte zuerst Namen speichern";
+        status.textContent = "Bitte zuerst Namen speichern";
+        substatus.textContent = "";
         return;
       }
 
       if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
-        status.innerText = "Du bist für diese Frage raus";
+        status.textContent = "Du bist für diese Frage raus";
+        substatus.textContent = "Warte auf die nächste Frage";
         return;
       }
 
       if (state.firstBuzz) {
         if (state.firstBuzz === playerName) {
-          status.innerText = "Du bist dran!";
+          status.textContent = "Du bist dran!";
+          substatus.textContent = "Warte auf die Wertung des Quizmasters";
         } else {
-          status.innerText = state.firstBuzz + " ist dran";
+          status.textContent = state.firstBuzz + " ist dran";
+          substatus.textContent = "Warte auf die Entscheidung oder auf eine neue Chance";
         }
       } else {
-        status.innerText = "Frage offen – Leertaste drücken!";
+        status.textContent = "Frage offen – Leertaste drücken!";
+        substatus.textContent = "";
+      }
+    });
+
+    socket.on("answerResult", ({ result, name, points }) => {
+      if (!playerName) return;
+
+      if (name === playerName) {
+        if (result === "correct") {
+          status.textContent = "Richtig! +" + points + " Punkte";
+        } else {
+          status.textContent = "Falsch! -" + points + " Punkte";
+        }
+      } else {
+        if (result === "correct") {
+          substatus.textContent = name + " war richtig (+" + points + ")";
+        } else {
+          substatus.textContent = name + " war falsch (-" + points + ")";
+        }
       }
     });
 
@@ -123,7 +288,7 @@
       event.preventDefault();
 
       if (!playerName) {
-        status.innerText = "Bitte zuerst Namen speichern";
+        status.textContent = "Bitte zuerst Namen speichern";
         return;
       }
 
