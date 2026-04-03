@@ -39,15 +39,47 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server);
 
-io.on("connection", (socket) => {
-  console.log("Ein Nutzer ist verbunden");
+const state = {
+  activeQuestion: null,
+  firstBuzz: null,
+  buzzLocked: false
+};
 
-  socket.on("buzz", () => {
-    io.emit("playerBuzzed");
+io.on("connection", (socket) => {
+  socket.emit("syncState", state);
+
+  socket.on("openQuestion", (questionText) => {
+    state.activeQuestion = questionText;
+    state.firstBuzz = null;
+    state.buzzLocked = false;
+
+    io.emit("syncState", state);
   });
 
-  socket.on("disconnect", () => {
-    console.log("Ein Nutzer hat getrennt");
+  socket.on("closeQuestion", () => {
+    state.activeQuestion = null;
+    state.firstBuzz = null;
+    state.buzzLocked = false;
+
+    io.emit("syncState", state);
+  });
+
+  socket.on("resetBuzzer", () => {
+    state.firstBuzz = null;
+    state.buzzLocked = false;
+
+    io.emit("syncState", state);
+  });
+
+  socket.on("buzz", (playerName) => {
+    if (!state.activeQuestion) return;
+    if (state.buzzLocked) return;
+
+    state.firstBuzz = playerName || "Ein Spieler";
+    state.buzzLocked = true;
+
+    io.emit("syncState", state);
+    io.emit("playerBuzzed", state.firstBuzz);
   });
 });
 
