@@ -43,11 +43,18 @@ const state = {
   categories: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
   activeQuestion: null,
   activeQuestionValue: 0,
+  activeQuestionIndex: null,
   firstBuzz: null,
   buzzLocked: false,
   eliminatedPlayers: [],
   scores: {},
-  lastAction: null
+  lastAction: null,
+  usedCells: [],
+  timer: {
+    total: 0,
+    remaining: 0,
+    running: false
+  }
 };
 
 function saveLastAction() {
@@ -59,44 +66,120 @@ function saveLastAction() {
   };
 }
 
+function getRemainingCellCount() {
+  return 25 - state.usedCells.length;
+}
+
+function getCurrentQuestionMultiplier() {
+  return getRemainingCellCount() <= 5 ? 2 : 1;
+}
+
+let timerInterval = null;
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  state.timer.running = false;
+}
+
+function emitState() {
+  io.emit("syncState", {
+    ...state,
+    currentMultiplier: getCurrentQuestionMultiplier(),
+    remainingCells: getRemainingCellCount()
+  });
+}
+
 io.on("connection", (socket) => {
-  socket.emit("syncState", state);
+  emitState();
 
   socket.on("updateCategories", (categories) => {
     if (!Array.isArray(categories) || categories.length !== 5) return;
     state.categories = categories.map((x) => String(x || "").slice(0, 30));
-    io.emit("syncState", state);
+    emitState();
   });
 
-  socket.on("openQuestion", ({ questionText, value }) => {
+  socket.on("openQuestion", ({ questionText, value, index }) => {
     state.activeQuestion = questionText;
     state.activeQuestionValue = Number(value) || 0;
+    state.activeQuestionIndex = Number.isInteger(index) ? index : null;
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    io.emit("syncState", state);
+    if (
+      state.activeQuestionIndex !== null &&
+      !state.usedCells.includes(state.activeQuestionIndex)
+    ) {
+      state.usedCells.push(state.activeQuestionIndex);
+    }
+
+    stopTimer();
+    state.timer.total = 0;
+    state.timer.remaining = 0;
+
+    emitState();
   });
 
   socket.on("closeQuestion", () => {
     state.activeQuestion = null;
     state.activeQuestionValue = 0;
+    state.activeQuestionIndex = null;
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    io.emit("syncState", state);
+    stopTimer();
+    state.timer.total = 0;
+    state.timer.remaining = 0;
+
+    emitState();
   });
 
   socket.on("resetBuzzer", () => {
     if (!state.activeQuestion) return;
-
     state.firstBuzz = null;
     state.buzzLocked = false;
+    emitState();
+  });
 
-    io.emit("syncState", state);
+  socket.on("timerStart", (seconds) => {
+    const secs = Number(seconds) || 0;
+    if (!state.activeQuestion) return;
+    if (secs <= 0) return;
+
+    stopTimer();
+    state.timer.total = secs;
+    state.timer.remaining = secs;
+    state.timer.running = true;
+
+    emitState();
+
+    timerInterval = setInterval(() => {
+      state.timer.remaining -= 1;
+
+      if (state.timer.remaining <= 0) {
+        state.timer.remaining = 0;
+        stopTimer();
+      }
+
+      emitState();
+    }, 1000);
+  });
+
+  socket.on("timerStop", () => {
+    stopTimer();
+    emitState();
+  });
+
+  socket.on("timerReset", () => {
+    stopTimer();
+    state.timer.remaining = state.timer.total;
+    emitState();
   });
 
   socket.on("markCorrect", () => {
@@ -106,14 +189,17 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
+    const multiplier = getCurrentQuestionMultiplier();
+    const points = state.activeQuestionValue * multiplier;
 
     if (!state.scores[name]) {
       state.scores[name] = 0;
     }
 
-    state.scores[name] += state.activeQuestionValue;
+    state.scores[name] += points;
 
-    io.emit("syncState", state);
+    io.emit("answerResult", { result: "correct", name, points });
+    emitState();
   });
 
   socket.on("markWrong", () => {
@@ -123,12 +209,14 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
+    const multiplier = getCurrentQuestionMultiplier();
+    const points = state.activeQuestionValue * multiplier;
 
     if (!state.scores[name]) {
       state.scores[name] = 0;
     }
 
-    state.scores[name] -= state.activeQuestionValue;
+    state.scores[name] -= points;
 
     if (!state.eliminatedPlayers.includes(name)) {
       state.eliminatedPlayers.push(name);
@@ -137,7 +225,8 @@ io.on("connection", (socket) => {
     state.firstBuzz = null;
     state.buzzLocked = false;
 
-    io.emit("syncState", state);
+    io.emit("answerResult", { result: "wrong", name, points });
+    emitState();
   });
 
   socket.on("undoLastAction", () => {
@@ -149,8 +238,7 @@ io.on("connection", (socket) => {
     state.scores = { ...state.lastAction.scores };
 
     state.lastAction = null;
-
-    io.emit("syncState", state);
+    emitState();
   });
 
   socket.on("buzz", (playerName) => {
@@ -168,8 +256,8 @@ io.on("connection", (socket) => {
       state.scores[name] = 0;
     }
 
-    io.emit("syncState", state);
     io.emit("playerBuzzed", state.firstBuzz);
+    emitState();
   });
 });
 
