@@ -52,7 +52,6 @@ io.on("connection", (socket) => {
     state.activeQuestion = questionText;
     state.firstBuzz = null;
     state.buzzLocked = false;
-
     io.emit("syncState", state);
   });
 
@@ -60,14 +59,12 @@ io.on("connection", (socket) => {
     state.activeQuestion = null;
     state.firstBuzz = null;
     state.buzzLocked = false;
-
     io.emit("syncState", state);
   });
 
   socket.on("resetBuzzer", () => {
     state.firstBuzz = null;
     state.buzzLocked = false;
-
     io.emit("syncState", state);
   });
 
