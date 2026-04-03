@@ -26,6 +26,12 @@
       text-align: center;
       font-weight: bold;
       font-size: 18px;
+      outline: none;
+      border: 2px solid transparent;
+    }
+
+    .category:focus {
+      border-color: #ffd54a;
     }
 
     .board {
@@ -57,6 +63,31 @@
       cursor: default;
     }
 
+    .scores {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .score-card {
+      background: #162038;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .score-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .score-points {
+      font-size: 28px;
+      color: #ffd54a;
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -85,6 +116,14 @@
       font-size: 30px;
       color: #ffd54a;
       margin-bottom: 24px;
+      min-height: 80px;
+    }
+
+    .subtext {
+      font-size: 20px;
+      color: #cbd5e1;
+      margin-bottom: 24px;
+      min-height: 30px;
     }
 
     .host-controls {
@@ -93,6 +132,9 @@
       right: 20px;
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
+      max-width: 520px;
+      justify-content: flex-end;
     }
 
     button {
@@ -104,42 +146,38 @@
       font-weight: bold;
     }
 
-    .unlock-btn {
-      background: #16a34a;
-      color: white;
-    }
-
-    .reset-btn {
-      background: #e67e22;
-      color: white;
-    }
-
-    .close-btn {
-      background: #c0392b;
-      color: white;
-    }
+    .unlock-btn { background: #16a34a; color: white; }
+    .reset-btn { background: #e67e22; color: white; }
+    .wrong-btn { background: #dc2626; color: white; }
+    .correct-btn { background: #2563eb; color: white; }
+    .close-btn { background: #475569; color: white; }
   </style>
 </head>
 <body>
-  <div class="categories">
-    <div class="category">Thema 1</div>
-    <div class="category">Thema 2</div>
-    <div class="category">Thema 3</div>
-    <div class="category">Thema 4</div>
-    <div class="category">Thema 5</div>
+  <div class="categories" id="categories">
+    <div class="category" contenteditable="true">Thema 1</div>
+    <div class="category" contenteditable="true">Thema 2</div>
+    <div class="category" contenteditable="true">Thema 3</div>
+    <div class="category" contenteditable="true">Thema 4</div>
+    <div class="category" contenteditable="true">Thema 5</div>
   </div>
 
   <div class="board" id="board"></div>
 
+  <div class="scores" id="scores"></div>
+
   <div class="overlay" id="overlay">
     <div class="host-controls">
       <button class="unlock-btn" id="unlockSoundBtn">Ton freischalten</button>
+      <button class="correct-btn" id="correctBtn">Richtig</button>
+      <button class="wrong-btn" id="wrongBtn">Falsch</button>
       <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
       <button class="close-btn" id="closeBtn">Frage schließen</button>
     </div>
 
     <div class="question-text" id="questionText"></div>
     <div class="buzzed-text" id="buzzedText">Noch niemand hat gebuzzert</div>
+    <div class="subtext" id="subText"></div>
   </div>
 
   <script>
@@ -150,41 +188,22 @@
     const overlay = document.getElementById("overlay");
     const questionText = document.getElementById("questionText");
     const buzzedText = document.getElementById("buzzedText");
+    const subText = document.getElementById("subText");
     const unlockSoundBtn = document.getElementById("unlockSoundBtn");
     const resetBtn = document.getElementById("resetBtn");
     const closeBtn = document.getElementById("closeBtn");
+    const correctBtn = document.getElementById("correctBtn");
+    const wrongBtn = document.getElementById("wrongBtn");
+    const categoriesEl = document.getElementById("categories");
+    const scoresEl = document.getElementById("scores");
 
-const questions = [
-  "Wie heißt der Hauptcharakter in GTA V?",
-  "Wer ist der Hauptcharakter in Naruto?",
-  "Wie viele Bundesländer hat Deutschland?",
-  "Was ist die meistgenutzte App weltweit?",
-  "Was ist 2 + 2?",
-
-  "Welche Firma hat GTA entwickelt?",
-  "Wie heißt Narutos bester Freund?",
-  "Was ist die Hauptstadt von Bayern?",
-  "Was bedeutet CPU?",
-  "Was ist 5 x 5?",
-
-  "In welchem Jahr kam GTA V raus?",
-  "Wie heißt Narutos Sohn?",
-  "Wie viele Einwohner hat Deutschland?",
-  "Was ist RAM?",
-  "Was ist 12 x 12?",
-
-  "Wie heißt die Stadt in GTA V?",
-  "Wie heißt Narutos Dorf?",
-  "Wer war der erste Bundeskanzler?",
-  "Was ist eine GPU?",
-  "Was ist 100 / 4?",
-
-  "Wie viele GTA Teile gibt es?",
-  "Wie heißt der stärkste Ninja?",
-  "Wann war der 2. Weltkrieg?",
-  "Was ist KI?",
-  "Was ist 999 + 1?"
-];
+    const questions = [
+      "Thema 1 - 100", "Thema 2 - 100", "Thema 3 - 100", "Thema 4 - 100", "Thema 5 - 100",
+      "Thema 1 - 200", "Thema 2 - 200", "Thema 3 - 200", "Thema 4 - 200", "Thema 5 - 200",
+      "Thema 1 - 300", "Thema 2 - 300", "Thema 3 - 300", "Thema 4 - 300", "Thema 5 - 300",
+      "Thema 1 - 400", "Thema 2 - 400", "Thema 3 - 400", "Thema 4 - 400", "Thema 5 - 400",
+      "Thema 1 - 500", "Thema 2 - 500", "Thema 3 - 500", "Thema 4 - 500", "Thema 5 - 500"
+    ];
 
     const usedCells = [];
     let audioUnlocked = false;
@@ -197,10 +216,8 @@ const questions = [
 
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
-
       osc.connect(gain);
       gain.connect(audioContext.destination);
-
       gain.gain.value = 0.001;
       osc.frequency.value = 440;
       osc.start();
@@ -211,8 +228,7 @@ const questions = [
     }
 
     function playBuzzSound() {
-      if (!audioUnlocked) return;
-      if (!audioContext) return;
+      if (!audioUnlocked || !audioContext) return;
 
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
@@ -229,8 +245,34 @@ const questions = [
       osc.stop(audioContext.currentTime + 0.25);
     }
 
-    let index = 0;
+    function renderScores(scores) {
+      const entries = Object.entries(scores);
+      if (entries.length === 0) {
+        scoresEl.innerHTML = "";
+        return;
+      }
 
+      scoresEl.innerHTML = entries
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, points]) => `
+          <div class="score-card">
+            <div class="score-name">${name}</div>
+            <div class="score-points">${points}</div>
+          </div>
+        `)
+        .join("");
+    }
+
+    function sendCategories() {
+      const cats = [...document.querySelectorAll(".category")].map(el => el.textContent.trim() || "Thema");
+      socket.emit("updateCategories", cats);
+    }
+
+    [...document.querySelectorAll(".category")].forEach(el => {
+      el.addEventListener("blur", sendCategories);
+    });
+
+    let index = 0;
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 5; col++) {
         const cell = document.createElement("div");
@@ -238,6 +280,7 @@ const questions = [
         cell.textContent = values[row];
 
         const currentIndex = index;
+        const currentValue = values[row];
 
         cell.addEventListener("click", () => {
           if (usedCells.includes(currentIndex)) return;
@@ -245,7 +288,10 @@ const questions = [
           usedCells.push(currentIndex);
           cell.classList.add("used");
 
-          socket.emit("openQuestion", questions[currentIndex]);
+          socket.emit("openQuestion", {
+            questionText: questions[currentIndex],
+            value: currentValue
+          });
         });
 
         board.appendChild(cell);
@@ -254,43 +300,52 @@ const questions = [
     }
 
     socket.on("syncState", (state) => {
-  if (state.activeQuestion) {
-    questionText.textContent = state.activeQuestion;
-    overlay.classList.add("show");
-  } else {
-    overlay.classList.remove("show");
-    buzzedText.textContent = "Noch niemand hat gebuzzert";
-  }
+      if (state.categories && state.categories.length === 5) {
+        const categoryNodes = document.querySelectorAll(".category");
+        state.categories.forEach((cat, i) => {
+          if (categoryNodes[i] && document.activeElement !== categoryNodes[i]) {
+            categoryNodes[i].textContent = cat;
+          }
+        });
+      }
 
-  if (state.firstBuzz) {
-    buzzedText.textContent = state.firstBuzz + " hat gebuzzert! Buzzer ist gesperrt bis Reset.";
-  } else if (state.activeQuestion) {
-    buzzedText.textContent = "Noch niemand hat gebuzzert";
-  }
-});
+      renderScores(state.scores || {});
 
-    socket.on("playerBuzzed", (name) => {
-  buzzedText.innerHTML = `
-    <span style="font-size:50px; color:#ffd54a;">
-      🔔 ${name}
-    </span>
-    <br>
-    <span style="font-size:22px; color:white;">
-      hat gebuzzert!
-    </span>
-  `;
+      if (state.activeQuestion) {
+        questionText.textContent = state.activeQuestion;
+        overlay.classList.add("show");
+      } else {
+        overlay.classList.remove("show");
+        buzzedText.textContent = "Noch niemand hat gebuzzert";
+        subText.textContent = "";
+      }
 
-  playBuzzSound();
-});
+      if (state.firstBuzz) {
+        buzzedText.innerHTML = `
+          <span style="font-size:50px; color:#ffd54a;">🔔 ${state.firstBuzz}</span>
+          <br>
+          <span style="font-size:22px; color:white;">hat gebuzzert!</span>
+        `;
+      } else if (state.activeQuestion) {
+        buzzedText.textContent = "Noch niemand hat gebuzzert";
+      }
+
+      if (state.eliminatedPlayers && state.eliminatedPlayers.length > 0) {
+        subText.textContent = "Schon raus für diese Frage: " + state.eliminatedPlayers.join(", ");
+      } else {
+        subText.textContent = "";
+      }
+    });
+
+    socket.on("playerBuzzed", () => {
+      playBuzzSound();
+    });
+
     unlockSoundBtn.addEventListener("click", unlockAudio);
-
-    resetBtn.addEventListener("click", () => {
-      socket.emit("resetBuzzer");
-    });
-
-    closeBtn.addEventListener("click", () => {
-      socket.emit("closeQuestion");
-    });
+    resetBtn.addEventListener("click", () => socket.emit("resetBuzzer"));
+    closeBtn.addEventListener("click", () => socket.emit("closeQuestion"));
+    correctBtn.addEventListener("click", () => socket.emit("markCorrect"));
+    wrongBtn.addEventListener("click", () => socket.emit("markWrong"));
   </script>
 </body>
 </html>
