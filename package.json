@@ -1,0 +1,12 @@
+{
+  "name": "quiz-buzzer",
+  "version": "1.0.0",
+  "description": "quiz project",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}
