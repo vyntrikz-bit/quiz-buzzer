@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Lobby</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      background: #0b0f1a;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px;
+    }
+
+    input {
+      padding: 12px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      width: 250px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .players {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(2, 200px);
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .player-card {
+      background: #162038;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 20px;
+    }
+
+    .slot {
+      font-size: 14px;
+      color: #aaa;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Quiz Lobby</h1>
+
+  <div>
+    <input id="nameInput" placeholder="Dein Name">
+    <button id="joinBtn">Beitreten</button>
+  </div>
+
+  <div class="players" id="players"></div>
+
+  <script>
+    const socket = io();
+
+    let playerName = "";
+
+    document.getElementById("joinBtn").onclick = () => {
+      playerName = document.getElementById("nameInput").value.trim();
+      if (!playerName) return;
+
+      socket.emit("joinLobby", playerName);
+    };
+
+    socket.on("lobbyUpdate", (players) => {
+      const container = document.getElementById("players");
+
+      container.innerHTML = players.map(p => `
+        <div class="player-card">
+          ${p.name}
+          <div class="slot">Slot ${p.slot}</div>
+        </div>
+      `).join("");
+    });
+  </script>
+
+</body>
+</html>
