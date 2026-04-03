@@ -13,13 +13,13 @@
       font-family: Arial, sans-serif;
     }
 
-   .board-wrap {
-  display: block;
-}
+    .board-wrap {
+      display: block;
+    }
 
-.board-wrap.hidden {
-  display: none !important;
-}
+    .board-wrap.hidden {
+      display: none !important;
+    }
 
     .categories {
       display: grid;
@@ -134,6 +134,14 @@
       line-height: 1.25;
     }
 
+    .timer-text {
+      font-size: 38px;
+      font-weight: bold;
+      color: #60a5fa;
+      margin-bottom: 20px;
+      min-height: 48px;
+    }
+
     .buzzed-text {
       font-size: 30px;
       color: #ffd54a;
@@ -144,16 +152,9 @@
     .subtext {
       font-size: 20px;
       color: #cbd5e1;
-      margin-bottom: 16px;
-      min-height: 30px;
-    }
-
-    .timer-text {
-      font-size: 38px;
-      font-weight: bold;
-      color: #60a5fa;
       margin-bottom: 20px;
-      min-height: 48px;
+      min-height: 60px;
+      line-height: 1.4;
     }
 
     .overlay-scores {
@@ -179,7 +180,7 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      max-width: 700px;
+      max-width: 900px;
       justify-content: flex-end;
     }
 
@@ -193,17 +194,19 @@
     }
 
     .unlock-btn { background: #16a34a; color: white; }
+    .timer-btn { background: #0ea5e9; color: white; }
     .correct-btn { background: #2563eb; color: white; }
     .wrong-btn { background: #dc2626; color: white; }
+    .answer-btn { background: #22c55e; color: white; }
+    .hide-answer-btn { background: #64748b; color: white; }
     .reset-btn { background: #e67e22; color: white; }
     .undo-btn { background: #9333ea; color: white; }
     .close-btn { background: #475569; color: white; }
-    .timer-btn { background: #0ea5e9; color: white; }
   </style>
 </head>
 <body>
   <div id="mainScreen">
-  <div class="board-wrap" id="boardWrap">
+    <div class="board-wrap" id="boardWrap">
       <div class="categories" id="categories">
         <div class="category" contenteditable="true">Thema 1</div>
         <div class="category" contenteditable="true">Thema 2</div>
@@ -231,6 +234,8 @@
       <button class="timer-btn" id="timerResetBtn">Timer Reset</button>
       <button class="correct-btn" id="correctBtn">Richtig</button>
       <button class="wrong-btn" id="wrongBtn">Falsch</button>
+      <button class="answer-btn" id="showAnswerBtn">Antwort zeigen</button>
+      <button class="hide-answer-btn" id="hideAnswerBtn">Antwort ausblenden</button>
       <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
       <button class="undo-btn" id="undoBtn">Undo</button>
       <button class="close-btn" id="closeBtn">Frage schließen</button>
@@ -249,48 +254,47 @@
     const values = [100, 200, 300, 400, 500];
     const board = document.getElementById("board");
     const overlay = document.getElementById("overlay");
-    const mainScreen = document.getElementById("mainScreen");
     const boardWrap = document.getElementById("boardWrap");
     const questionText = document.getElementById("questionText");
+    const timerText = document.getElementById("timerText");
     const buzzedText = document.getElementById("buzzedText");
     const subText = document.getElementById("subText");
-    const timerText = document.getElementById("timerText");
     const scoresEl = document.getElementById("scores");
     const overlayScores = document.getElementById("overlayScores");
     const remainingInfo = document.getElementById("remainingInfo");
     const multiplierInfo = document.getElementById("multiplierInfo");
 
     const questions = [
-  { q: "Frage 1", a: "Antwort 1" },
-  { q: "Frage 2", a: "Antwort 2" },
-  { q: "Frage 3", a: "Antwort 3" },
-  { q: "Frage 4", a: "Antwort 4" },
-  { q: "Frage 5", a: "Antwort 5" },
+      { q: "Frage 1", a: "Antwort 1" },
+      { q: "Frage 2", a: "Antwort 2" },
+      { q: "Frage 3", a: "Antwort 3" },
+      { q: "Frage 4", a: "Antwort 4" },
+      { q: "Frage 5", a: "Antwort 5" },
 
-  { q: "Frage 6", a: "Antwort 6" },
-  { q: "Frage 7", a: "Antwort 7" },
-  { q: "Frage 8", a: "Antwort 8" },
-  { q: "Frage 9", a: "Antwort 9" },
-  { q: "Frage 10", a: "Antwort 10" },
+      { q: "Frage 6", a: "Antwort 6" },
+      { q: "Frage 7", a: "Antwort 7" },
+      { q: "Frage 8", a: "Antwort 8" },
+      { q: "Frage 9", a: "Antwort 9" },
+      { q: "Frage 10", a: "Antwort 10" },
 
-  { q: "Frage 11", a: "Antwort 11" },
-  { q: "Frage 12", a: "Antwort 12" },
-  { q: "Frage 13", a: "Antwort 13" },
-  { q: "Frage 14", a: "Antwort 14" },
-  { q: "Frage 15", a: "Antwort 15" },
+      { q: "Frage 11", a: "Antwort 11" },
+      { q: "Frage 12", a: "Antwort 12" },
+      { q: "Frage 13", a: "Antwort 13" },
+      { q: "Frage 14", a: "Antwort 14" },
+      { q: "Frage 15", a: "Antwort 15" },
 
-  { q: "Frage 16", a: "Antwort 16" },
-  { q: "Frage 17", a: "Antwort 17" },
-  { q: "Frage 18", a: "Antwort 18" },
-  { q: "Frage 19", a: "Antwort 19" },
-  { q: "Frage 20", a: "Antwort 20" },
+      { q: "Frage 16", a: "Antwort 16" },
+      { q: "Frage 17", a: "Antwort 17" },
+      { q: "Frage 18", a: "Antwort 18" },
+      { q: "Frage 19", a: "Antwort 19" },
+      { q: "Frage 20", a: "Antwort 20" },
 
-  { q: "Frage 21", a: "Antwort 21" },
-  { q: "Frage 22", a: "Antwort 22" },
-  { q: "Frage 23", a: "Antwort 23" },
-  { q: "Frage 24", a: "Antwort 24" },
-  { q: "Frage 25", a: "Antwort 25" }
-];
+      { q: "Frage 21", a: "Antwort 21" },
+      { q: "Frage 22", a: "Antwort 22" },
+      { q: "Frage 23", a: "Antwort 23" },
+      { q: "Frage 24", a: "Antwort 24" },
+      { q: "Frage 25", a: "Antwort 25" }
+    ];
 
     let audioUnlocked = false;
     let audioContext = null;
@@ -403,7 +407,7 @@
 
           socket.emit("openQuestion", {
             questionText: questions[currentIndex].q,
-answer: questions[currentIndex].a,
+            answer: questions[currentIndex].a,
             value: currentValue,
             index: currentIndex
           });
@@ -434,17 +438,22 @@ answer: questions[currentIndex].a,
       multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
 
       if (state.activeQuestion) {
-  questionText.textContent = state.activeQuestion;
-  questionOverlay.classList.add("show");
-  boardWrap.classList.add("hidden");
-} else {
-  questionText.textContent = "Warte auf die nächste Frage";
-  questionOverlay.classList.remove("show");
-  boardWrap.classList.remove("hidden");
-  timerText.textContent = "";
-  status.textContent = "";
-  substatus.textContent = "";
-}
+        questionText.textContent = state.activeQuestion;
+        overlay.classList.add("show");
+        boardWrap.classList.add("hidden");
+      } else {
+        overlay.classList.remove("show");
+        boardWrap.classList.remove("hidden");
+        buzzedText.textContent = "Noch niemand hat gebuzzert";
+        subText.textContent = "";
+        timerText.textContent = "";
+      }
+
+      if (state.timer && state.timer.total > 0) {
+        timerText.textContent = "Timer: " + state.timer.remaining + "s";
+      } else {
+        timerText.textContent = "";
+      }
 
       if (state.firstBuzz) {
         buzzedText.innerHTML = `
@@ -456,16 +465,16 @@ answer: questions[currentIndex].a,
         buzzedText.textContent = "Noch niemand hat gebuzzert";
       }
 
-      if (state.eliminatedPlayers && state.eliminatedPlayers.length > 0) {
+      if (state.answerVisible && state.currentAnswer) {
+        subText.innerHTML = `
+          <span style="font-size:28px;color:#22c55e;">Richtige Antwort:</span>
+          <br>
+          <span style="font-size:38px;color:white;">${state.currentAnswer}</span>
+        `;
+      } else if (state.eliminatedPlayers && state.eliminatedPlayers.length > 0) {
         subText.textContent = "Schon raus für diese Frage: " + state.eliminatedPlayers.join(", ");
       } else {
         subText.textContent = "";
-      }
-
-      if (state.timer && state.timer.total > 0) {
-        timerText.textContent = "Timer: " + state.timer.remaining + "s";
-      } else {
-        timerText.textContent = "";
       }
     });
 
@@ -476,10 +485,14 @@ answer: questions[currentIndex].a,
     socket.on("answerResult", ({ result, name, points }) => {
       if (result === "correct") {
         playCorrectSound();
-        subText.textContent = name + " bekommt +" + points + " Punkte";
+        if (!document.body.innerHTML.includes("Richtige Antwort:")) {
+          subText.textContent = name + " bekommt +" + points + " Punkte";
+        }
       } else {
         playWrongSound();
-        subText.textContent = name + " bekommt -" + points + " Punkte";
+        if (!document.body.innerHTML.includes("Richtige Antwort:")) {
+          subText.textContent = name + " bekommt -" + points + " Punkte";
+        }
       }
     });
 
@@ -489,6 +502,8 @@ answer: questions[currentIndex].a,
     document.getElementById("timerResetBtn").addEventListener("click", () => socket.emit("timerReset"));
     document.getElementById("correctBtn").addEventListener("click", () => socket.emit("markCorrect"));
     document.getElementById("wrongBtn").addEventListener("click", () => socket.emit("markWrong"));
+    document.getElementById("showAnswerBtn").addEventListener("click", () => socket.emit("showCorrectAnswer"));
+    document.getElementById("hideAnswerBtn").addEventListener("click", () => socket.emit("hideCorrectAnswer"));
     document.getElementById("resetBtn").addEventListener("click", () => socket.emit("resetBuzzer"));
     document.getElementById("undoBtn").addEventListener("click", () => socket.emit("undoLastAction"));
     document.getElementById("closeBtn").addEventListener("click", () => socket.emit("closeQuestion"));
