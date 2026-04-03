@@ -16,13 +16,13 @@
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
+      gap: 6px;
       padding: 10px;
     }
 
     .category {
       background: #1e2a5a;
-      padding: 15px;
+      padding: 16px;
       text-align: center;
       font-weight: bold;
       font-size: 18px;
@@ -31,7 +31,7 @@
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
+      gap: 6px;
       padding: 10px;
     }
 
@@ -41,17 +41,18 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 28px;
+      font-size: 30px;
+      font-weight: bold;
       cursor: pointer;
       user-select: none;
     }
 
     .cell:hover {
-      background: #3d52c4;
+      background: #3a4fc0;
     }
 
-    .used {
-      background: #111 !important;
+    .cell.used {
+      background: #111;
       color: #555;
       cursor: default;
     }
@@ -74,15 +75,16 @@
     }
 
     .question-text {
-      font-size: 42px;
+      font-size: 44px;
       max-width: 1100px;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
+      line-height: 1.25;
     }
 
     .buzzed-text {
-      font-size: 28px;
-      margin-bottom: 30px;
+      font-size: 30px;
       color: #ffd54a;
+      margin-bottom: 24px;
     }
 
     .host-controls {
@@ -98,8 +100,13 @@
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
+    }
+
+    .unlock-btn {
+      background: #16a34a;
+      color: white;
     }
 
     .reset-btn {
@@ -126,17 +133,14 @@
 
   <div class="overlay" id="overlay">
     <div class="host-controls">
+      <button class="unlock-btn" id="unlockSoundBtn">Ton freischalten</button>
       <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
       <button class="close-btn" id="closeBtn">Frage schließen</button>
     </div>
 
     <div class="question-text" id="questionText"></div>
-    <div class="buzzed-text" id="buzzedText"></div>
+    <div class="buzzed-text" id="buzzedText">Noch niemand hat gebuzzert</div>
   </div>
-
-  <audio id="buzzSound" preload="auto">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
 
   <script>
     const socket = io();
@@ -146,7 +150,9 @@
     const overlay = document.getElementById("overlay");
     const questionText = document.getElementById("questionText");
     const buzzedText = document.getElementById("buzzedText");
-    const buzzSound = document.getElementById("buzzSound");
+    const unlockSoundBtn = document.getElementById("unlockSoundBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const closeBtn = document.getElementById("closeBtn");
 
     const questions = [
       "Frage 1", "Frage 2", "Frage 3", "Frage 4", "Frage 5",
@@ -157,60 +163,102 @@
     ];
 
     const usedCells = [];
+    let audioUnlocked = false;
+    let audioContext = null;
+
+    function unlockAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      gain.gain.value = 0.001;
+      osc.frequency.value = 440;
+      osc.start();
+      osc.stop(audioContext.currentTime + 0.05);
+
+      audioUnlocked = true;
+      unlockSoundBtn.textContent = "Ton aktiv";
+    }
+
+    function playBuzzSound() {
+      if (!audioUnlocked) return;
+      if (!audioContext) return;
+
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.type = "square";
+      osc.frequency.setValueAtTime(880, audioContext.currentTime);
+      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.start();
+      osc.stop(audioContext.currentTime + 0.25);
+    }
 
     let index = 0;
 
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 5; col++) {
-        const div = document.createElement("div");
-        div.className = "cell";
-        div.innerText = values[row];
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = values[row];
 
         const currentIndex = index;
 
-        div.onclick = () => {
+        cell.addEventListener("click", () => {
           if (usedCells.includes(currentIndex)) return;
 
           usedCells.push(currentIndex);
-          div.classList.add("used");
+          cell.classList.add("used");
 
           socket.emit("openQuestion", questions[currentIndex]);
-        };
+        });
 
-        board.appendChild(div);
+        board.appendChild(cell);
         index++;
       }
     }
 
     socket.on("syncState", (state) => {
       if (state.activeQuestion) {
-        questionText.innerText = state.activeQuestion;
+        questionText.textContent = state.activeQuestion;
         overlay.classList.add("show");
       } else {
         overlay.classList.remove("show");
-        buzzedText.innerText = "";
+        buzzedText.textContent = "Noch niemand hat gebuzzert";
       }
 
       if (state.firstBuzz) {
-        buzzedText.innerText = state.firstBuzz + " hat gebuzzert!";
+        buzzedText.textContent = state.firstBuzz + " hat gebuzzert!";
       } else if (state.activeQuestion) {
-        buzzedText.innerText = "Noch niemand hat gebuzzert";
+        buzzedText.textContent = "Noch niemand hat gebuzzert";
       }
     });
 
     socket.on("playerBuzzed", (name) => {
-      buzzedText.innerText = name + " hat gebuzzert!";
-      buzzSound.currentTime = 0;
-      buzzSound.play().catch(() => {});
+      buzzedText.textContent = name + " hat gebuzzert!";
+      playBuzzSound();
     });
 
-    document.getElementById("resetBtn").onclick = () => {
-      socket.emit("resetBuzzer");
-    };
+    unlockSoundBtn.addEventListener("click", unlockAudio);
 
-    document.getElementById("closeBtn").onclick = () => {
+    resetBtn.addEventListener("click", () => {
+      socket.emit("resetBuzzer");
+    });
+
+    closeBtn.addEventListener("click", () => {
       socket.emit("closeQuestion");
-    };
+    });
   </script>
 </body>
 </html>
