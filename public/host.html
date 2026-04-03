@@ -409,16 +409,17 @@
       multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
 
       if (state.activeQuestion) {
-        questionText.textContent = state.activeQuestion;
-        overlay.classList.add("show");
-        mainScreen.className = "main-screen hide-board";
-      } else {
-        overlay.classList.remove("show");
-        mainScreen.className = "main-screen show-board";
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-        subText.textContent = "";
-        timerText.textContent = "";
-      }
+  questionText.textContent = state.activeQuestion;
+  questionOverlay.classList.add("show");
+  boardWrap.classList.add("hidden");
+} else {
+  questionText.textContent = "Warte auf die nächste Frage";
+  questionOverlay.classList.remove("show");
+  boardWrap.classList.remove("hidden");
+  timerText.textContent = "";
+  status.textContent = "";
+  substatus.textContent = "";
+}
 
       if (state.firstBuzz) {
         buzzedText.innerHTML = `
