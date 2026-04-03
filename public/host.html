@@ -230,20 +230,20 @@
     }
 
     socket.on("syncState", (state) => {
-      if (state.activeQuestion) {
-        questionText.textContent = state.activeQuestion;
-        overlay.classList.add("show");
-      } else {
-        overlay.classList.remove("show");
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-      }
+  if (state.activeQuestion) {
+    questionText.textContent = state.activeQuestion;
+    overlay.classList.add("show");
+  } else {
+    overlay.classList.remove("show");
+    buzzedText.textContent = "Noch niemand hat gebuzzert";
+  }
 
-      if (state.firstBuzz) {
-        buzzedText.textContent = state.firstBuzz + " hat gebuzzert!";
-      } else if (state.activeQuestion) {
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-      }
-    });
+  if (state.firstBuzz) {
+    buzzedText.textContent = state.firstBuzz + " hat gebuzzert! Buzzer ist gesperrt bis Reset.";
+  } else if (state.activeQuestion) {
+    buzzedText.textContent = "Noch niemand hat gebuzzert";
+  }
+});
 
     socket.on("playerBuzzed", (name) => {
       buzzedText.textContent = name + " hat gebuzzert!";
