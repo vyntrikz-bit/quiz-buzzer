@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Host</title>
   <script src="/socket.io/socket.io.js"></script>
+
   <style>
     body {
       margin: 0;
       background: #0b0f1a;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
     }
 
     .categories {
@@ -27,11 +28,6 @@
       font-weight: bold;
       font-size: 18px;
       outline: none;
-      border: 2px solid transparent;
-    }
-
-    .category:focus {
-      border-color: #ffd54a;
     }
 
     .board {
@@ -48,44 +44,27 @@
       justify-content: center;
       align-items: center;
       font-size: 30px;
-      font-weight: bold;
       cursor: pointer;
-      user-select: none;
-    }
-
-    .cell:hover {
-      background: #3a4fc0;
     }
 
     .cell.used {
       background: #111;
       color: #555;
-      cursor: default;
     }
 
     .scores {
+      display: flex;
+      gap: 10px;
       padding: 10px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .score-card {
+    .score {
       background: #162038;
+      padding: 10px;
       border-radius: 10px;
-      padding: 12px;
       text-align: center;
-    }
-
-    .score-name {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    .score-points {
-      font-size: 28px;
-      color: #ffd54a;
+      min-width: 120px;
     }
 
     .overlay {
@@ -93,259 +72,210 @@
       inset: 0;
       background: black;
       display: none;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      text-align: center;
-      padding: 40px;
-      z-index: 999;
     }
 
     .overlay.show {
       display: flex;
     }
 
-    .question-text {
-      font-size: 44px;
-      max-width: 1100px;
-      margin-bottom: 24px;
-      line-height: 1.25;
+    .question {
+      font-size: 40px;
+      margin-bottom: 20px;
     }
 
-    .buzzed-text {
+    .buzz {
       font-size: 30px;
       color: #ffd54a;
-      margin-bottom: 24px;
-      min-height: 80px;
+      margin-bottom: 10px;
     }
 
-    .subtext {
-      font-size: 20px;
-      color: #cbd5e1;
-      margin-bottom: 24px;
-      min-height: 30px;
+    .sub {
+      color: #aaa;
+      margin-bottom: 20px;
     }
 
-    .host-controls {
+    .controls {
       position: absolute;
       top: 20px;
       right: 20px;
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
-      max-width: 520px;
-      justify-content: flex-end;
+      gap: 10px;
     }
 
     button {
-      padding: 12px 18px;
+      padding: 10px 14px;
       border: none;
       border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
       font-weight: bold;
+      cursor: pointer;
     }
 
-    .unlock-btn { background: #16a34a; color: white; }
-    .reset-btn { background: #e67e22; color: white; }
-    .wrong-btn { background: #dc2626; color: white; }
-    .correct-btn { background: #2563eb; color: white; }
-    .close-btn { background: #475569; color: white; }
+    .correct { background: #2563eb; color: white; }
+    .wrong { background: #dc2626; color: white; }
+    .reset { background: #e67e22; color: white; }
+    .undo { background: #9333ea; color: white; }
+    .close { background: #555; color: white; }
+    .sound { background: #16a34a; color: white; }
   </style>
 </head>
+
 <body>
-  <div class="categories" id="categories">
-    <div class="category" contenteditable="true">Thema 1</div>
-    <div class="category" contenteditable="true">Thema 2</div>
-    <div class="category" contenteditable="true">Thema 3</div>
-    <div class="category" contenteditable="true">Thema 4</div>
-    <div class="category" contenteditable="true">Thema 5</div>
+
+<div class="categories" id="categories">
+  <div class="category" contenteditable="true">Thema 1</div>
+  <div class="category" contenteditable="true">Thema 2</div>
+  <div class="category" contenteditable="true">Thema 3</div>
+  <div class="category" contenteditable="true">Thema 4</div>
+  <div class="category" contenteditable="true">Thema 5</div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="scores" id="scores"></div>
+
+<div class="overlay" id="overlay">
+
+  <div class="controls">
+    <button class="sound" id="soundBtn">Ton aktivieren</button>
+    <button class="correct" id="correctBtn">Richtig</button>
+    <button class="wrong" id="wrongBtn">Falsch</button>
+    <button class="reset" id="resetBtn">Reset</button>
+    <button class="undo" id="undoBtn">Undo</button>
+    <button class="close" id="closeBtn">Schließen</button>
   </div>
 
-  <div class="board" id="board"></div>
+  <div class="question" id="question"></div>
+  <div class="buzz" id="buzz"></div>
+  <div class="sub" id="sub"></div>
 
-  <div class="scores" id="scores"></div>
+</div>
 
-  <div class="overlay" id="overlay">
-    <div class="host-controls">
-      <button class="unlock-btn" id="unlockSoundBtn">Ton freischalten</button>
-      <button class="correct-btn" id="correctBtn">Richtig</button>
-      <button class="wrong-btn" id="wrongBtn">Falsch</button>
-      <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
-      <button class="close-btn" id="closeBtn">Frage schließen</button>
-    </div>
+<script>
+const socket = io();
 
-    <div class="question-text" id="questionText"></div>
-    <div class="buzzed-text" id="buzzedText">Noch niemand hat gebuzzert</div>
-    <div class="subtext" id="subText"></div>
-  </div>
+const values = [100,200,300,400,500];
+const board = document.getElementById("board");
+const overlay = document.getElementById("overlay");
+const questionEl = document.getElementById("question");
+const buzzEl = document.getElementById("buzz");
+const subEl = document.getElementById("sub");
+const scoresEl = document.getElementById("scores");
 
-  <script>
-    const socket = io();
+const questions = [
+  "Frage 1","Frage 2","Frage 3","Frage 4","Frage 5",
+  "Frage 6","Frage 7","Frage 8","Frage 9","Frage 10",
+  "Frage 11","Frage 12","Frage 13","Frage 14","Frage 15",
+  "Frage 16","Frage 17","Frage 18","Frage 19","Frage 20",
+  "Frage 21","Frage 22","Frage 23","Frage 24","Frage 25"
+];
 
-    const values = [100, 200, 300, 400, 500];
-    const board = document.getElementById("board");
-    const overlay = document.getElementById("overlay");
-    const questionText = document.getElementById("questionText");
-    const buzzedText = document.getElementById("buzzedText");
-    const subText = document.getElementById("subText");
-    const unlockSoundBtn = document.getElementById("unlockSoundBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const closeBtn = document.getElementById("closeBtn");
-    const correctBtn = document.getElementById("correctBtn");
-    const wrongBtn = document.getElementById("wrongBtn");
-    const categoriesEl = document.getElementById("categories");
-    const scoresEl = document.getElementById("scores");
+let used = [];
+let index = 0;
 
-    const questions = [
-      "Thema 1 - 100", "Thema 2 - 100", "Thema 3 - 100", "Thema 4 - 100", "Thema 5 - 100",
-      "Thema 1 - 200", "Thema 2 - 200", "Thema 3 - 200", "Thema 4 - 200", "Thema 5 - 200",
-      "Thema 1 - 300", "Thema 2 - 300", "Thema 3 - 300", "Thema 4 - 300", "Thema 5 - 300",
-      "Thema 1 - 400", "Thema 2 - 400", "Thema 3 - 400", "Thema 4 - 400", "Thema 5 - 400",
-      "Thema 1 - 500", "Thema 2 - 500", "Thema 3 - 500", "Thema 4 - 500", "Thema 5 - 500"
-    ];
+// Board bauen
+for (let r=0;r<5;r++){
+  for (let c=0;c<5;c++){
+    let cell = document.createElement("div");
+    cell.className="cell";
+    cell.innerText = values[r];
 
-    const usedCells = [];
-    let audioUnlocked = false;
-    let audioContext = null;
+    let i = index;
+    let val = values[r];
 
-    function unlockAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
+    cell.onclick = () => {
+      if (used.includes(i)) return;
 
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      gain.gain.value = 0.001;
-      osc.frequency.value = 440;
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.05);
+      used.push(i);
+      cell.classList.add("used");
 
-      audioUnlocked = true;
-      unlockSoundBtn.textContent = "Ton aktiv";
-    }
+      socket.emit("openQuestion", {
+        questionText: questions[i],
+        value: val
+      });
+    };
 
-    function playBuzzSound() {
-      if (!audioUnlocked || !audioContext) return;
+    board.appendChild(cell);
+    index++;
+  }
+}
 
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+// Kategorien speichern
+document.querySelectorAll(".category").forEach(el=>{
+  el.onblur = ()=>{
+    let cats = [...document.querySelectorAll(".category")].map(e=>e.innerText);
+    socket.emit("updateCategories", cats);
+  };
+});
 
-      osc.type = "square";
-      osc.frequency.setValueAtTime(880, audioContext.currentTime);
-      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
-
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.25);
-    }
-
-    function renderScores(scores) {
-      const entries = Object.entries(scores);
-      if (entries.length === 0) {
-        scoresEl.innerHTML = "";
-        return;
-      }
-
-      scoresEl.innerHTML = entries
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, points]) => `
-          <div class="score-card">
-            <div class="score-name">${name}</div>
-            <div class="score-points">${points}</div>
-          </div>
-        `)
-        .join("");
-    }
-
-    function sendCategories() {
-      const cats = [...document.querySelectorAll(".category")].map(el => el.textContent.trim() || "Thema");
-      socket.emit("updateCategories", cats);
-    }
-
-    [...document.querySelectorAll(".category")].forEach(el => {
-      el.addEventListener("blur", sendCategories);
+// Punkte anzeigen
+function renderScores(scores){
+  scoresEl.innerHTML="";
+  Object.entries(scores)
+    .sort((a,b)=>b[1]-a[1])
+    .forEach(([name,points])=>{
+      let div=document.createElement("div");
+      div.className="score";
+      div.innerHTML=`<b>${name}</b><br>${points}`;
+      scoresEl.appendChild(div);
     });
+}
 
-    let index = 0;
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = values[row];
+// Sync
+socket.on("syncState",(state)=>{
 
-        const currentIndex = index;
-        const currentValue = values[row];
+  renderScores(state.scores || {});
 
-        cell.addEventListener("click", () => {
-          if (usedCells.includes(currentIndex)) return;
+  if(state.activeQuestion){
+    overlay.classList.add("show");
+    questionEl.innerText = state.activeQuestion;
+  }else{
+    overlay.classList.remove("show");
+  }
 
-          usedCells.push(currentIndex);
-          cell.classList.add("used");
+  if(state.firstBuzz){
+    buzzEl.innerHTML = `🔔 ${state.firstBuzz}`;
+  }else{
+    buzzEl.innerText = "Noch niemand";
+  }
 
-          socket.emit("openQuestion", {
-            questionText: questions[currentIndex],
-            value: currentValue
-          });
-        });
+  if(state.eliminatedPlayers?.length){
+    subEl.innerText = "Raus: "+state.eliminatedPlayers.join(", ");
+  }else{
+    subEl.innerText="";
+  }
 
-        board.appendChild(cell);
-        index++;
-      }
-    }
+});
 
-    socket.on("syncState", (state) => {
-      if (state.categories && state.categories.length === 5) {
-        const categoryNodes = document.querySelectorAll(".category");
-        state.categories.forEach((cat, i) => {
-          if (categoryNodes[i] && document.activeElement !== categoryNodes[i]) {
-            categoryNodes[i].textContent = cat;
-          }
-        });
-      }
+// Sound
+let ctx;
+document.getElementById("soundBtn").onclick = ()=>{
+  ctx = new AudioContext();
+};
 
-      renderScores(state.scores || {});
+// Buzzer Sound
+socket.on("playerBuzzed", ()=>{
+  if(!ctx) return;
+  let o=ctx.createOscillator();
+  let g=ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.value=800;
+  g.gain.value=0.2;
+  o.start();
+  o.stop(ctx.currentTime+0.2);
+});
 
-      if (state.activeQuestion) {
-        questionText.textContent = state.activeQuestion;
-        overlay.classList.add("show");
-      } else {
-        overlay.classList.remove("show");
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-        subText.textContent = "";
-      }
+// Buttons
+document.getElementById("correctBtn").onclick=()=>socket.emit("markCorrect");
+document.getElementById("wrongBtn").onclick=()=>socket.emit("markWrong");
+document.getElementById("resetBtn").onclick=()=>socket.emit("resetBuzzer");
+document.getElementById("undoBtn").onclick=()=>socket.emit("undoLastAction");
+document.getElementById("closeBtn").onclick=()=>socket.emit("closeQuestion");
 
-      if (state.firstBuzz) {
-        buzzedText.innerHTML = `
-          <span style="font-size:50px; color:#ffd54a;">🔔 ${state.firstBuzz}</span>
-          <br>
-          <span style="font-size:22px; color:white;">hat gebuzzert!</span>
-        `;
-      } else if (state.activeQuestion) {
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-      }
+</script>
 
-      if (state.eliminatedPlayers && state.eliminatedPlayers.length > 0) {
-        subText.textContent = "Schon raus für diese Frage: " + state.eliminatedPlayers.join(", ");
-      } else {
-        subText.textContent = "";
-      }
-    });
-
-    socket.on("playerBuzzed", () => {
-      playBuzzSound();
-    });
-
-    unlockSoundBtn.addEventListener("click", unlockAudio);
-    resetBtn.addEventListener("click", () => socket.emit("resetBuzzer"));
-    closeBtn.addEventListener("click", () => socket.emit("closeQuestion"));
-    correctBtn.addEventListener("click", () => socket.emit("markCorrect"));
-    wrongBtn.addEventListener("click", () => socket.emit("markWrong"));
-  </script>
 </body>
 </html>
