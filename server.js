@@ -69,15 +69,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("buzz", (playerName) => {
-    if (!state.activeQuestion) return;
-    if (state.buzzLocked) return;
+  if (!state.activeQuestion) return;
+  if (state.buzzLocked) return;
 
-    state.firstBuzz = playerName || "Ein Spieler";
-    state.buzzLocked = true;
+  state.firstBuzz = playerName || "Ein Spieler";
+  state.buzzLocked = true;
 
-    io.emit("syncState", state);
-    io.emit("playerBuzzed", state.firstBuzz);
-  });
+  io.emit("syncState", state);
+  io.emit("playerBuzzed", state.firstBuzz);
+});
 });
 
 const PORT = process.env.PORT || 3000;
