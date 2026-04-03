@@ -13,6 +13,14 @@
       font-family: Arial, sans-serif;
     }
 
+    .main-screen.show-board .board-wrap {
+      display: block;
+    }
+
+    .main-screen.hide-board .board-wrap {
+      display: none;
+    }
+
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -148,6 +156,22 @@
       min-height: 48px;
     }
 
+    .overlay-scores {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .overlay-score-card {
+      background: #162038;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
     .host-controls {
       position: absolute;
       top: 20px;
@@ -178,22 +202,26 @@
   </style>
 </head>
 <body>
-  <div class="categories" id="categories">
-    <div class="category" contenteditable="true">Thema 1</div>
-    <div class="category" contenteditable="true">Thema 2</div>
-    <div class="category" contenteditable="true">Thema 3</div>
-    <div class="category" contenteditable="true">Thema 4</div>
-    <div class="category" contenteditable="true">Thema 5</div>
+  <div class="main-screen show-board" id="mainScreen">
+    <div class="board-wrap">
+      <div class="categories" id="categories">
+        <div class="category" contenteditable="true">Thema 1</div>
+        <div class="category" contenteditable="true">Thema 2</div>
+        <div class="category" contenteditable="true">Thema 3</div>
+        <div class="category" contenteditable="true">Thema 4</div>
+        <div class="category" contenteditable="true">Thema 5</div>
+      </div>
+
+      <div class="board" id="board"></div>
+
+      <div class="top-info">
+        <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
+        <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
+      </div>
+
+      <div class="scores" id="scores"></div>
+    </div>
   </div>
-
-  <div class="board" id="board"></div>
-
-  <div class="top-info">
-    <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
-    <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
-  </div>
-
-  <div class="scores" id="scores"></div>
 
   <div class="overlay" id="overlay">
     <div class="host-controls">
@@ -212,6 +240,7 @@
     <div class="timer-text" id="timerText"></div>
     <div class="buzzed-text" id="buzzedText">Noch niemand hat gebuzzert</div>
     <div class="subtext" id="subText"></div>
+    <div class="overlay-scores" id="overlayScores"></div>
   </div>
 
   <script>
@@ -220,12 +249,13 @@
     const values = [100, 200, 300, 400, 500];
     const board = document.getElementById("board");
     const overlay = document.getElementById("overlay");
+    const mainScreen = document.getElementById("mainScreen");
     const questionText = document.getElementById("questionText");
     const buzzedText = document.getElementById("buzzedText");
     const subText = document.getElementById("subText");
     const timerText = document.getElementById("timerText");
-    const categoriesEl = document.getElementById("categories");
     const scoresEl = document.getElementById("scores");
+    const overlayScores = document.getElementById("overlayScores");
     const remainingInfo = document.getElementById("remainingInfo");
     const multiplierInfo = document.getElementById("multiplierInfo");
 
@@ -263,15 +293,12 @@
       if (!audioUnlocked || !audioContext) return;
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
-
       osc.type = "square";
       osc.frequency.setValueAtTime(880, audioContext.currentTime);
       gain.gain.setValueAtTime(0.15, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
-
       osc.connect(gain);
       gain.connect(audioContext.destination);
-
       osc.start();
       osc.stop(audioContext.currentTime + 0.25);
     }
@@ -280,16 +307,13 @@
       if (!audioUnlocked || !audioContext) return;
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
-
       osc.type = "triangle";
       osc.frequency.setValueAtTime(700, audioContext.currentTime);
       osc.frequency.linearRampToValueAtTime(1000, audioContext.currentTime + 0.2);
       gain.gain.setValueAtTime(0.15, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-
       osc.connect(gain);
       gain.connect(audioContext.destination);
-
       osc.start();
       osc.stop(audioContext.currentTime + 0.35);
     }
@@ -298,36 +322,36 @@
       if (!audioUnlocked || !audioContext) return;
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
-
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(300, audioContext.currentTime);
       osc.frequency.linearRampToValueAtTime(160, audioContext.currentTime + 0.35);
       gain.gain.setValueAtTime(0.15, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-
       osc.connect(gain);
       gain.connect(audioContext.destination);
-
       osc.start();
       osc.stop(audioContext.currentTime + 0.35);
     }
 
-    function renderScores(scores) {
+    function scoreCardsHtml(scores) {
       const entries = Object.entries(scores || {});
-      if (entries.length === 0) {
-        scoresEl.innerHTML = "";
-        return;
-      }
+      if (entries.length === 0) return "";
 
-      scoresEl.innerHTML = entries
+      return entries
         .sort((a, b) => b[1] - a[1])
         .map(([name, points]) => `
-          <div class="score-card">
+          <div class="overlay-score-card">
             <div class="score-name">${name}</div>
             <div class="score-points">${points}</div>
           </div>
         `)
         .join("");
+    }
+
+    function renderScores(scores) {
+      const html = scoreCardsHtml(scores);
+      scoresEl.innerHTML = html;
+      overlayScores.innerHTML = html;
     }
 
     function sendCategories() {
@@ -380,15 +404,16 @@
       });
 
       renderScores(state.scores || {});
-
       remainingInfo.textContent = "Offene Felder: " + (state.remainingCells ?? 25);
       multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
 
       if (state.activeQuestion) {
         questionText.textContent = state.activeQuestion;
         overlay.classList.add("show");
+        mainScreen.className = "main-screen hide-board";
       } else {
         overlay.classList.remove("show");
+        mainScreen.className = "main-screen show-board";
         buzzedText.textContent = "Noch niemand hat gebuzzert";
         subText.textContent = "";
         timerText.textContent = "";
@@ -410,12 +435,10 @@
         subText.textContent = "";
       }
 
-      if (state.timer) {
-        if (state.timer.total > 0) {
-          timerText.textContent = "Timer: " + state.timer.remaining + "s";
-        } else {
-          timerText.textContent = "";
-        }
+      if (state.timer && state.timer.total > 0) {
+        timerText.textContent = "Timer: " + state.timer.remaining + "s";
+      } else {
+        timerText.textContent = "";
       }
     });
 
