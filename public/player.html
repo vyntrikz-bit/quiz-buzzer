@@ -20,6 +20,21 @@
         statusText.innerText = "Gebuzzert!";
       }
     });
-  </script>
+  <script src="/socket.io/socket.io.js"></script>
+
+<script>
+const socket = io();
+const statusText = document.getElementById("status");
+
+window.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+    event.preventDefault();
+
+    socket.emit("buzz");
+
+    statusText.innerText = "Gebuzzert!";
+  }
+});
+</script>
 </body>
 </html>
