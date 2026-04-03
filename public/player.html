@@ -14,12 +14,12 @@
     }
 
     .board-wrap {
-  display: block;
-}
+      display: block;
+    }
 
-.board-wrap.hidden {
-  display: none !important;
-}
+    .board-wrap.hidden {
+      display: none !important;
+    }
 
     .topbar {
       padding: 12px;
@@ -144,6 +144,7 @@
       color: #cbd5e1;
       min-height: 24px;
       margin-bottom: 20px;
+      line-height: 1.4;
     }
 
     .overlay-scoreboard {
@@ -182,8 +183,8 @@
   </style>
 </head>
 <body>
-  <div class="main-screen show-board" id="mainScreen">
-    <div class="board-wrap">
+  <div id="mainScreen">
+    <div class="board-wrap" id="boardWrap">
       <div class="topbar">
         <input type="text" id="playerName" placeholder="Dein Name">
         <button id="saveName">Name speichern</button>
@@ -231,7 +232,7 @@
     const status = document.getElementById("status");
     const substatus = document.getElementById("substatus");
     const board = document.getElementById("board");
-    const mainScreen = document.getElementById("mainScreen");
+    const boardWrap = document.getElementById("boardWrap");
     const questionOverlay = document.getElementById("questionOverlay");
     const overlayScoreboard = document.getElementById("overlayScoreboard");
 
@@ -296,11 +297,11 @@
       if (state.activeQuestion) {
         questionText.textContent = state.activeQuestion;
         questionOverlay.classList.add("show");
-        mainScreen.className = "main-screen hide-board";
+        boardWrap.classList.add("hidden");
       } else {
         questionText.textContent = "Warte auf die nächste Frage";
         questionOverlay.classList.remove("show");
-        mainScreen.className = "main-screen show-board";
+        boardWrap.classList.remove("hidden");
         timerText.textContent = "";
         status.textContent = "";
         substatus.textContent = "";
@@ -312,9 +313,7 @@
         timerText.textContent = "";
       }
 
-      if (!state.activeQuestion) {
-        return;
-      }
+      if (!state.activeQuestion) return;
 
       if (!playerName) {
         status.textContent = "Bitte zuerst Namen speichern";
@@ -322,7 +321,15 @@
         return;
       }
 
-      if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
+      if (state.answerVisible && state.currentAnswer) {
+        substatus.innerHTML = `
+          Richtige Antwort:
+          <br>
+          <strong style="font-size:28px;color:#22c55e;">
+            ${state.currentAnswer}
+          </strong>
+        `;
+      } else if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
         status.textContent = "Du bist für diese Frage raus";
         substatus.textContent = "Warte auf die nächste Frage";
         return;
@@ -331,14 +338,20 @@
       if (state.firstBuzz) {
         if (state.firstBuzz === playerName) {
           status.textContent = "Du bist dran!";
-          substatus.textContent = "Warte auf die Wertung des Quizmasters";
+          if (!state.answerVisible) {
+            substatus.textContent = "Warte auf die Wertung des Quizmasters";
+          }
         } else {
           status.textContent = state.firstBuzz + " ist dran";
-          substatus.textContent = "Warte auf die Entscheidung oder auf eine neue Chance";
+          if (!state.answerVisible) {
+            substatus.textContent = "Warte auf die Entscheidung oder auf eine neue Chance";
+          }
         }
       } else {
         status.textContent = "Frage offen – Leertaste drücken!";
-        substatus.textContent = "";
+        if (!state.answerVisible) {
+          substatus.textContent = "";
+        }
       }
     });
 
@@ -353,9 +366,13 @@
         }
       } else {
         if (result === "correct") {
-          substatus.textContent = name + " war richtig (+" + points + ")";
+          if (!substatus.innerHTML.includes("Richtige Antwort:")) {
+            substatus.textContent = name + " war richtig (+" + points + ")";
+          }
         } else {
-          substatus.textContent = name + " war falsch (-" + points + ")";
+          if (!substatus.innerHTML.includes("Richtige Antwort:")) {
+            substatus.textContent = name + " war falsch (-" + points + ")";
+          }
         }
       }
     });
