@@ -44,6 +44,8 @@ const state = {
   activeQuestion: null,
   activeQuestionValue: 0,
   activeQuestionIndex: null,
+  currentAnswer: "",
+  answerVisible: false,
   firstBuzz: null,
   buzzLocked: false,
   eliminatedPlayers: [],
@@ -101,8 +103,10 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("openQuestion", ({ questionText, value, index }) => {
+  socket.on("openQuestion", ({ questionText, answer, value, index }) => {
     state.activeQuestion = questionText;
+    state.currentAnswer = answer || "";
+    state.answerVisible = false;
     state.activeQuestionValue = Number(value) || 0;
     state.activeQuestionIndex = Number.isInteger(index) ? index : null;
     state.firstBuzz = null;
@@ -110,40 +114,26 @@ io.on("connection", (socket) => {
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    socket.on("timerStart", (seconds) => {
-  const secs = Number(seconds) || 0;
-  if (!state.activeQuestion) return;
-
-  if (state.timer.remaining > 0) {
-    state.timer.running = true;
-  } else {
-    if (secs <= 0) return;
-    state.timer.total = secs;
-    state.timer.remaining = secs;
-    state.timer.running = true;
-  }
-
-  stopTimer();
-  state.timer.running = true;
-
-  emitState();
-
-  timerInterval = setInterval(() => {
-    state.timer.remaining -= 1;
-
-    if (state.timer.remaining <= 0) {
-      state.timer.remaining = 0;
-      stopTimer();
+    if (
+      state.activeQuestionIndex !== null &&
+      !state.usedCells.includes(state.activeQuestionIndex)
+    ) {
+      state.usedCells.push(state.activeQuestionIndex);
     }
 
+    stopTimer();
+    state.timer.total = 0;
+    state.timer.remaining = 0;
+
     emitState();
-  }, 1000);
-});
+  });
 
   socket.on("closeQuestion", () => {
     state.activeQuestion = null;
     state.activeQuestionValue = 0;
     state.activeQuestionIndex = null;
+    state.currentAnswer = "";
+    state.answerVisible = false;
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
@@ -153,6 +143,17 @@ io.on("connection", (socket) => {
     state.timer.total = 0;
     state.timer.remaining = 0;
 
+    emitState();
+  });
+
+  socket.on("showCorrectAnswer", () => {
+    if (!state.activeQuestion) return;
+    state.answerVisible = true;
+    emitState();
+  });
+
+  socket.on("hideCorrectAnswer", () => {
+    state.answerVisible = false;
     emitState();
   });
 
@@ -166,11 +167,17 @@ io.on("connection", (socket) => {
   socket.on("timerStart", (seconds) => {
     const secs = Number(seconds) || 0;
     if (!state.activeQuestion) return;
-    if (secs <= 0) return;
+
+    if (state.timer.remaining > 0) {
+      state.timer.running = true;
+    } else {
+      if (secs <= 0) return;
+      state.timer.total = secs;
+      state.timer.remaining = secs;
+      state.timer.running = true;
+    }
 
     stopTimer();
-    state.timer.total = secs;
-    state.timer.remaining = secs;
     state.timer.running = true;
 
     emitState();
