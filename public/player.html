@@ -13,6 +13,14 @@
       font-family: Arial, sans-serif;
     }
 
+    .main-screen.show-board .board-wrap {
+      display: block;
+    }
+
+    .main-screen.hide-board .board-wrap {
+      display: none;
+    }
+
     .topbar {
       padding: 12px;
       display: flex;
@@ -92,41 +100,77 @@
       color: #555;
     }
 
-    .question-box {
-      margin: 10px;
-      background: #111827;
-      border-radius: 12px;
-      padding: 24px;
+    .question-overlay {
+      position: fixed;
+      inset: 0;
+      background: black;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      min-height: 140px;
+      padding: 40px;
+      z-index: 999;
+    }
+
+    .question-overlay.show {
+      display: flex;
     }
 
     .question-text {
-      font-size: 34px;
+      font-size: 42px;
       line-height: 1.25;
-      margin-bottom: 14px;
+      max-width: 1100px;
+      margin-bottom: 18px;
     }
 
     .timer-text {
-      font-size: 28px;
+      font-size: 34px;
       color: #60a5fa;
       font-weight: bold;
-      min-height: 34px;
-      margin-bottom: 10px;
+      min-height: 40px;
+      margin-bottom: 16px;
     }
 
     .status {
-      font-size: 24px;
+      font-size: 28px;
       min-height: 40px;
-      margin-top: 10px;
       color: #ffd54a;
+      margin-bottom: 10px;
     }
 
     .substatus {
       font-size: 18px;
       color: #cbd5e1;
       min-height: 24px;
-      margin-top: 8px;
+      margin-bottom: 20px;
+    }
+
+    .overlay-scoreboard {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .overlay-score-card {
+      background: #162038;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .score-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .score-points {
+      font-size: 28px;
+      color: #ffd54a;
     }
 
     .hint {
@@ -138,35 +182,40 @@
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <input type="text" id="playerName" placeholder="Dein Name">
-    <button id="saveName">Name speichern</button>
+  <div class="main-screen show-board" id="mainScreen">
+    <div class="board-wrap">
+      <div class="topbar">
+        <input type="text" id="playerName" placeholder="Dein Name">
+        <button id="saveName">Name speichern</button>
+      </div>
+
+      <div class="info-row">
+        <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
+        <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
+      </div>
+
+      <div class="categories" id="categories">
+        <div class="category">Thema 1</div>
+        <div class="category">Thema 2</div>
+        <div class="category">Thema 3</div>
+        <div class="category">Thema 4</div>
+        <div class="category">Thema 5</div>
+      </div>
+
+      <div class="board" id="board"></div>
+
+      <div class="hint">
+        Drücke die <strong>Leertaste</strong>, wenn eine Frage offen ist.
+      </div>
+    </div>
   </div>
 
-  <div class="info-row">
-    <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
-    <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
-  </div>
-
-  <div class="categories" id="categories">
-    <div class="category">Thema 1</div>
-    <div class="category">Thema 2</div>
-    <div class="category">Thema 3</div>
-    <div class="category">Thema 4</div>
-    <div class="category">Thema 5</div>
-  </div>
-
-  <div class="board" id="board"></div>
-
-  <div class="question-box">
+  <div class="question-overlay" id="questionOverlay">
     <div class="question-text" id="questionText">Warte auf die nächste Frage</div>
     <div class="timer-text" id="timerText"></div>
     <div class="status" id="status"></div>
     <div class="substatus" id="substatus"></div>
-  </div>
-
-  <div class="hint">
-    Drücke die <strong>Leertaste</strong>, wenn eine Frage offen ist.
+    <div class="overlay-scoreboard" id="overlayScoreboard"></div>
   </div>
 
   <script>
@@ -182,11 +231,32 @@
     const status = document.getElementById("status");
     const substatus = document.getElementById("substatus");
     const board = document.getElementById("board");
+    const mainScreen = document.getElementById("mainScreen");
+    const questionOverlay = document.getElementById("questionOverlay");
+    const overlayScoreboard = document.getElementById("overlayScoreboard");
 
     let playerName = localStorage.getItem("playerName") || "";
     playerNameInput.value = playerName;
 
     const cells = [];
+
+    function renderOverlayScores(scores) {
+      const entries = Object.entries(scores || {});
+      if (entries.length === 0) {
+        overlayScoreboard.innerHTML = "";
+        return;
+      }
+
+      overlayScoreboard.innerHTML = entries
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, points]) => `
+          <div class="overlay-score-card">
+            <div class="score-name">${name}</div>
+            <div class="score-points">${points}</div>
+          </div>
+        `)
+        .join("");
+    }
 
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 5; col++) {
@@ -221,10 +291,19 @@
       remainingInfo.textContent = "Offene Felder: " + (state.remainingCells ?? 25);
       multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
 
+      renderOverlayScores(state.scores || {});
+
       if (state.activeQuestion) {
         questionText.textContent = state.activeQuestion;
+        questionOverlay.classList.add("show");
+        mainScreen.className = "main-screen hide-board";
       } else {
         questionText.textContent = "Warte auf die nächste Frage";
+        questionOverlay.classList.remove("show");
+        mainScreen.className = "main-screen show-board";
+        timerText.textContent = "";
+        status.textContent = "";
+        substatus.textContent = "";
       }
 
       if (state.timer && state.timer.total > 0) {
@@ -234,8 +313,6 @@
       }
 
       if (!state.activeQuestion) {
-        status.textContent = "";
-        substatus.textContent = "";
         return;
       }
 
