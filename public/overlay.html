@@ -11,7 +11,7 @@
       height: 1080px;
       background: transparent;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       overflow: hidden;
     }
 
@@ -21,6 +21,7 @@
       height: 1080px;
     }
 
+    /* STREAMER (über Slot 1) */
     .streamer-box {
       position: absolute;
       top: 40px;
@@ -32,9 +33,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
-      font-weight: bold;
-      text-align: center;
       overflow: hidden;
     }
 
@@ -44,14 +42,22 @@
       object-fit: contain;
     }
 
+    /* QUIZ BOARD (über Slot 2–4) */
     .quiz-box {
       position: absolute;
       top: 40px;
+
+      /* START = nach Slot 1 */
       left: 550px;
-      right: 240px;
+
+      /* FESTE BREITE → wichtig */
+      width: 1130px;
+
       height: 420px;
+
       background: rgba(15,23,42,0.75);
       border-radius: 18px;
+
       display: flex;
       align-items: center;
       justify-content: center;
@@ -66,6 +72,7 @@
       line-height: 1.2;
     }
 
+    /* TIMER */
     .timer {
       position: absolute;
       top: 470px;
@@ -73,26 +80,26 @@
       font-size: 40px;
       font-weight: bold;
       color: #60a5fa;
-      min-width: 180px;
-      text-align: right;
     }
 
+    /* ANSWER */
     .answer-box {
       position: absolute;
       top: 460px;
       left: 550px;
-      right: 240px;
+      width: 1130px;
       text-align: center;
       font-size: 32px;
       min-height: 60px;
-      line-height: 1.3;
     }
 
+    /* KAMERAS */
     .players-row {
       position: absolute;
       bottom: 180px;
       left: 160px;
       right: 240px;
+
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 40px;
@@ -113,8 +120,6 @@
       align-items: center;
       justify-content: center;
       color: rgba(255,255,255,0.4);
-      font-size: 24px;
-      background: linear-gradient(rgba(255,255,255,0.06), rgba(255,255,255,0.03));
     }
 
     .player-name {
@@ -125,6 +130,7 @@
       background: rgba(0,0,0,0.4);
     }
 
+    /* PUNKTE */
     .score-row {
       position: absolute;
       bottom: 60px;
@@ -157,18 +163,20 @@
 <body>
   <div class="canvas">
 
+    <!-- HOST -->
     <div class="streamer-box">
-      <img src="avatar.png" id="avatar" alt="Avatar">
+      <img src="avatar.png" id="avatar">
     </div>
 
+    <!-- QUIZ -->
     <div class="quiz-box">
       <div class="quiz-text" id="quizText">Warte auf Frage</div>
     </div>
 
     <div class="timer" id="timerText"></div>
-
     <div class="answer-box" id="answerBox"></div>
 
+    <!-- CAMS -->
     <div class="players-row">
       <div class="player-slot">
         <div class="camera-frame">Slot 1</div>
@@ -188,6 +196,7 @@
       </div>
     </div>
 
+    <!-- SCORES -->
     <div class="score-row" id="scoreRow"></div>
 
   </div>
@@ -215,8 +224,7 @@
 
     socket.on("lobbyUpdate", (players) => {
       clearPlayers();
-
-      players.forEach((p) => {
+      players.forEach(p => {
         if (playerEls[p.slot]) {
           playerEls[p.slot].textContent = p.name;
         }
@@ -224,11 +232,7 @@
     });
 
     socket.on("syncState", (state) => {
-      if (state.activeQuestion) {
-        quizText.textContent = state.activeQuestion;
-      } else {
-        quizText.textContent = "Warte auf Frage";
-      }
+      quizText.textContent = state.activeQuestion || "Warte auf Frage";
 
       if (state.timer && state.timer.total > 0) {
         timerText.textContent = "⏱ " + state.timer.remaining + "s";
@@ -242,23 +246,18 @@
           <strong>${state.currentAnswer}</strong>
         `;
       } else if (state.firstBuzz) {
-        answerBox.innerHTML = `
-          <span style="color:#ffd54a;">🔔 ${state.firstBuzz}</span>
-        `;
+        answerBox.innerHTML = `🔔 ${state.firstBuzz}`;
       } else {
         answerBox.innerHTML = "";
       }
 
       const entries = Object.entries(state.scores || {});
-      scoreRow.innerHTML = entries
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, points]) => `
-          <div class="score-box">
-            <div class="score-name">${name}</div>
-            <div class="score-points">${points}</div>
-          </div>
-        `)
-        .join("");
+      scoreRow.innerHTML = entries.map(([name, points]) => `
+        <div class="score-box">
+          <div class="score-name">${name}</div>
+          <div class="score-points">${points}</div>
+        </div>
+      `).join("");
     });
   </script>
 </body>
