@@ -13,68 +13,83 @@
       font-family: Arial, sans-serif;
     }
 
-    .board-wrap {
-      display: block;
+    .topbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px;
+      background: #121a2d;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .board-wrap.hidden {
-      display: none !important;
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #334155;
+      color: white;
+    }
+
+    .primary { background: #2563eb; }
+    .danger { background: #dc2626; }
+    .success { background: #16a34a; }
+    .warn { background: #e67e22; }
+    .purple { background: #9333ea; }
+
+    .wrap {
+      padding: 14px;
     }
 
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      padding: 10px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
     .category {
-      background: #1e2a5a;
-      padding: 16px;
+      background: #162038;
+      border-radius: 10px;
+      padding: 14px;
       text-align: center;
-      font-weight: bold;
-      font-size: 18px;
+      font-size: 20px;
+      font-weight: 700;
       outline: none;
-      border: 2px solid transparent;
-    }
-
-    .category:focus {
-      border-color: #ffd54a;
     }
 
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      padding: 10px;
+      gap: 8px;
     }
 
     .cell {
-      background: #2b3c8f;
-      height: 100px;
+      height: 94px;
+      background: #f2a7c2;
+      color: #18181b;
+      border-radius: 8px;
       display: flex;
-      justify-content: center;
       align-items: center;
-      font-size: 30px;
-      font-weight: bold;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: 900;
       cursor: pointer;
       user-select: none;
     }
 
-    .cell:hover {
-      background: #3a4fc0;
-    }
-
     .cell.used {
-      background: #111;
-      color: #555;
+      opacity: 0.28;
       cursor: default;
     }
 
-    .scores {
-      padding: 10px;
+    .score-grid {
+      margin-top: 16px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
 
@@ -86,345 +101,272 @@
     }
 
     .score-name {
-      font-size: 16px;
-      font-weight: bold;
+      font-size: 18px;
+      font-weight: 700;
       margin-bottom: 6px;
     }
 
     .score-points {
       font-size: 28px;
+      font-weight: 800;
       color: #ffd54a;
     }
 
-    .top-info {
+    .panel {
+      margin-top: 18px;
+      background: #111827;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .row {
       display: flex;
-      gap: 10px;
-      padding: 0 10px 10px;
+      gap: 12px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    .info-box {
-      background: #162038;
+    input[type="text"] {
+      width: 420px;
+      max-width: 100%;
+      padding: 12px;
       border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: bold;
+      border: none;
+      background: #1f2937;
+      color: white;
+      font-size: 16px;
     }
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: black;
-      display: none;
+    .muted {
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .big-preview {
+      margin-top: 14px;
+      background: #e8a4bc;
+      color: #111;
+      border-radius: 20px;
+      min-height: 300px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-category {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .preview-value {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .preview-center {
+      height: 100%;
+      min-height: 260px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
       text-align: center;
-      padding: 40px;
-      z-index: 999;
+      padding: 40px 60px;
+      box-sizing: border-box;
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1.2;
     }
 
-    .overlay.show {
-      display: flex;
+    .preview-image {
+      max-width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 8px;
     }
 
-    .question-text {
-      font-size: 44px;
-      max-width: 1100px;
-      margin-bottom: 24px;
-      line-height: 1.25;
-    }
-
-    .timer-text {
-      font-size: 38px;
-      font-weight: bold;
-      color: #60a5fa;
-      margin-bottom: 20px;
-      min-height: 48px;
-    }
-
-    .buzzed-text {
-      font-size: 30px;
-      color: #ffd54a;
-      margin-bottom: 16px;
-      min-height: 80px;
-    }
-
-    .subtext {
-      font-size: 20px;
-      color: #cbd5e1;
-      margin-bottom: 20px;
-      min-height: 60px;
-      line-height: 1.4;
-    }
-
-    .overlay-scores {
-      width: 100%;
-      max-width: 900px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .overlay-score-card {
-      background: #162038;
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-    }
-
-    .host-controls {
+    .preview-answer {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      max-width: 900px;
-      justify-content: flex-end;
-    }
-
-    button {
-      padding: 12px 18px;
-      border: none;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: white;
+      color: #111;
       border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
+      padding: 10px 20px;
+      font-size: 28px;
+      font-weight: 800;
     }
-
-    .unlock-btn { background: #16a34a; color: white; }
-    .timer-btn { background: #0ea5e9; color: white; }
-    .correct-btn { background: #2563eb; color: white; }
-    .wrong-btn { background: #dc2626; color: white; }
-    .answer-btn { background: #22c55e; color: white; }
-    .hide-answer-btn { background: #64748b; color: white; }
-    .reset-btn { background: #e67e22; color: white; }
-    .undo-btn { background: #9333ea; color: white; }
-    .close-btn { background: #475569; color: white; }
   </style>
 </head>
 <body>
-  <div id="mainScreen">
-    <div class="board-wrap" id="boardWrap">
-      <div class="categories" id="categories">
-        <div class="category" contenteditable="true">Thema 1</div>
-        <div class="category" contenteditable="true">Thema 2</div>
-        <div class="category" contenteditable="true">Thema 3</div>
-        <div class="category" contenteditable="true">Thema 4</div>
-        <div class="category" contenteditable="true">Thema 5</div>
-      </div>
-
-      <div class="board" id="board"></div>
-
-      <div class="top-info">
-        <div class="info-box" id="remainingInfo">Offene Felder: 25</div>
-        <div class="info-box" id="multiplierInfo">Multiplikator: x1</div>
-      </div>
-
-      <div class="scores" id="scores"></div>
-    </div>
+  <div class="topbar">
+    <button class="primary" id="showQuestionBtn">Frage anzeigen</button>
+    <button class="success" id="showAnswerBtn">Antwort anzeigen</button>
+    <button id="hideAnswerBtn">Antwort ausblenden</button>
+    <button class="success" id="correctBtn">Richtig</button>
+    <button class="danger" id="wrongBtn">Falsch</button>
+    <button class="warn" id="resetBuzzerBtn">Buzzer Reset</button>
+    <button class="purple" id="undoBtn">Undo</button>
+    <button id="timer20Btn">Timer 20s</button>
+    <button id="timerStopBtn">Timer Stop</button>
+    <button id="timerResetBtn">Timer Reset</button>
+    <button id="closeQuestionBtn">Frage schließen</button>
   </div>
 
-  <div class="overlay" id="overlay">
-    <div class="host-controls">
-      <button class="unlock-btn" id="unlockSoundBtn">Ton freischalten</button>
-      <button class="timer-btn" id="timer20Btn">Timer 20s</button>
-      <button class="timer-btn" id="timerStopBtn">Timer Stop</button>
-      <button class="timer-btn" id="timerResetBtn">Timer Reset</button>
-      <button class="correct-btn" id="correctBtn">Richtig</button>
-      <button class="wrong-btn" id="wrongBtn">Falsch</button>
-      <button class="answer-btn" id="showAnswerBtn">Antwort zeigen</button>
-      <button class="hide-answer-btn" id="hideAnswerBtn">Antwort ausblenden</button>
-      <button class="reset-btn" id="resetBtn">Buzzer zurücksetzen</button>
-      <button class="undo-btn" id="undoBtn">Undo</button>
-      <button class="close-btn" id="closeBtn">Frage schließen</button>
+  <div class="wrap">
+    <div class="categories" id="categories">
+      <div class="category" contenteditable="true">Thema 1</div>
+      <div class="category" contenteditable="true">Thema 2</div>
+      <div class="category" contenteditable="true">Thema 3</div>
+      <div class="category" contenteditable="true">Thema 4</div>
+      <div class="category" contenteditable="true">Thema 5</div>
     </div>
 
-    <div class="question-text" id="questionText"></div>
-    <div class="timer-text" id="timerText"></div>
-    <div class="buzzed-text" id="buzzedText">Noch niemand hat gebuzzert</div>
-    <div class="subtext" id="subText"></div>
-    <div class="overlay-scores" id="overlayScores"></div>
+    <div class="board" id="board"></div>
+
+    <div class="score-grid" id="scoreGrid"></div>
+
+    <div class="panel">
+      <div class="row">
+        <strong>Aktuelle Vorschau</strong>
+        <span class="muted">Hier siehst du, wie das große Overlay-Feld aussehen wird.</span>
+      </div>
+
+      <div class="big-preview" id="preview">
+        <div class="preview-category" id="previewCategory"></div>
+        <div class="preview-value" id="previewValue"></div>
+        <div class="preview-center" id="previewCenter"></div>
+        <div class="preview-answer" id="previewAnswer" style="display:none;"></div>
+      </div>
+    </div>
   </div>
 
   <script>
     const socket = io();
 
-    const values = [100, 200, 300, 400, 500];
+    const values = [200, 300, 400, 500, 600];
     const board = document.getElementById("board");
-    const overlay = document.getElementById("overlay");
-    const boardWrap = document.getElementById("boardWrap");
-    const questionText = document.getElementById("questionText");
-    const timerText = document.getElementById("timerText");
-    const buzzedText = document.getElementById("buzzedText");
-    const subText = document.getElementById("subText");
-    const scoresEl = document.getElementById("scores");
-    const overlayScores = document.getElementById("overlayScores");
-    const remainingInfo = document.getElementById("remainingInfo");
-    const multiplierInfo = document.getElementById("multiplierInfo");
+    const categoriesEl = document.getElementById("categories");
+    const scoreGrid = document.getElementById("scoreGrid");
 
-    const questions = [
-      { q: "Frage 1", a: "Antwort 1" },
-      { q: "Frage 2", a: "Antwort 2" },
-      { q: "Frage 3", a: "Antwort 3" },
-      { q: "Frage 4", a: "Antwort 4" },
-      { q: "Frage 5", a: "Antwort 5" },
+    const previewCategory = document.getElementById("previewCategory");
+    const previewValue = document.getElementById("previewValue");
+    const previewCenter = document.getElementById("previewCenter");
+    const previewAnswer = document.getElementById("previewAnswer");
 
-      { q: "Frage 6", a: "Antwort 6" },
-      { q: "Frage 7", a: "Antwort 7" },
-      { q: "Frage 8", a: "Antwort 8" },
-      { q: "Frage 9", a: "Antwort 9" },
-      { q: "Frage 10", a: "Antwort 10" },
+    // 25 Felder, row-major: 5 Kategorien x 5 Punkte
+    // image: Dateiname im public-Ordner oder leer
+    const questionBank = [
+      { question: "Frage 1", answer: "Antwort 1", image: "" },
+      { question: "Frage 2", answer: "Antwort 2", image: "" },
+      { question: "Frage 3", answer: "Antwort 3", image: "" },
+      { question: "Frage 4", answer: "Antwort 4", image: "" },
+      { question: "Frage 5", answer: "Antwort 5", image: "" },
 
-      { q: "Frage 11", a: "Antwort 11" },
-      { q: "Frage 12", a: "Antwort 12" },
-      { q: "Frage 13", a: "Antwort 13" },
-      { q: "Frage 14", a: "Antwort 14" },
-      { q: "Frage 15", a: "Antwort 15" },
+      { question: "Frage 6", answer: "Antwort 6", image: "" },
+      { question: "Frage 7", answer: "Antwort 7", image: "" },
+      { question: "Frage 8", answer: "Antwort 8", image: "" },
+      { question: "Frage 9", answer: "Antwort 9", image: "" },
+      { question: "Frage 10", answer: "Antwort 10", image: "" },
 
-      { q: "Frage 16", a: "Antwort 16" },
-      { q: "Frage 17", a: "Antwort 17" },
-      { q: "Frage 18", a: "Antwort 18" },
-      { q: "Frage 19", a: "Antwort 19" },
-      { q: "Frage 20", a: "Antwort 20" },
+      { question: "Frage 11", answer: "Antwort 11", image: "" },
+      { question: "Frage 12", answer: "Antwort 12", image: "" },
+      { question: "Frage 13", answer: "Antwort 13", image: "" },
+      { question: "Frage 14", answer: "Antwort 14", image: "" },
+      { question: "Frage 15", answer: "Antwort 15", image: "" },
 
-      { q: "Frage 21", a: "Antwort 21" },
-      { q: "Frage 22", a: "Antwort 22" },
-      { q: "Frage 23", a: "Antwort 23" },
-      { q: "Frage 24", a: "Antwort 24" },
-      { q: "Frage 25", a: "Antwort 25" }
+      { question: "Frage 16", answer: "Antwort 16", image: "" },
+      { question: "Frage 17", answer: "Antwort 17", image: "" },
+      { question: "Frage 18", answer: "Antwort 18", image: "" },
+      { question: "Frage 19", answer: "Antwort 19", image: "" },
+      { question: "Frage 20", answer: "Antwort 20", image: "" },
+
+      { question: "Frage 21", answer: "Antwort 21", image: "" },
+      { question: "Frage 22", answer: "Antwort 22", image: "" },
+      { question: "Frage 23", answer: "Antwort 23", image: "" },
+      { question: "Frage 24", answer: "Antwort 24", image: "" },
+      { question: "Frage 25", answer: "Antwort 25", image: "" }
     ];
 
-    let audioUnlocked = false;
-    let audioContext = null;
-    let cells = [];
-
-    function unlockAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      gain.gain.value = 0.001;
-      osc.frequency.value = 440;
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.05);
-
-      audioUnlocked = true;
-      document.getElementById("unlockSoundBtn").textContent = "Ton aktiv";
-    }
-
-    function playBuzzSound() {
-      if (!audioUnlocked || !audioContext) return;
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = "square";
-      osc.frequency.setValueAtTime(880, audioContext.currentTime);
-      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.25);
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.25);
-    }
-
-    function playCorrectSound() {
-      if (!audioUnlocked || !audioContext) return;
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(700, audioContext.currentTime);
-      osc.frequency.linearRampToValueAtTime(1000, audioContext.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.35);
-    }
-
-    function playWrongSound() {
-      if (!audioUnlocked || !audioContext) return;
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(300, audioContext.currentTime);
-      osc.frequency.linearRampToValueAtTime(160, audioContext.currentTime + 0.35);
-      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.start();
-      osc.stop(audioContext.currentTime + 0.35);
-    }
-
-    function scoreCardsHtml(scores) {
-      const entries = Object.entries(scores || {});
-      if (entries.length === 0) return "";
-
-      return entries
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, points]) => `
-          <div class="overlay-score-card">
-            <div class="score-name">${name}</div>
-            <div class="score-points">${points}</div>
-          </div>
-        `)
-        .join("");
-    }
-
-    function renderScores(scores) {
-      const html = scoreCardsHtml(scores);
-      scoresEl.innerHTML = html;
-      overlayScores.innerHTML = html;
+    function getCategories() {
+      return [...document.querySelectorAll(".category")].map((el) => el.textContent.trim() || "Thema");
     }
 
     function sendCategories() {
-      const cats = [...document.querySelectorAll(".category")].map(el => el.textContent.trim() || "Thema");
-      socket.emit("updateCategories", cats);
+      socket.emit("updateCategories", getCategories());
     }
 
-    [...document.querySelectorAll(".category")].forEach(el => {
+    [...document.querySelectorAll(".category")].forEach((el) => {
       el.addEventListener("blur", sendCategories);
     });
 
-    let index = 0;
+    const cells = [];
+    let selectedIndex = null;
+
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 5; col++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         cell.textContent = values[row];
 
-        const currentIndex = index;
-        const currentValue = values[row];
+        const index = row * 5 + col;
 
         cell.addEventListener("click", () => {
           if (cell.classList.contains("used")) return;
 
+          selectedIndex = index;
+
+          const categories = getCategories();
+          const item = questionBank[index];
+
           socket.emit("openQuestion", {
-            questionText: questions[currentIndex].q,
-            answer: questions[currentIndex].a,
-            value: currentValue,
-            index: currentIndex
+            index,
+            category: categories[col],
+            value: values[row],
+            question: item.question,
+            answer: item.answer,
+            image: item.image
           });
         });
 
         board.appendChild(cell);
         cells.push(cell);
-        index++;
+      }
+    }
+
+    function renderScores(scores, players) {
+      const slotMap = { 1: null, 2: null, 3: null, 4: null, 5: null };
+      (players || []).forEach((p) => {
+        slotMap[p.slot] = p.name;
+      });
+
+      scoreGrid.innerHTML = "";
+      for (let slot = 1; slot <= 5; slot++) {
+        const playerName = slotMap[slot] || `Slot ${slot}`;
+        const points = typeof scores[playerName] !== "undefined" ? scores[playerName] : 0;
+
+        const card = document.createElement("div");
+        card.className = "score-card";
+        card.innerHTML = `
+          <div class="score-name">${playerName}</div>
+          <div class="score-points">${points}</div>
+        `;
+        scoreGrid.appendChild(card);
       }
     }
 
     socket.on("syncState", (state) => {
       if (state.categories && state.categories.length === 5) {
-        const categoryNodes = document.querySelectorAll(".category");
+        const nodes = document.querySelectorAll(".category");
         state.categories.forEach((cat, i) => {
-          if (categoryNodes[i] && document.activeElement !== categoryNodes[i]) {
-            categoryNodes[i].textContent = cat;
+          if (nodes[i] && document.activeElement !== nodes[i]) {
+            nodes[i].textContent = cat;
           }
         });
       }
@@ -433,80 +375,49 @@
         cell.classList.toggle("used", (state.usedCells || []).includes(i));
       });
 
-      renderScores(state.scores || {});
-      remainingInfo.textContent = "Offene Felder: " + (state.remainingCells ?? 25);
-      multiplierInfo.textContent = "Multiplikator: x" + (state.currentMultiplier ?? 1);
+      renderScores(state.scores || {}, state.lobbyPlayers || []);
 
-      if (state.activeQuestion) {
-        questionText.textContent = state.activeQuestion;
-        overlay.classList.add("show");
-        boardWrap.classList.add("hidden");
-      } else {
-        overlay.classList.remove("show");
-        boardWrap.classList.remove("hidden");
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-        subText.textContent = "";
-        timerText.textContent = "";
-      }
+      if (state.currentQuestion && state.questionPanelOpen) {
+        previewCategory.textContent = state.currentQuestion.category || "";
+        previewValue.textContent = state.currentQuestion.value || "";
 
-      if (state.timer && state.timer.total > 0) {
-        timerText.textContent = "Timer: " + state.timer.remaining + "s";
-      } else {
-        timerText.textContent = "";
-      }
+        if (state.questionVisible) {
+          if (state.currentQuestion.image) {
+            previewCenter.innerHTML = `<img class="preview-image" src="${state.currentQuestion.image}" alt="">`;
+          } else {
+            previewCenter.textContent = state.currentQuestion.question || "";
+          }
+        } else {
+          previewCenter.textContent = "";
+        }
 
-      if (state.firstBuzz) {
-        buzzedText.innerHTML = `
-          <span style="font-size:50px; color:#ffd54a;">🔔 ${state.firstBuzz}</span>
-          <br>
-          <span style="font-size:22px; color:white;">hat gebuzzert!</span>
-        `;
-      } else if (state.activeQuestion) {
-        buzzedText.textContent = "Noch niemand hat gebuzzert";
-      }
-
-      if (state.answerVisible && state.currentAnswer) {
-        subText.innerHTML = `
-          <span style="font-size:28px;color:#22c55e;">Richtige Antwort:</span>
-          <br>
-          <span style="font-size:38px;color:white;">${state.currentAnswer}</span>
-        `;
-      } else if (state.eliminatedPlayers && state.eliminatedPlayers.length > 0) {
-        subText.textContent = "Schon raus für diese Frage: " + state.eliminatedPlayers.join(", ");
-      } else {
-        subText.textContent = "";
-      }
-    });
-
-    socket.on("playerBuzzed", () => {
-      playBuzzSound();
-    });
-
-    socket.on("answerResult", ({ result, name, points }) => {
-      if (result === "correct") {
-        playCorrectSound();
-        if (!document.body.innerHTML.includes("Richtige Antwort:")) {
-          subText.textContent = name + " bekommt +" + points + " Punkte";
+        if (state.answerVisible) {
+          previewAnswer.style.display = "block";
+          previewAnswer.textContent = state.currentQuestion.answer || "";
+        } else {
+          previewAnswer.style.display = "none";
+          previewAnswer.textContent = "";
         }
       } else {
-        playWrongSound();
-        if (!document.body.innerHTML.includes("Richtige Antwort:")) {
-          subText.textContent = name + " bekommt -" + points + " Punkte";
-        }
+        previewCategory.textContent = "";
+        previewValue.textContent = "";
+        previewCenter.textContent = "";
+        previewAnswer.style.display = "none";
+        previewAnswer.textContent = "";
       }
     });
 
-    document.getElementById("unlockSoundBtn").addEventListener("click", unlockAudio);
-    document.getElementById("timer20Btn").addEventListener("click", () => socket.emit("timerStart", 20));
-    document.getElementById("timerStopBtn").addEventListener("click", () => socket.emit("timerStop"));
-    document.getElementById("timerResetBtn").addEventListener("click", () => socket.emit("timerReset"));
-    document.getElementById("correctBtn").addEventListener("click", () => socket.emit("markCorrect"));
-    document.getElementById("wrongBtn").addEventListener("click", () => socket.emit("markWrong"));
-    document.getElementById("showAnswerBtn").addEventListener("click", () => socket.emit("showCorrectAnswer"));
-    document.getElementById("hideAnswerBtn").addEventListener("click", () => socket.emit("hideCorrectAnswer"));
-    document.getElementById("resetBtn").addEventListener("click", () => socket.emit("resetBuzzer"));
-    document.getElementById("undoBtn").addEventListener("click", () => socket.emit("undoLastAction"));
-    document.getElementById("closeBtn").addEventListener("click", () => socket.emit("closeQuestion"));
+    document.getElementById("showQuestionBtn").onclick = () => socket.emit("showQuestion");
+    document.getElementById("showAnswerBtn").onclick = () => socket.emit("showAnswer");
+    document.getElementById("hideAnswerBtn").onclick = () => socket.emit("hideAnswer");
+    document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
+    document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
+    document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
+    document.getElementById("undoBtn").onclick = () => socket.emit("undoLastAction");
+    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
+    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
+    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
+    document.getElementById("closeQuestionBtn").onclick = () => socket.emit("closeQuestion");
   </script>
 </body>
 </html>
