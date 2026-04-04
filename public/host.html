@@ -24,13 +24,22 @@
       z-index: 10;
     }
 
-    button {
+    button, select, input {
       padding: 12px 16px;
       border: none;
       border-radius: 10px;
+      font-size: 15px;
+    }
+
+    button {
       font-weight: bold;
       cursor: pointer;
       background: #334155;
+      color: white;
+    }
+
+    select, input {
+      background: #1f2937;
       color: white;
     }
 
@@ -126,17 +135,6 @@
       align-items: center;
     }
 
-    input[type="text"] {
-      width: 420px;
-      max-width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      background: #1f2937;
-      color: white;
-      font-size: 16px;
-    }
-
     .muted {
       color: #cbd5e1;
       font-size: 14px;
@@ -201,6 +199,22 @@
       padding: 10px 20px;
       font-size: 28px;
       font-weight: 800;
+      display: none;
+    }
+
+    .manual-box {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .status-line {
+      margin-top: 12px;
+      color: #ffd54a;
+      font-size: 18px;
+      min-height: 28px;
     }
   </style>
 </head>
@@ -244,6 +258,16 @@
         <div class="preview-center" id="previewCenter"></div>
         <div class="preview-answer" id="previewAnswer" style="display:none;"></div>
       </div>
+
+      <div class="manual-box">
+        <strong>Backup Punkte:</strong>
+        <select id="playerSelect"></select>
+        <input id="manualPointsInput" type="number" min="1" step="1" value="100">
+        <button class="success" id="manualAddBtn">Punkte geben</button>
+        <button class="danger" id="manualSubtractBtn">Punkte abziehen</button>
+      </div>
+
+      <div class="status-line" id="statusLine"></div>
     </div>
   </div>
 
@@ -252,16 +276,18 @@
 
     const values = [200, 300, 400, 500, 600];
     const board = document.getElementById("board");
-    const categoriesEl = document.getElementById("categories");
     const scoreGrid = document.getElementById("scoreGrid");
+    const playerSelect = document.getElementById("playerSelect");
+    const manualPointsInput = document.getElementById("manualPointsInput");
+    const statusLine = document.getElementById("statusLine");
 
     const previewCategory = document.getElementById("previewCategory");
     const previewValue = document.getElementById("previewValue");
     const previewCenter = document.getElementById("previewCenter");
     const previewAnswer = document.getElementById("previewAnswer");
 
-    // 25 Felder, row-major: 5 Kategorien x 5 Punkte
-    // image: Dateiname im public-Ordner oder leer
+    let lobbyPlayers = [];
+
     const questionBank = [
       { question: "Frage 1", answer: "Antwort 1", image: "" },
       { question: "Frage 2", answer: "Antwort 2", image: "" },
@@ -307,7 +333,6 @@
     });
 
     const cells = [];
-    let selectedIndex = null;
 
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 5; col++) {
@@ -320,8 +345,6 @@
         cell.addEventListener("click", () => {
           if (cell.classList.contains("used")) return;
 
-          selectedIndex = index;
-
           const categories = getCategories();
           const item = questionBank[index];
 
@@ -333,6 +356,8 @@
             answer: item.answer,
             image: item.image
           });
+
+          statusLine.textContent = "Fragenfeld geöffnet";
         });
 
         board.appendChild(cell);
@@ -361,6 +386,27 @@
       }
     }
 
+    function renderPlayerSelect(players) {
+      const currentValue = playerSelect.value;
+      playerSelect.innerHTML = "";
+
+      players.forEach((player) => {
+        const option = document.createElement("option");
+        option.value = player.name;
+        option.textContent = `${player.name} (Slot ${player.slot})`;
+        playerSelect.appendChild(option);
+      });
+
+      if (currentValue && [...playerSelect.options].some((o) => o.value === currentValue)) {
+        playerSelect.value = currentValue;
+      }
+    }
+
+    socket.on("lobbyUpdate", (players) => {
+      lobbyPlayers = players;
+      renderPlayerSelect(players);
+    });
+
     socket.on("syncState", (state) => {
       if (state.categories && state.categories.length === 5) {
         const nodes = document.querySelectorAll(".category");
@@ -376,6 +422,7 @@
       });
 
       renderScores(state.scores || {}, state.lobbyPlayers || []);
+      renderPlayerSelect(state.lobbyPlayers || []);
 
       if (state.currentQuestion && state.questionPanelOpen) {
         previewCategory.textContent = state.currentQuestion.category || "";
@@ -388,6 +435,7 @@
             previewCenter.textContent = state.currentQuestion.question || "";
           }
         } else {
+          previewCenter.innerHTML = "";
           previewCenter.textContent = "";
         }
 
@@ -401,23 +449,95 @@
       } else {
         previewCategory.textContent = "";
         previewValue.textContent = "";
+        previewCenter.innerHTML = "";
         previewCenter.textContent = "";
         previewAnswer.style.display = "none";
         previewAnswer.textContent = "";
       }
     });
 
-    document.getElementById("showQuestionBtn").onclick = () => socket.emit("showQuestion");
-    document.getElementById("showAnswerBtn").onclick = () => socket.emit("showAnswer");
-    document.getElementById("hideAnswerBtn").onclick = () => socket.emit("hideAnswer");
-    document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
-    document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
-    document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
-    document.getElementById("undoBtn").onclick = () => socket.emit("undoLastAction");
-    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
-    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
-    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
-    document.getElementById("closeQuestionBtn").onclick = () => socket.emit("closeQuestion");
+    socket.on("answerResult", ({ result, name, points }) => {
+      if (result === "correct") {
+        statusLine.textContent = `${name} bekommt automatisch +${points} Punkte`;
+      } else {
+        statusLine.textContent = `${name} bekommt automatisch -${points} Punkte`;
+      }
+    });
+
+    socket.on("manualScoreChanged", ({ type, name, points }) => {
+      if (type === "add") {
+        statusLine.textContent = `${name} hat manuell +${points} Punkte bekommen`;
+      } else {
+        statusLine.textContent = `${name} hat manuell -${points} Punkte verloren`;
+      }
+    });
+
+    document.getElementById("showQuestionBtn").onclick = () => {
+      socket.emit("showQuestion");
+      statusLine.textContent = "Frage eingeblendet";
+    };
+
+    document.getElementById("showAnswerBtn").onclick = () => {
+      socket.emit("showAnswer");
+      statusLine.textContent = "Antwort eingeblendet";
+    };
+
+    document.getElementById("hideAnswerBtn").onclick = () => {
+      socket.emit("hideAnswer");
+      statusLine.textContent = "Antwort ausgeblendet";
+    };
+
+    document.getElementById("correctBtn").onclick = () => {
+      socket.emit("markCorrect");
+    };
+
+    document.getElementById("wrongBtn").onclick = () => {
+      socket.emit("markWrong");
+    };
+
+    document.getElementById("resetBuzzerBtn").onclick = () => {
+      socket.emit("resetBuzzer");
+      statusLine.textContent = "Buzzer zurückgesetzt";
+    };
+
+    document.getElementById("undoBtn").onclick = () => {
+      socket.emit("undoLastAction");
+      statusLine.textContent = "Letzte Aktion rückgängig gemacht";
+    };
+
+    document.getElementById("timer20Btn").onclick = () => {
+      socket.emit("timerStart", 20);
+      statusLine.textContent = "Timer gestartet";
+    };
+
+    document.getElementById("timerStopBtn").onclick = () => {
+      socket.emit("timerStop");
+      statusLine.textContent = "Timer gestoppt";
+    };
+
+    document.getElementById("timerResetBtn").onclick = () => {
+      socket.emit("timerReset");
+      statusLine.textContent = "Timer zurückgesetzt";
+    };
+
+    document.getElementById("closeQuestionBtn").onclick = () => {
+      socket.emit("closeQuestion");
+      statusLine.textContent = "Frage geschlossen";
+    };
+
+    document.getElementById("manualAddBtn").onclick = () => {
+      const name = playerSelect.value;
+      const points = Number(manualPointsInput.value) || 0;
+      if (!name || points <= 0) return;
+      socket.emit("manualAddPoints", { name, points });
+    };
+
+    document.getElementById("manualSubtractBtn").onclick = () => {
+      const name = playerSelect.value;
+      const points = Number(manualPointsInput.value) || 0;
+      if (!name || points <= 0) return;
+      socket.emit("manualSubtractPoints", { name, points });
+    };
   </script>
 </body>
 </html>
