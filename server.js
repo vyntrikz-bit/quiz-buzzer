@@ -108,11 +108,37 @@ function emitLobby() {
   io.emit("lobbyUpdate", state.lobbyPlayers);
 }
 
-function ensureScorePlayer(name) {
-  if (!name) return;
-  if (!(name in state.scores)) {
-    state.scores[name] = 0;
+function upsertLobbyPlayer(socketId, name) {
+  const cleanName = String(name || "").trim().slice(0, 24);
+  if (!cleanName) return null;
+
+  let player = state.lobbyPlayers.find((p) => p.socketId === socketId);
+  if (player) {
+    player.name = cleanName;
+    if (!(cleanName in state.scores)) state.scores[cleanName] = 0;
+    return player;
   }
+
+  player = state.lobbyPlayers.find((p) => p.name.toLowerCase() === cleanName.toLowerCase());
+  if (player) {
+    player.socketId = socketId;
+    player.name = cleanName;
+    if (!(cleanName in state.scores)) state.scores[cleanName] = 0;
+    return player;
+  }
+
+  const freeSlot = getFreeSlot();
+  if (!freeSlot) return null;
+
+  const newPlayer = {
+    socketId,
+    name: cleanName,
+    slot: freeSlot
+  };
+
+  state.lobbyPlayers.push(newPlayer);
+  if (!(cleanName in state.scores)) state.scores[cleanName] = 0;
+  return newPlayer;
 }
 
 io.on("connection", (socket) => {
@@ -120,43 +146,11 @@ io.on("connection", (socket) => {
   emitLobby();
 
   socket.on("joinLobby", (playerName) => {
-    const name = String(playerName || "").trim().slice(0, 24);
-    if (!name) return;
-
-    const existingBySocket = state.lobbyPlayers.find((p) => p.socketId === socket.id);
-    if (existingBySocket) {
-      existingBySocket.name = name;
-      ensureScorePlayer(name);
-      emitLobby();
-      emitState();
-      return;
-    }
-
-    const existingByName = state.lobbyPlayers.find(
-      (p) => p.name.toLowerCase() === name.toLowerCase()
-    );
-    if (existingByName) {
-      existingByName.socketId = socket.id;
-      existingByName.name = name;
-      ensureScorePlayer(name);
-      emitLobby();
-      emitState();
-      return;
-    }
-
-    const freeSlot = getFreeSlot();
-    if (!freeSlot) {
+    const player = upsertLobbyPlayer(socket.id, playerName);
+    if (!player) {
       socket.emit("lobbyFull");
       return;
     }
-
-    state.lobbyPlayers.push({
-      socketId: socket.id,
-      name,
-      slot: freeSlot
-    });
-
-    ensureScorePlayer(name);
     emitLobby();
     emitState();
   });
@@ -287,19 +281,23 @@ io.on("connection", (socket) => {
 
   socket.on("buzz", (playerName) => {
     const name = String(playerName || "").trim().slice(0, 24);
-
     if (!name) return;
     if (!state.currentQuestion) return;
     if (!state.questionVisible) return;
     if (state.buzzLocked) return;
     if (state.eliminatedPlayers.includes(name)) return;
 
-    ensureScorePlayer(name);
+    upsertLobbyPlayer(socket.id, name);
+
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
 
     state.firstBuzz = name;
     state.buzzLocked = true;
 
     io.emit("playerBuzzed", { name });
+    emitLobby();
     emitState();
   });
 
@@ -310,9 +308,12 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
-    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
+    const points = state.currentQuestion.value * getCurrentMultiplier();
 
-    ensureScorePlayer(name);
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
+
     state.scores[name] += points;
 
     io.emit("answerResult", {
@@ -331,9 +332,12 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
-    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
+    const points = state.currentQuestion.value * getCurrentMultiplier();
 
-    ensureScorePlayer(name);
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
+
     state.scores[name] -= points;
 
     if (!state.eliminatedPlayers.includes(name)) {
@@ -358,7 +362,11 @@ io.on("connection", (socket) => {
     if (!playerName || amount <= 0) return;
 
     saveLastAction();
-    ensureScorePlayer(playerName);
+
+    if (!(playerName in state.scores)) {
+      state.scores[playerName] = 0;
+    }
+
     state.scores[playerName] += amount;
 
     io.emit("manualScoreChanged", {
@@ -376,7 +384,11 @@ io.on("connection", (socket) => {
     if (!playerName || amount <= 0) return;
 
     saveLastAction();
-    ensureScorePlayer(playerName);
+
+    if (!(playerName in state.scores)) {
+      state.scores[playerName] = 0;
+    }
+
     state.scores[playerName] -= amount;
 
     io.emit("manualScoreChanged", {
