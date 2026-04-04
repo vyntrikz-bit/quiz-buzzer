@@ -6,18 +6,37 @@
   <title>Spieler</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background: #0b0f1a;
-      color: white;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
       font-family: Arial, sans-serif;
-      padding: 24px;
+      color: white;
     }
 
-    .top {
+    .stage {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .canvas {
+      position: absolute;
+      width: 1920px;
+      height: 1080px;
+      transform-origin: top left;
+      background: url("background.png") center/cover no-repeat;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 5;
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
       align-items: center;
     }
 
@@ -27,6 +46,8 @@
       border: none;
       width: 240px;
       font-size: 16px;
+      background: rgba(17,24,39,0.9);
+      color: white;
     }
 
     button {
@@ -39,241 +60,445 @@
       color: white;
     }
 
-    .question-panel {
-      margin-top: 20px;
-      background: #e8a4bc;
-      color: #111;
-      border-radius: 20px;
-      min-height: 280px;
-      position: relative;
-      padding: 20px;
-      box-sizing: border-box;
+    .status {
+      position: absolute;
+      top: 22px;
+      right: 20px;
+      background: rgba(17,24,39,0.85);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 22px;
+      color: #ffd54a;
+      z-index: 5;
+      min-width: 280px;
+      text-align: right;
+    }
+
+    /* Board */
+    .board-wrap {
+      position: absolute;
+      top: 20px;
+      left: 550px;
+      width: 1100px;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
     }
 
     .category {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .cell {
+      height: 90px;
+      background: #f2a7c2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 50px;
+      font-weight: bold;
+      border-radius: 8px;
+      color: #111;
+    }
+
+    .cell.used {
+      opacity: 0.3;
+    }
+
+    /* Frage */
+    .question-wrap {
+      position: absolute;
+      top: 20px;
+      left: 550px;
+      width: 1100px;
+      height: 500px;
+      background: #e8a4bc;
+      border-radius: 20px;
+      display: none;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .question-category {
       position: absolute;
       top: 14px;
       left: 18px;
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 30px;
+      font-weight: bold;
+      color: white;
     }
 
-    .value {
+    .question-value {
       position: absolute;
       top: 14px;
       right: 18px;
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 30px;
+      font-weight: bold;
+      color: white;
     }
 
-    .center {
-      min-height: 240px;
+    .question-center {
+      position: absolute;
+      top: 70px;
+      left: 25px;
+      right: 25px;
+      bottom: 70px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 44px 60px;
-      box-sizing: border-box;
-      font-size: 38px;
-      font-weight: 800;
-      line-height: 1.2;
+      font-size: 50px;
+      font-weight: bold;
+      color: black;
     }
 
-    .image {
+    .question-image {
       max-width: 100%;
-      max-height: 220px;
+      max-height: 100%;
       object-fit: contain;
       border-radius: 8px;
     }
 
-    .answer {
+    .answer-box {
       position: absolute;
+      bottom: 15px;
       left: 50%;
-      bottom: 18px;
       transform: translateX(-50%);
       background: white;
+      color: black;
+      padding: 10px 25px;
       border-radius: 10px;
-      padding: 10px 20px;
-      font-size: 28px;
-      font-weight: 800;
+      font-size: 30px;
       display: none;
+      max-width: 80%;
+      text-align: center;
+      font-weight: bold;
     }
 
-    .status {
-      margin-top: 18px;
-      font-size: 26px;
-      color: #ffd54a;
-      min-height: 32px;
+    /* Host-Feld links oben bleibt gleich groß wie Overlay-Ansicht */
+    .host-box {
+      position: absolute;
+      left: 20px;
+      top: 300px;
+      width: 500px;
+      height: 280px;
+      border: 4px solid white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-sizing: border-box;
+      background: rgba(0,0,0,0.15);
     }
 
-    .hint {
-      margin-top: 10px;
-      color: #cbd5e1;
+    #avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    .players {
-      margin-top: 26px;
+    /* Spieler unten */
+    .players-row {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 20px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 10px;
     }
 
-    .player-card {
-      background: #162038;
-      border-radius: 12px;
-      padding: 12px;
+    .player-column {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .player-cam {
+      height: 240px;
+      border: 4px solid white;
+      border-radius: 20px;
+      box-sizing: border-box;
+    }
+
+    .player-cam.active {
+      border-color: red;
+      box-shadow: 0 0 20px red;
+    }
+
+    .name-box {
+      background: white;
+      color: black;
       text-align: center;
+      font-weight: bold;
+      padding: 6px;
+      border-radius: 10px;
+      font-size: 22px;
     }
 
-    .player-card.active {
-      border: 4px solid #ef4444;
-      box-shadow: 0 0 20px #ef4444;
-    }
-
-    .player-name {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .player-score {
-      font-size: 26px;
-      font-weight: 800;
-      color: #ffd54a;
+    .score-box {
+      background: black;
+      border: 3px solid white;
+      text-align: center;
+      font-size: 24px;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      padding: 6px 0;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <div class="top">
-    <input id="nameInput" placeholder="Dein Name">
-    <button id="saveBtn">Name speichern</button>
+<div class="stage">
+  <div class="canvas" id="canvas">
+
+    <div class="topbar">
+      <input id="nameInput" placeholder="Dein Name">
+      <button id="saveBtn">Name speichern</button>
+    </div>
+
+    <div class="status" id="status">Warte auf die nächste Frage</div>
+
+    <!-- Board -->
+    <div class="board-wrap" id="boardWrap">
+      <div class="categories" id="categories">
+        <div class="category">Thema 1</div>
+        <div class="category">Thema 2</div>
+        <div class="category">Thema 3</div>
+        <div class="category">Thema 4</div>
+        <div class="category">Thema 5</div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <!-- Frage -->
+    <div class="question-wrap" id="questionWrap">
+      <div class="question-category" id="qCategory"></div>
+      <div class="question-value" id="qValue"></div>
+      <div class="question-center" id="qCenter"></div>
+      <div class="answer-box" id="answerBox"></div>
+    </div>
+
+    <!-- Host links -->
+    <div class="host-box">
+      <img src="avatar.png" id="avatar" alt="">
+    </div>
+
+    <!-- Spieler -->
+    <div class="players-row">
+      <div class="player-column">
+        <div class="player-cam" id="cam1"></div>
+        <div class="name-box" id="name1">Leer</div>
+        <div class="score-box" id="score1">0</div>
+      </div>
+
+      <div class="player-column">
+        <div class="player-cam" id="cam2"></div>
+        <div class="name-box" id="name2">Leer</div>
+        <div class="score-box" id="score2">0</div>
+      </div>
+
+      <div class="player-column">
+        <div class="player-cam" id="cam3"></div>
+        <div class="name-box" id="name3">Leer</div>
+        <div class="score-box" id="score3">0</div>
+      </div>
+
+      <div class="player-column">
+        <div class="player-cam" id="cam4"></div>
+        <div class="name-box" id="name4">Leer</div>
+        <div class="score-box" id="score4">0</div>
+      </div>
+
+      <div class="player-column">
+        <div class="player-cam" id="cam5"></div>
+        <div class="name-box" id="name5">Leer</div>
+        <div class="score-box" id="score5">0</div>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <div class="question-panel">
-    <div class="category" id="category"></div>
-    <div class="value" id="value"></div>
-    <div class="center" id="center">Warte auf die nächste Frage</div>
-    <div class="answer" id="answer"></div>
-  </div>
+<script>
+const socket = io();
 
-  <div class="status" id="status"></div>
-  <div class="hint">Mit Leertaste buzzern, sobald die Frage sichtbar ist.</div>
+const boardWrap = document.getElementById("boardWrap");
+const questionWrap = document.getElementById("questionWrap");
+const qCategory = document.getElementById("qCategory");
+const qValue = document.getElementById("qValue");
+const qCenter = document.getElementById("qCenter");
+const answerBox = document.getElementById("answerBox");
+const statusEl = document.getElementById("status");
 
-  <div class="players" id="players"></div>
+const values = [200,300,400,500,600];
+const board = document.getElementById("board");
 
-  <script>
-    const socket = io();
+let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+let playerName = localStorage.getItem("playerName") || "";
+document.getElementById("nameInput").value = playerName;
 
-    const nameInput = document.getElementById("nameInput");
-    const categoryEl = document.getElementById("category");
-    const valueEl = document.getElementById("value");
-    const centerEl = document.getElementById("center");
-    const answerEl = document.getElementById("answer");
-    const statusEl = document.getElementById("status");
-    const playersEl = document.getElementById("players");
+for (let r = 0; r < 5; r++) {
+  for (let c = 0; c < 5; c++) {
+    const div = document.createElement("div");
+    div.className = "cell";
+    div.innerText = values[r];
+    board.appendChild(div);
+  }
+}
 
-    let playerName = localStorage.getItem("playerName") || "";
-    nameInput.value = playerName;
-    let lobbyPlayers = [];
+document.getElementById("saveBtn").onclick = () => {
+  playerName = document.getElementById("nameInput").value.trim().slice(0, 24);
+  if (!playerName) return;
+  localStorage.setItem("playerName", playerName);
+  socket.emit("joinLobby", playerName);
+  statusEl.textContent = "Name gespeichert";
+};
 
-    document.getElementById("saveBtn").onclick = () => {
-      playerName = nameInput.value.trim().slice(0, 24);
-      if (!playerName) return;
-      localStorage.setItem("playerName", playerName);
-      socket.emit("joinLobby", playerName);
-      statusEl.textContent = "Name gespeichert";
-    };
+socket.on("lobbyUpdate", (players) => {
+  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
-    function renderPlayers(scores, currentBuzz) {
-      playersEl.innerHTML = "";
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("name" + i).innerText = "Leer";
+  }
 
-      for (let slot = 1; slot <= 5; slot++) {
-        const player = lobbyPlayers.find((p) => p.slot === slot);
-        const name = player ? player.name : "Leer";
-        const points = typeof scores[name] !== "undefined" ? scores[name] : 0;
+  players.forEach((p) => {
+    slotPlayers[p.slot] = p.name;
+    document.getElementById("name" + p.slot).innerText = p.name;
+  });
+});
 
-        const div = document.createElement("div");
-        div.className = "player-card" + (name === currentBuzz ? " active" : "");
-        div.innerHTML = `
-          <div class="player-name">${name}</div>
-          <div class="player-score">${points}</div>
-        `;
-        playersEl.appendChild(div);
+socket.on("syncState", (state) => {
+  // Kategorien
+  if (state.categories && state.categories.length === 5) {
+    const categoryNodes = document.querySelectorAll(".category");
+    state.categories.forEach((cat, i) => {
+      if (categoryNodes[i]) categoryNodes[i].textContent = cat;
+    });
+  }
+
+  // Board used
+  const allCells = document.querySelectorAll(".cell");
+  allCells.forEach((cell, i) => {
+    cell.classList.toggle("used", (state.usedCells || []).includes(i));
+  });
+
+  // aktive Cam resetten
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("cam" + i).classList.remove("active");
+  }
+
+  // aktiven Buzzer markieren
+  if (state.firstBuzz) {
+    for (let i = 1; i <= 5; i++) {
+      if (slotPlayers[i] === state.firstBuzz) {
+        document.getElementById("cam" + i).classList.add("active");
       }
     }
+  }
 
-    socket.on("lobbyUpdate", (players) => {
-      lobbyPlayers = players;
-    });
+  // Scores
+  for (let i = 1; i <= 5; i++) {
+    const name = slotPlayers[i];
+    document.getElementById("score" + i).innerText =
+      name && typeof state.scores[name] !== "undefined" ? state.scores[name] : 0;
+  }
 
-    socket.on("syncState", (state) => {
-      renderPlayers(state.scores || {}, state.firstBuzz || "");
+  // Board / Frage umschalten
+  if (state.currentQuestion) {
+    boardWrap.style.display = "none";
+    questionWrap.style.display = "block";
 
-      if (!state.currentQuestion || !state.questionPanelOpen) {
-        categoryEl.textContent = "";
-        valueEl.textContent = "";
-        centerEl.textContent = "Warte auf die nächste Frage";
-        answerEl.style.display = "none";
-        answerEl.textContent = "";
-        statusEl.textContent = "";
-        return;
-      }
+    qCategory.innerText = state.currentQuestion.category || "";
+    qValue.innerText = state.currentQuestion.value || "";
 
-      categoryEl.textContent = state.currentQuestion.category || "";
-      valueEl.textContent = state.currentQuestion.value || "";
-
-      if (state.questionVisible) {
-        if (state.currentQuestion.image) {
-          centerEl.innerHTML = `<img class="image" src="${state.currentQuestion.image}" alt="">`;
-        } else {
-          centerEl.textContent = state.currentQuestion.question || "";
-        }
+    if (state.questionVisible) {
+      if (state.currentQuestion.image) {
+        qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
       } else {
-        centerEl.textContent = "";
+        qCenter.innerText = state.currentQuestion.question || "";
       }
+    } else {
+      qCenter.innerHTML = "";
+      qCenter.innerText = "";
+    }
 
-      if (state.answerVisible) {
-        answerEl.style.display = "block";
-        answerEl.textContent = state.currentQuestion.answer || "";
-      } else {
-        answerEl.style.display = "none";
-        answerEl.textContent = "";
-      }
+    if (state.answerVisible) {
+      answerBox.style.display = "block";
+      answerBox.innerText = state.currentQuestion.answer || "";
+    } else {
+      answerBox.style.display = "none";
+    }
+  } else {
+    boardWrap.style.display = "block";
+    questionWrap.style.display = "none";
+  }
 
-      if (!playerName) {
-        statusEl.textContent = "Bitte zuerst Namen speichern";
-        return;
-      }
+  // Status
+  if (!playerName) {
+    statusEl.textContent = "Bitte Namen speichern";
+    return;
+  }
 
-      if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
-        statusEl.textContent = "Du bist für diese Frage raus";
-        return;
-      }
+  if (!state.currentQuestion) {
+    statusEl.textContent = "Warte auf die nächste Frage";
+    return;
+  }
 
-      if (state.firstBuzz) {
-        if (state.firstBuzz === playerName) {
-          statusEl.textContent = "Du bist dran!";
-        } else {
-          statusEl.textContent = state.firstBuzz + " ist dran";
-        }
-      } else if (state.questionVisible) {
-        statusEl.textContent = "Frage sichtbar – Leertaste drücken!";
-      } else {
-        statusEl.textContent = "Warte auf Freigabe der Frage";
-      }
-    });
+  if (!state.questionVisible) {
+    statusEl.textContent = "Warte auf Freigabe der Frage";
+    return;
+  }
 
-    window.addEventListener("keydown", (event) => {
-      if (event.code !== "Space") return;
-      event.preventDefault();
+  if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
+    statusEl.textContent = "Du bist für diese Frage raus";
+    return;
+  }
 
-      if (!playerName) {
-        statusEl.textContent = "Bitte zuerst Namen speichern";
-        return;
-      }
+  if (state.firstBuzz) {
+    if (state.firstBuzz === playerName) {
+      statusEl.textContent = "Du bist dran!";
+    } else {
+      statusEl.textContent = state.firstBuzz + " ist dran";
+    }
+  } else {
+    statusEl.textContent = "Frage sichtbar – Leertaste drücken!";
+  }
+});
 
-      socket.emit("buzz", playerName);
-    });
-  </script>
+window.addEventListener("keydown", (event) => {
+  if (event.code !== "Space") return;
+  event.preventDefault();
+
+  if (!playerName) {
+    statusEl.textContent = "Bitte zuerst Namen speichern";
+    return;
+  }
+
+  socket.emit("buzz", playerName);
+});
+
+function fit() {
+  const canvas = document.getElementById("canvas");
+  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
+  canvas.style.left = "50%";
+  canvas.style.top = "50%";
+}
+window.addEventListener("resize", fit);
+window.addEventListener("load", fit);
+fit();
+</script>
 </body>
 </html>
