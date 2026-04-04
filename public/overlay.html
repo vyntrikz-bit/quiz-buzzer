@@ -39,6 +39,7 @@ html, body {
   border: 4px solid white;
   border-radius: 20px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 #avatar {
@@ -65,6 +66,7 @@ html, body {
   text-align: center;
   font-size: 28px;
   font-weight: bold;
+  color: white;
 }
 
 .board {
@@ -82,6 +84,7 @@ html, body {
   font-size: 50px;
   font-weight: bold;
   border-radius: 8px;
+  color: #111;
 }
 
 .cell.used {
@@ -89,41 +92,44 @@ html, body {
 }
 
 /* QUESTION PANEL */
+/* HIER geändert: kleiner/höher, damit es NICHT in die Cams ragt */
 .question-wrap {
   position: absolute;
   top: 20px;
   left: 550px;
   width: 1100px;
-  height: 580px;
+  height: 500px;
   background: #e8a4bc;
   border-radius: 20px;
   display: none;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .question-category {
   position: absolute;
-  top: 15px;
-  left: 20px;
+  top: 14px;
+  left: 18px;
   font-size: 30px;
   font-weight: bold;
-  color: black;
+  color: white;
 }
 
 .question-value {
   position: absolute;
-  top: 15px;
-  right: 20px;
+  top: 14px;
+  right: 18px;
   font-size: 30px;
   font-weight: bold;
-  color: black;
+  color: white;
 }
 
 .question-center {
   position: absolute;
-  top: 80px;
-  left: 20px;
-  right: 20px;
-  bottom: 80px;
+  top: 70px;
+  left: 25px;
+  right: 25px;
+  bottom: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,6 +142,8 @@ html, body {
 .question-image {
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .answer-box {
@@ -149,9 +157,12 @@ html, body {
   border-radius: 10px;
   font-size: 30px;
   display: none;
+  max-width: 80%;
+  text-align: center;
+  font-weight: bold;
 }
 
-/* PLAYERS */
+/* PLAYERS - bleiben fest */
 .players-row {
   position: absolute;
   left: 10px;
@@ -172,6 +183,7 @@ html, body {
   height: 240px;
   border: 4px solid white;
   border-radius: 20px;
+  box-sizing: border-box;
 }
 
 .player-cam.active {
@@ -186,6 +198,7 @@ html, body {
   font-weight: bold;
   padding: 6px;
   border-radius: 10px;
+  font-size: 22px;
 }
 
 .score-box {
@@ -194,6 +207,10 @@ html, body {
   text-align: center;
   font-size: 24px;
   border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  padding: 6px 0;
+  box-sizing: border-box;
 }
 </style>
 </head>
@@ -204,7 +221,7 @@ html, body {
 
 <!-- BOARD -->
 <div class="board-wrap" id="boardWrap">
-  <div class="categories">
+  <div class="categories" id="categories">
     <div class="category">Thema 1</div>
     <div class="category">Thema 2</div>
     <div class="category">Thema 3</div>
@@ -224,7 +241,7 @@ html, body {
 
 <!-- HOST -->
 <div class="host-box">
-  <img src="avatar.png" id="avatar">
+  <img src="avatar.png" id="avatar" alt="Avatar">
 </div>
 
 <!-- PLAYERS -->
@@ -278,86 +295,90 @@ const board = document.getElementById("board");
 
 let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
-for(let r=0;r<5;r++){
-  for(let c=0;c<5;c++){
-    const div=document.createElement("div");
-    div.className="cell";
-    div.innerText=values[r];
+for (let r = 0; r < 5; r++) {
+  for (let c = 0; c < 5; c++) {
+    const div = document.createElement("div");
+    div.className = "cell";
+    div.innerText = values[r];
     board.appendChild(div);
   }
 }
 
-socket.on("lobbyUpdate",(players)=>{
-  players.forEach(p=>{
-    slotPlayers[p.slot]=p.name;
-    document.getElementById("name"+p.slot).innerText=p.name;
+socket.on("lobbyUpdate", (players) => {
+  // reset
+  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("name" + i).innerText = "Leer";
+  }
+
+  players.forEach((p) => {
+    slotPlayers[p.slot] = p.name;
+    document.getElementById("name" + p.slot).innerText = p.name;
   });
 });
 
-socket.on("syncState",(state)=>{
-
-  /* RESET ACTIVE */
-  for(let i=1;i<=5;i++){
-    document.getElementById("cam"+i).classList.remove("active");
+socket.on("syncState", (state) => {
+  // aktive Cam resetten
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("cam" + i).classList.remove("active");
   }
 
-  if(state.firstBuzz){
-    for(let i=1;i<=5;i++){
-      if(slotPlayers[i]===state.firstBuzz){
-        document.getElementById("cam"+i).classList.add("active");
+  // aktiven Buzzer markieren
+  if (state.firstBuzz) {
+    for (let i = 1; i <= 5; i++) {
+      if (slotPlayers[i] === state.firstBuzz) {
+        document.getElementById("cam" + i).classList.add("active");
       }
     }
   }
 
-  /* SCORES */
-  for(let i=1;i<=5;i++){
-    let name=slotPlayers[i];
-    document.getElementById("score"+i).innerText =
-      name && state.scores[name] ? state.scores[name] : 0;
+  // Scores
+  for (let i = 1; i <= 5; i++) {
+    const name = slotPlayers[i];
+    document.getElementById("score" + i).innerText =
+      name && typeof state.scores[name] !== "undefined" ? state.scores[name] : 0;
   }
 
-  /* MODE SWITCH */
-  if(state.currentQuestion){
+  // Board/Frage umschalten
+  if (state.currentQuestion) {
+    boardWrap.style.display = "none";
+    questionWrap.style.display = "block";
 
-    boardWrap.style.display="none";
-    questionWrap.style.display="block";
+    qCategory.innerText = state.currentQuestion.category || "";
+    qValue.innerText = state.currentQuestion.value || "";
 
-    qCategory.innerText=state.currentQuestion.category;
-    qValue.innerText=state.currentQuestion.value;
-
-    if(state.questionVisible){
-      if(state.currentQuestion.image){
-        qCenter.innerHTML=`<img src="${state.currentQuestion.image}" class="question-image">`;
-      }else{
-        qCenter.innerText=state.currentQuestion.question;
+    if (state.questionVisible) {
+      if (state.currentQuestion.image) {
+        qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
+      } else {
+        qCenter.innerText = state.currentQuestion.question || "";
       }
-    }else{
-      qCenter.innerHTML="";
+    } else {
+      qCenter.innerHTML = "";
     }
 
-    if(state.answerVisible){
-      answerBox.style.display="block";
-      answerBox.innerText=state.currentQuestion.answer;
-    }else{
-      answerBox.style.display="none";
+    if (state.answerVisible) {
+      answerBox.style.display = "block";
+      answerBox.innerText = state.currentQuestion.answer || "";
+    } else {
+      answerBox.style.display = "none";
     }
-
-  }else{
-    boardWrap.style.display="block";
-    questionWrap.style.display="none";
+  } else {
+    boardWrap.style.display = "block";
+    questionWrap.style.display = "none";
   }
 });
 
-/* AUTO SCALE */
-function fit(){
-  const canvas=document.getElementById("canvas");
-  const scale=Math.min(window.innerWidth/1920, window.innerHeight/1080);
-  canvas.style.transform=`scale(${scale}) translate(-50%,-50%)`;
-  canvas.style.left="50%";
-  canvas.style.top="50%";
+// AUTO SCALE für F11 / Fenstergröße
+function fit() {
+  const canvas = document.getElementById("canvas");
+  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
+  canvas.style.left = "50%";
+  canvas.style.top = "50%";
 }
-window.addEventListener("resize",fit);
-window.addEventListener("load",fit);
+window.addEventListener("resize", fit);
+window.addEventListener("load", fit);
 fit();
 </script>
 
