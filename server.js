@@ -19,6 +19,8 @@ const server = http.createServer((req, res) => {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
     ".mp3": "audio/mpeg",
     ".ogg": "audio/ogg"
   };
@@ -41,17 +43,16 @@ const io = new Server(server);
 
 const state = {
   categories: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
-  activeQuestion: null,
-  activeQuestionValue: 0,
-  activeQuestionIndex: null,
-  currentAnswer: "",
+  usedCells: [],
+  currentQuestion: null,
+  questionPanelOpen: false,
+  questionVisible: false,
   answerVisible: false,
   firstBuzz: null,
   buzzLocked: false,
   eliminatedPlayers: [],
   scores: {},
   lastAction: null,
-  usedCells: [],
   lobbyPlayers: [],
   timer: {
     total: 0,
@@ -60,29 +61,29 @@ const state = {
   }
 };
 
-function saveLastAction() {
-  state.lastAction = {
-    firstBuzz: state.firstBuzz,
-    buzzLocked: state.buzzLocked,
-    eliminatedPlayers: [...state.eliminatedPlayers],
-    scores: { ...state.scores }
-  };
-}
-
 function getRemainingCellCount() {
   return 25 - state.usedCells.length;
 }
 
-function getCurrentQuestionMultiplier() {
+function getCurrentMultiplier() {
   return getRemainingCellCount() <= 5 ? 2 : 1;
 }
 
 function getFreeSlot() {
-  const usedSlots = state.lobbyPlayers.map(p => p.slot);
-  for (let i = 1; i <= 4; i++) {
+  const usedSlots = state.lobbyPlayers.map((p) => p.slot);
+  for (let i = 1; i <= 5; i++) {
     if (!usedSlots.includes(i)) return i;
   }
   return null;
+}
+
+function saveLastAction() {
+  state.lastAction = {
+    scores: { ...state.scores },
+    firstBuzz: state.firstBuzz,
+    buzzLocked: state.buzzLocked,
+    eliminatedPlayers: [...state.eliminatedPlayers]
+  };
 }
 
 let timerInterval = null;
@@ -98,8 +99,8 @@ function stopTimer() {
 function emitState() {
   io.emit("syncState", {
     ...state,
-    currentMultiplier: getCurrentQuestionMultiplier(),
-    remainingCells: getRemainingCellCount()
+    remainingCells: getRemainingCellCount(),
+    currentMultiplier: getCurrentMultiplier()
   });
 }
 
@@ -112,12 +113,22 @@ io.on("connection", (socket) => {
   emitLobby();
 
   socket.on("joinLobby", (playerName) => {
-    const name = String(playerName || "").trim().slice(0, 20);
+    const name = String(playerName || "").trim().slice(0, 24);
     if (!name) return;
 
-    let existing = state.lobbyPlayers.find(p => p.socketId === socket.id);
-    if (existing) {
-      existing.name = name;
+    const existingBySocket = state.lobbyPlayers.find((p) => p.socketId === socket.id);
+    if (existingBySocket) {
+      existingBySocket.name = name;
+      emitLobby();
+      return;
+    }
+
+    const existingByName = state.lobbyPlayers.find(
+      (p) => p.name.toLowerCase() === name.toLowerCase()
+    );
+    if (existingByName) {
+      existingByName.socketId = socket.id;
+      existingByName.name = name;
       emitLobby();
       return;
     }
@@ -134,31 +145,51 @@ io.on("connection", (socket) => {
       slot: freeSlot
     });
 
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
+
     emitLobby();
+    emitState();
   });
 
   socket.on("updateCategories", (categories) => {
     if (!Array.isArray(categories) || categories.length !== 5) return;
-    state.categories = categories.map((x) => String(x || "").slice(0, 30));
+    state.categories = categories.map((x) => String(x || "").trim().slice(0, 40) || "Thema");
     emitState();
   });
 
-  socket.on("openQuestion", ({ questionText, answer, value, index }) => {
-    state.activeQuestion = questionText;
-    state.currentAnswer = answer || "";
+  socket.on("openQuestion", (payload) => {
+    const {
+      index,
+      category,
+      value,
+      question,
+      answer,
+      image = ""
+    } = payload || {};
+
+    if (!Number.isInteger(index)) return;
+
+    state.currentQuestion = {
+      index,
+      category: String(category || ""),
+      value: Number(value) || 0,
+      question: String(question || ""),
+      answer: String(answer || ""),
+      image: String(image || "")
+    };
+
+    state.questionPanelOpen = true;
+    state.questionVisible = false;
     state.answerVisible = false;
-    state.activeQuestionValue = Number(value) || 0;
-    state.activeQuestionIndex = Number.isInteger(index) ? index : null;
     state.firstBuzz = null;
     state.buzzLocked = false;
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    if (
-      state.activeQuestionIndex !== null &&
-      !state.usedCells.includes(state.activeQuestionIndex)
-    ) {
-      state.usedCells.push(state.activeQuestionIndex);
+    if (!state.usedCells.includes(index)) {
+      state.usedCells.push(index);
     }
 
     stopTimer();
@@ -168,11 +199,27 @@ io.on("connection", (socket) => {
     emitState();
   });
 
+  socket.on("showQuestion", () => {
+    if (!state.currentQuestion) return;
+    state.questionVisible = true;
+    emitState();
+  });
+
+  socket.on("showAnswer", () => {
+    if (!state.currentQuestion) return;
+    state.answerVisible = true;
+    emitState();
+  });
+
+  socket.on("hideAnswer", () => {
+    state.answerVisible = false;
+    emitState();
+  });
+
   socket.on("closeQuestion", () => {
-    state.activeQuestion = null;
-    state.activeQuestionValue = 0;
-    state.activeQuestionIndex = null;
-    state.currentAnswer = "";
+    state.currentQuestion = null;
+    state.questionPanelOpen = false;
+    state.questionVisible = false;
     state.answerVisible = false;
     state.firstBuzz = null;
     state.buzzLocked = false;
@@ -186,19 +233,8 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("showCorrectAnswer", () => {
-    if (!state.activeQuestion) return;
-    state.answerVisible = true;
-    emitState();
-  });
-
-  socket.on("hideCorrectAnswer", () => {
-    state.answerVisible = false;
-    emitState();
-  });
-
   socket.on("resetBuzzer", () => {
-    if (!state.activeQuestion) return;
+    if (!state.currentQuestion) return;
     state.firstBuzz = null;
     state.buzzLocked = false;
     emitState();
@@ -206,20 +242,18 @@ io.on("connection", (socket) => {
 
   socket.on("timerStart", (seconds) => {
     const secs = Number(seconds) || 0;
-    if (!state.activeQuestion) return;
+    if (!state.currentQuestion) return;
 
     if (state.timer.remaining > 0) {
-      state.timer.running = true;
+      // weiterlaufen mit Restzeit
     } else {
       if (secs <= 0) return;
       state.timer.total = secs;
       state.timer.remaining = secs;
-      state.timer.running = true;
     }
 
     stopTimer();
     state.timer.running = true;
-
     emitState();
 
     timerInterval = setInterval(() => {
@@ -245,37 +279,60 @@ io.on("connection", (socket) => {
     emitState();
   });
 
+  socket.on("buzz", (playerName) => {
+    const name = String(playerName || "").trim().slice(0, 24);
+
+    if (!name) return;
+    if (!state.currentQuestion) return;
+    if (!state.questionVisible) return;
+    if (state.buzzLocked) return;
+    if (state.eliminatedPlayers.includes(name)) return;
+
+    state.firstBuzz = name;
+    state.buzzLocked = true;
+
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
+
+    io.emit("playerBuzzed", { name });
+    emitState();
+  });
+
   socket.on("markCorrect", () => {
-    if (!state.activeQuestion) return;
+    if (!state.currentQuestion) return;
     if (!state.firstBuzz) return;
 
     saveLastAction();
 
     const name = state.firstBuzz;
-    const multiplier = getCurrentQuestionMultiplier();
-    const points = state.activeQuestionValue * multiplier;
+    const points = state.currentQuestion.value * getCurrentMultiplier();
 
-    if (!state.scores[name]) {
+    if (!(name in state.scores)) {
       state.scores[name] = 0;
     }
 
     state.scores[name] += points;
 
-    io.emit("answerResult", { result: "correct", name, points });
+    io.emit("answerResult", {
+      result: "correct",
+      name,
+      points
+    });
+
     emitState();
   });
 
   socket.on("markWrong", () => {
-    if (!state.activeQuestion) return;
+    if (!state.currentQuestion) return;
     if (!state.firstBuzz) return;
 
     saveLastAction();
 
     const name = state.firstBuzz;
-    const multiplier = getCurrentQuestionMultiplier();
-    const points = state.activeQuestionValue * multiplier;
+    const points = state.currentQuestion.value * getCurrentMultiplier();
 
-    if (!state.scores[name]) {
+    if (!(name in state.scores)) {
       state.scores[name] = 0;
     }
 
@@ -288,46 +345,34 @@ io.on("connection", (socket) => {
     state.firstBuzz = null;
     state.buzzLocked = false;
 
-    io.emit("answerResult", { result: "wrong", name, points });
+    io.emit("answerResult", {
+      result: "wrong",
+      name,
+      points
+    });
+
     emitState();
   });
 
   socket.on("undoLastAction", () => {
     if (!state.lastAction) return;
 
+    state.scores = { ...state.lastAction.scores };
     state.firstBuzz = state.lastAction.firstBuzz;
     state.buzzLocked = state.lastAction.buzzLocked;
     state.eliminatedPlayers = [...state.lastAction.eliminatedPlayers];
-    state.scores = { ...state.lastAction.scores };
-
     state.lastAction = null;
-    emitState();
-  });
 
-  socket.on("buzz", (playerName) => {
-    const name = String(playerName || "").trim().slice(0, 20);
-
-    if (!name) return;
-    if (!state.activeQuestion) return;
-    if (state.buzzLocked) return;
-    if (state.eliminatedPlayers.includes(name)) return;
-
-    state.firstBuzz = name;
-    state.buzzLocked = true;
-
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
-
-    io.emit("playerBuzzed", state.firstBuzz);
     emitState();
   });
 
   socket.on("disconnect", () => {
     const before = state.lobbyPlayers.length;
-    state.lobbyPlayers = state.lobbyPlayers.filter(p => p.socketId !== socket.id);
+    state.lobbyPlayers = state.lobbyPlayers.filter((p) => p.socketId !== socket.id);
+
     if (state.lobbyPlayers.length !== before) {
       emitLobby();
+      emitState();
     }
   });
 });
