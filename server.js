@@ -108,6 +108,13 @@ function emitLobby() {
   io.emit("lobbyUpdate", state.lobbyPlayers);
 }
 
+function ensureScorePlayer(name) {
+  if (!name) return;
+  if (!(name in state.scores)) {
+    state.scores[name] = 0;
+  }
+}
+
 io.on("connection", (socket) => {
   emitState();
   emitLobby();
@@ -119,7 +126,9 @@ io.on("connection", (socket) => {
     const existingBySocket = state.lobbyPlayers.find((p) => p.socketId === socket.id);
     if (existingBySocket) {
       existingBySocket.name = name;
+      ensureScorePlayer(name);
       emitLobby();
+      emitState();
       return;
     }
 
@@ -129,6 +138,7 @@ io.on("connection", (socket) => {
     if (existingByName) {
       existingByName.socketId = socket.id;
       existingByName.name = name;
+      ensureScorePlayer(name);
       emitLobby();
       emitState();
       return;
@@ -146,10 +156,7 @@ io.on("connection", (socket) => {
       slot: freeSlot
     });
 
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
-
+    ensureScorePlayer(name);
     emitLobby();
     emitState();
   });
@@ -287,12 +294,10 @@ io.on("connection", (socket) => {
     if (state.buzzLocked) return;
     if (state.eliminatedPlayers.includes(name)) return;
 
+    ensureScorePlayer(name);
+
     state.firstBuzz = name;
     state.buzzLocked = true;
-
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
 
     io.emit("playerBuzzed", { name });
     emitState();
@@ -305,12 +310,9 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
-    const points = state.currentQuestion.value * getCurrentMultiplier();
+    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
-
+    ensureScorePlayer(name);
     state.scores[name] += points;
 
     io.emit("answerResult", {
@@ -329,12 +331,9 @@ io.on("connection", (socket) => {
     saveLastAction();
 
     const name = state.firstBuzz;
-    const points = state.currentQuestion.value * getCurrentMultiplier();
+    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
-
+    ensureScorePlayer(name);
     state.scores[name] -= points;
 
     if (!state.eliminatedPlayers.includes(name)) {
@@ -359,11 +358,7 @@ io.on("connection", (socket) => {
     if (!playerName || amount <= 0) return;
 
     saveLastAction();
-
-    if (!(playerName in state.scores)) {
-      state.scores[playerName] = 0;
-    }
-
+    ensureScorePlayer(playerName);
     state.scores[playerName] += amount;
 
     io.emit("manualScoreChanged", {
@@ -381,11 +376,7 @@ io.on("connection", (socket) => {
     if (!playerName || amount <= 0) return;
 
     saveLastAction();
-
-    if (!(playerName in state.scores)) {
-      state.scores[playerName] = 0;
-    }
-
+    ensureScorePlayer(playerName);
     state.scores[playerName] -= amount;
 
     io.emit("manualScoreChanged", {
