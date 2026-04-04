@@ -130,6 +130,7 @@ io.on("connection", (socket) => {
       existingByName.socketId = socket.id;
       existingByName.name = name;
       emitLobby();
+      emitState();
       return;
     }
 
@@ -244,9 +245,7 @@ io.on("connection", (socket) => {
     const secs = Number(seconds) || 0;
     if (!state.currentQuestion) return;
 
-    if (state.timer.remaining > 0) {
-      // weiterlaufen mit Restzeit
-    } else {
+    if (state.timer.remaining <= 0) {
       if (secs <= 0) return;
       state.timer.total = secs;
       state.timer.remaining = secs;
@@ -349,6 +348,50 @@ io.on("connection", (socket) => {
       result: "wrong",
       name,
       points
+    });
+
+    emitState();
+  });
+
+  socket.on("manualAddPoints", ({ name, points }) => {
+    const playerName = String(name || "").trim().slice(0, 24);
+    const amount = Number(points) || 0;
+    if (!playerName || amount <= 0) return;
+
+    saveLastAction();
+
+    if (!(playerName in state.scores)) {
+      state.scores[playerName] = 0;
+    }
+
+    state.scores[playerName] += amount;
+
+    io.emit("manualScoreChanged", {
+      type: "add",
+      name: playerName,
+      points: amount
+    });
+
+    emitState();
+  });
+
+  socket.on("manualSubtractPoints", ({ name, points }) => {
+    const playerName = String(name || "").trim().slice(0, 24);
+    const amount = Number(points) || 0;
+    if (!playerName || amount <= 0) return;
+
+    saveLastAction();
+
+    if (!(playerName in state.scores)) {
+      state.scores[playerName] = 0;
+    }
+
+    state.scores[playerName] -= amount;
+
+    io.emit("manualScoreChanged", {
+      type: "subtract",
+      name: playerName,
+      points: amount
     });
 
     emitState();
