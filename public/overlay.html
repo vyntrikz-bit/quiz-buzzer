@@ -406,41 +406,42 @@
       }
 
       // Modus umschalten
-      if (state.questionPanelOpen && state.currentQuestion) {
-        boardWrap.style.display = "none";
-        questionWrap.style.display = "block";
+     if (state.currentQuestion) {
+  boardWrap.style.display = "none";
+  questionWrap.style.display = "block";
 
-        questionCategory.textContent = state.currentQuestion.category || "";
-        questionValue.textContent = state.currentQuestion.value || "";
+  questionCategory.textContent = state.currentQuestion.category || "";
+  questionValue.textContent = state.currentQuestion.value || "";
 
-        if (state.questionVisible) {
-          if (state.currentQuestion.image) {
-            questionCenter.innerHTML = `<img class="question-image" src="${state.currentQuestion.image}" alt="" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">`;
-          } else {
-            questionCenter.textContent = state.currentQuestion.question || "";
-          }
-        } else {
-          questionCenter.textContent = "";
-          questionCenter.innerHTML = "";
-        }
+  if (state.questionVisible) {
+    if (state.currentQuestion.image) {
+      questionCenter.innerHTML = `<img class="question-image" src="${state.currentQuestion.image}" alt="" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">`;
+    } else {
+      questionCenter.textContent = state.currentQuestion.question || "";
+    }
+  } else {
+    questionCenter.innerHTML = "";
+    questionCenter.textContent = "";
+  }
 
-        if (state.answerVisible) {
-          answerBox.style.display = "block";
-          answerBox.textContent = state.currentQuestion.answer || "";
-        } else {
-          answerBox.style.display = "none";
-          answerBox.textContent = "";
-        }
-      } else {
-        boardWrap.style.display = "block";
-        questionWrap.style.display = "none";
-        questionCategory.textContent = "";
-        questionValue.textContent = "";
-        questionCenter.textContent = "";
-        questionCenter.innerHTML = "";
-        answerBox.style.display = "none";
-        answerBox.textContent = "";
-      }
+  if (state.answerVisible) {
+    answerBox.style.display = "block";
+    answerBox.textContent = state.currentQuestion.answer || "";
+  } else {
+    answerBox.style.display = "none";
+    answerBox.textContent = "";
+  }
+} else {
+  boardWrap.style.display = "block";
+  questionWrap.style.display = "none";
+
+  questionCategory.textContent = "";
+  questionValue.textContent = "";
+  questionCenter.innerHTML = "";
+  questionCenter.textContent = "";
+  answerBox.style.display = "none";
+  answerBox.textContent = "";
+}
     });
   </script>
 </body>
