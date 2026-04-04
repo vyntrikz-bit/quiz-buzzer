@@ -34,47 +34,41 @@
       position: absolute;
       top: 18px;
       left: 18px;
-      z-index: 5;
       display: flex;
       gap: 8px;
-      align-items: center;
+      z-index: 20;
     }
 
     input {
       padding: 12px;
       border-radius: 10px;
       border: none;
-      width: 240px;
-      font-size: 16px;
-      background: rgba(17,24,39,0.9);
+      background: rgba(15, 23, 42, 0.9);
       color: white;
+      width: 220px;
+      font-size: 16px;
     }
 
     button {
       padding: 12px 16px;
       border-radius: 10px;
       border: none;
-      font-weight: bold;
-      cursor: pointer;
       background: #2563eb;
       color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .status {
       position: absolute;
-      top: 22px;
-      right: 20px;
-      background: rgba(17,24,39,0.85);
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-size: 22px;
+      top: 70px;
+      left: 18px;
+      z-index: 20;
+      font-size: 24px;
       color: #ffd54a;
-      z-index: 5;
-      min-width: 280px;
-      text-align: right;
+      min-height: 28px;
     }
 
-    /* Board */
     .board-wrap {
       position: absolute;
       top: 20px;
@@ -117,7 +111,6 @@
       opacity: 0.3;
     }
 
-    /* Frage */
     .question-wrap {
       position: absolute;
       top: 20px;
@@ -127,8 +120,8 @@
       background: #e8a4bc;
       border-radius: 20px;
       display: none;
-      box-sizing: border-box;
       overflow: hidden;
+      box-sizing: border-box;
     }
 
     .question-category {
@@ -186,319 +179,171 @@
       text-align: center;
       font-weight: bold;
     }
-
-    /* Host-Feld links oben bleibt gleich groß wie Overlay-Ansicht */
-    .host-box {
-      position: absolute;
-      left: 20px;
-      top: 300px;
-      width: 500px;
-      height: 280px;
-      border: 4px solid white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-sizing: border-box;
-      background: rgba(0,0,0,0.15);
-    }
-
-    #avatar {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Spieler unten */
-    .players-row {
-      position: absolute;
-      left: 10px;
-      right: 10px;
-      bottom: 20px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-    }
-
-    .player-column {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .player-cam {
-      height: 240px;
-      border: 4px solid white;
-      border-radius: 20px;
-      box-sizing: border-box;
-    }
-
-    .player-cam.active {
-      border-color: red;
-      box-shadow: 0 0 20px red;
-    }
-
-    .name-box {
-      background: white;
-      color: black;
-      text-align: center;
-      font-weight: bold;
-      padding: 6px;
-      border-radius: 10px;
-      font-size: 22px;
-    }
-
-    .score-box {
-      background: black;
-      border: 3px solid white;
-      text-align: center;
-      font-size: 24px;
-      border-radius: 10px;
-      color: white;
-      font-weight: bold;
-      padding: 6px 0;
-      box-sizing: border-box;
-    }
   </style>
 </head>
 <body>
-<div class="stage">
-  <div class="canvas" id="canvas">
+  <div class="stage">
+    <div class="canvas" id="canvas">
 
-    <div class="topbar">
-      <input id="nameInput" placeholder="Dein Name">
-      <button id="saveBtn">Name speichern</button>
+      <div class="topbar">
+        <input id="nameInput" placeholder="Dein Name">
+        <button id="saveBtn">Name speichern</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="board-wrap" id="boardWrap">
+        <div class="categories" id="categories">
+          <div class="category">Thema 1</div>
+          <div class="category">Thema 2</div>
+          <div class="category">Thema 3</div>
+          <div class="category">Thema 4</div>
+          <div class="category">Thema 5</div>
+        </div>
+        <div class="board" id="board"></div>
+      </div>
+
+      <div class="question-wrap" id="questionWrap">
+        <div class="question-category" id="qCategory"></div>
+        <div class="question-value" id="qValue"></div>
+        <div class="question-center" id="qCenter"></div>
+        <div class="answer-box" id="answerBox"></div>
+      </div>
+
     </div>
-
-    <div class="status" id="status">Warte auf die nächste Frage</div>
-
-    <!-- Board -->
-    <div class="board-wrap" id="boardWrap">
-      <div class="categories" id="categories">
-        <div class="category">Thema 1</div>
-        <div class="category">Thema 2</div>
-        <div class="category">Thema 3</div>
-        <div class="category">Thema 4</div>
-        <div class="category">Thema 5</div>
-      </div>
-      <div class="board" id="board"></div>
-    </div>
-
-    <!-- Frage -->
-    <div class="question-wrap" id="questionWrap">
-      <div class="question-category" id="qCategory"></div>
-      <div class="question-value" id="qValue"></div>
-      <div class="question-center" id="qCenter"></div>
-      <div class="answer-box" id="answerBox"></div>
-    </div>
-
-    <!-- Host links -->
-    <div class="host-box">
-      <img src="avatar.png" id="avatar" alt="">
-    </div>
-
-    <!-- Spieler -->
-    <div class="players-row">
-      <div class="player-column">
-        <div class="player-cam" id="cam1"></div>
-        <div class="name-box" id="name1">Leer</div>
-        <div class="score-box" id="score1">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="player-cam" id="cam2"></div>
-        <div class="name-box" id="name2">Leer</div>
-        <div class="score-box" id="score2">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="player-cam" id="cam3"></div>
-        <div class="name-box" id="name3">Leer</div>
-        <div class="score-box" id="score3">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="player-cam" id="cam4"></div>
-        <div class="name-box" id="name4">Leer</div>
-        <div class="score-box" id="score4">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="player-cam" id="cam5"></div>
-        <div class="name-box" id="name5">Leer</div>
-        <div class="score-box" id="score5">0</div>
-      </div>
-    </div>
-
   </div>
-</div>
 
-<script>
-const socket = io();
+  <script>
+    const socket = io();
 
-const boardWrap = document.getElementById("boardWrap");
-const questionWrap = document.getElementById("questionWrap");
-const qCategory = document.getElementById("qCategory");
-const qValue = document.getElementById("qValue");
-const qCenter = document.getElementById("qCenter");
-const answerBox = document.getElementById("answerBox");
-const statusEl = document.getElementById("status");
+    const boardWrap = document.getElementById("boardWrap");
+    const questionWrap = document.getElementById("questionWrap");
+    const qCategory = document.getElementById("qCategory");
+    const qValue = document.getElementById("qValue");
+    const qCenter = document.getElementById("qCenter");
+    const answerBox = document.getElementById("answerBox");
+    const statusEl = document.getElementById("status");
+    const board = document.getElementById("board");
+    const values = [200,300,400,500,600];
 
-const values = [200,300,400,500,600];
-const board = document.getElementById("board");
+    let playerName = localStorage.getItem("playerName") || "";
+    document.getElementById("nameInput").value = playerName;
 
-let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
-let playerName = localStorage.getItem("playerName") || "";
-document.getElementById("nameInput").value = playerName;
-
-for (let r = 0; r < 5; r++) {
-  for (let c = 0; c < 5; c++) {
-    const div = document.createElement("div");
-    div.className = "cell";
-    div.innerText = values[r];
-    board.appendChild(div);
-  }
-}
-
-document.getElementById("saveBtn").onclick = () => {
-  playerName = document.getElementById("nameInput").value.trim().slice(0, 24);
-  if (!playerName) return;
-  localStorage.setItem("playerName", playerName);
-  socket.emit("joinLobby", playerName);
-  statusEl.textContent = "Name gespeichert";
-};
-
-socket.on("lobbyUpdate", (players) => {
-  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
-
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById("name" + i).innerText = "Leer";
-  }
-
-  players.forEach((p) => {
-    slotPlayers[p.slot] = p.name;
-    document.getElementById("name" + p.slot).innerText = p.name;
-  });
-});
-
-socket.on("syncState", (state) => {
-  // Kategorien
-  if (state.categories && state.categories.length === 5) {
-    const categoryNodes = document.querySelectorAll(".category");
-    state.categories.forEach((cat, i) => {
-      if (categoryNodes[i]) categoryNodes[i].textContent = cat;
-    });
-  }
-
-  // Board used
-  const allCells = document.querySelectorAll(".cell");
-  allCells.forEach((cell, i) => {
-    cell.classList.toggle("used", (state.usedCells || []).includes(i));
-  });
-
-  // aktive Cam resetten
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById("cam" + i).classList.remove("active");
-  }
-
-  // aktiven Buzzer markieren
-  if (state.firstBuzz) {
-    for (let i = 1; i <= 5; i++) {
-      if (slotPlayers[i] === state.firstBuzz) {
-        document.getElementById("cam" + i).classList.add("active");
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.innerText = values[r];
+        board.appendChild(div);
       }
     }
-  }
 
-  // Scores
-  for (let i = 1; i <= 5; i++) {
-    const name = slotPlayers[i];
-    document.getElementById("score" + i).innerText =
-      name && typeof state.scores[name] !== "undefined" ? state.scores[name] : 0;
-  }
+    function joinIfPossible() {
+      if (playerName) {
+        socket.emit("joinLobby", playerName);
+      }
+    }
 
-  // Board / Frage umschalten
-  if (state.currentQuestion) {
-    boardWrap.style.display = "none";
-    questionWrap.style.display = "block";
+    document.getElementById("saveBtn").onclick = () => {
+      playerName = document.getElementById("nameInput").value.trim().slice(0, 24);
+      if (!playerName) return;
+      localStorage.setItem("playerName", playerName);
+      socket.emit("joinLobby", playerName);
+      statusEl.textContent = "Name gespeichert";
+    };
 
-    qCategory.innerText = state.currentQuestion.category || "";
-    qValue.innerText = state.currentQuestion.value || "";
+    socket.on("syncState", (state) => {
+      const categoryNodes = document.querySelectorAll(".category");
+      if (state.categories && state.categories.length === 5) {
+        state.categories.forEach((cat, i) => {
+          if (categoryNodes[i]) categoryNodes[i].textContent = cat;
+        });
+      }
 
-    if (state.questionVisible) {
-      if (state.currentQuestion.image) {
-        qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
+      const allCells = document.querySelectorAll(".cell");
+      allCells.forEach((cell, i) => {
+        cell.classList.toggle("used", (state.usedCells || []).includes(i));
+      });
+
+      if (state.currentQuestion) {
+        boardWrap.style.display = "none";
+        questionWrap.style.display = "block";
+
+        qCategory.innerText = state.currentQuestion.category || "";
+        qValue.innerText = state.currentQuestion.value || "";
+
+        if (state.questionVisible) {
+          if (state.currentQuestion.image) {
+            qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
+          } else {
+            qCenter.innerText = state.currentQuestion.question || "";
+          }
+        } else {
+          qCenter.innerHTML = "";
+        }
+
+        if (state.answerVisible) {
+          answerBox.style.display = "block";
+          answerBox.innerText = state.currentQuestion.answer || "";
+        } else {
+          answerBox.style.display = "none";
+        }
       } else {
-        qCenter.innerText = state.currentQuestion.question || "";
+        boardWrap.style.display = "block";
+        questionWrap.style.display = "none";
       }
-    } else {
-      qCenter.innerHTML = "";
-      qCenter.innerText = "";
+
+      if (!playerName) {
+        statusEl.textContent = "Bitte Namen speichern";
+        return;
+      }
+
+      if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
+        statusEl.textContent = "Du bist für diese Frage raus";
+        return;
+      }
+
+      if (state.firstBuzz) {
+        if (state.firstBuzz === playerName) {
+          statusEl.textContent = "Du bist dran!";
+        } else {
+          statusEl.textContent = state.firstBuzz + " ist dran";
+        }
+      } else if (state.questionVisible) {
+        statusEl.textContent = "Leertaste zum Buzzern";
+      } else if (state.currentQuestion) {
+        statusEl.textContent = "Warte auf Freigabe der Frage";
+      } else {
+        statusEl.textContent = "";
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code !== "Space") return;
+      event.preventDefault();
+
+      if (!playerName) {
+        statusEl.textContent = "Bitte zuerst Namen speichern";
+        return;
+      }
+
+      socket.emit("buzz", playerName);
+    });
+
+    function fit() {
+      const canvas = document.getElementById("canvas");
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
+      canvas.style.left = "50%";
+      canvas.style.top = "50%";
     }
 
-    if (state.answerVisible) {
-      answerBox.style.display = "block";
-      answerBox.innerText = state.currentQuestion.answer || "";
-    } else {
-      answerBox.style.display = "none";
-    }
-  } else {
-    boardWrap.style.display = "block";
-    questionWrap.style.display = "none";
-  }
-
-  // Status
-  if (!playerName) {
-    statusEl.textContent = "Bitte Namen speichern";
-    return;
-  }
-
-  if (!state.currentQuestion) {
-    statusEl.textContent = "Warte auf die nächste Frage";
-    return;
-  }
-
-  if (!state.questionVisible) {
-    statusEl.textContent = "Warte auf Freigabe der Frage";
-    return;
-  }
-
-  if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
-    statusEl.textContent = "Du bist für diese Frage raus";
-    return;
-  }
-
-  if (state.firstBuzz) {
-    if (state.firstBuzz === playerName) {
-      statusEl.textContent = "Du bist dran!";
-    } else {
-      statusEl.textContent = state.firstBuzz + " ist dran";
-    }
-  } else {
-    statusEl.textContent = "Frage sichtbar – Leertaste drücken!";
-  }
-});
-
-window.addEventListener("keydown", (event) => {
-  if (event.code !== "Space") return;
-  event.preventDefault();
-
-  if (!playerName) {
-    statusEl.textContent = "Bitte zuerst Namen speichern";
-    return;
-  }
-
-  socket.emit("buzz", playerName);
-});
-
-function fit() {
-  const canvas = document.getElementById("canvas");
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-  canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
-  canvas.style.left = "50%";
-  canvas.style.top = "50%";
-}
-window.addEventListener("resize", fit);
-window.addEventListener("load", fit);
-fit();
-</script>
+    window.addEventListener("resize", fit);
+    window.addEventListener("load", () => {
+      fit();
+      joinIfPossible();
+    });
+    fit();
+  </script>
 </body>
 </html>
