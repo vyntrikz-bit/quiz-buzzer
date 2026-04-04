@@ -40,12 +40,14 @@ html, body {
   border-radius: 20px;
   overflow: hidden;
   box-sizing: border-box;
+  background: transparent;
 }
 
 #avatar {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 /* BOARD */
@@ -92,7 +94,6 @@ html, body {
 }
 
 /* QUESTION PANEL */
-/* HIER geändert: kleiner/höher, damit es NICHT in die Cams ragt */
 .question-wrap {
   position: absolute;
   top: 20px;
@@ -162,7 +163,7 @@ html, body {
   font-weight: bold;
 }
 
-/* PLAYERS - bleiben fest */
+/* PLAYERS */
 .players-row {
   position: absolute;
   left: 10px;
@@ -241,7 +242,7 @@ html, body {
 
 <!-- HOST -->
 <div class="host-box">
-  <img src="avatar.png" id="avatar" alt="Avatar">
+  <img src="avatar.png" id="avatar" alt="" onerror="this.style.display='none'">
 </div>
 
 <!-- PLAYERS -->
@@ -305,8 +306,8 @@ for (let r = 0; r < 5; r++) {
 }
 
 socket.on("lobbyUpdate", (players) => {
-  // reset
   slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+
   for (let i = 1; i <= 5; i++) {
     document.getElementById("name" + i).innerText = "Leer";
   }
@@ -318,12 +319,22 @@ socket.on("lobbyUpdate", (players) => {
 });
 
 socket.on("syncState", (state) => {
-  // aktive Cam resetten
+  const categoryNodes = document.querySelectorAll(".category");
+  if (state.categories && state.categories.length === 5) {
+    state.categories.forEach((cat, i) => {
+      if (categoryNodes[i]) categoryNodes[i].innerText = cat;
+    });
+  }
+
+  const allCells = document.querySelectorAll(".cell");
+  allCells.forEach((cell, i) => {
+    cell.classList.toggle("used", (state.usedCells || []).includes(i));
+  });
+
   for (let i = 1; i <= 5; i++) {
     document.getElementById("cam" + i).classList.remove("active");
   }
 
-  // aktiven Buzzer markieren
   if (state.firstBuzz) {
     for (let i = 1; i <= 5; i++) {
       if (slotPlayers[i] === state.firstBuzz) {
@@ -332,14 +343,15 @@ socket.on("syncState", (state) => {
     }
   }
 
-  // Scores
   for (let i = 1; i <= 5; i++) {
     const name = slotPlayers[i];
-    document.getElementById("score" + i).innerText =
-      name && typeof state.scores[name] !== "undefined" ? state.scores[name] : 0;
+    const scoreValue =
+      name && typeof state.scores[name] !== "undefined"
+        ? state.scores[name]
+        : 0;
+    document.getElementById("score" + i).innerText = scoreValue;
   }
 
-  // Board/Frage umschalten
   if (state.currentQuestion) {
     boardWrap.style.display = "none";
     questionWrap.style.display = "block";
@@ -369,7 +381,6 @@ socket.on("syncState", (state) => {
   }
 });
 
-// AUTO SCALE für F11 / Fenstergröße
 function fit() {
   const canvas = document.getElementById("canvas");
   const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
