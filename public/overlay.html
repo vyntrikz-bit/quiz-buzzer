@@ -1,449 +1,365 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>OBS Overlay</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body {
-      margin: 0;
-      width: 1920px;
-      height: 1080px;
-      background: url("background.png") center center / cover no-repeat;
-      color: white;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-    }
+<meta charset="UTF-8">
+<title>OBS Overlay</title>
+<script src="/socket.io/socket.io.js"></script>
 
-    .canvas {
-      position: relative;
-      width: 1920px;
-      height: 1080px;
-    }
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: Arial, sans-serif;
+}
 
-    .panel {
-      background: rgba(18, 18, 22, 0.72);
-      border: 5px solid rgba(255,255,255,0.92);
-      border-radius: 24px;
-      box-sizing: border-box;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.28);
-    }
+.stage {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
 
-    /* Board-Modus */
-    .board-wrap {
-      position: absolute;
-      top: 18px;
-      left: 565px;
-      width: 1085px;
-    }
+.canvas {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  background: url("background.png") center/cover no-repeat;
+}
 
-    .categories {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 8px;
-    }
+/* HOST */
+.host-box {
+  position: absolute;
+  left: 20px;
+  top: 300px;
+  width: 500px;
+  height: 280px;
+  border: 4px solid white;
+  border-radius: 20px;
+  overflow: hidden;
+}
 
-    .category {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 800;
-      color: white;
-      padding: 6px 4px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.45);
-    }
+#avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
+/* BOARD */
+.board-wrap {
+  position: absolute;
+  top: 20px;
+  left: 550px;
+  width: 1100px;
+}
 
-    .cell {
-      height: 94px;
-      background: #f2a7c2;
-      color: #171717;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 52px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      box-sizing: border-box;
-    }
+.categories {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
 
-    .cell.used {
-      opacity: 0.25;
-    }
+.category {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+}
 
-    /* Fragen-/Antwort-Modus */
-    .question-wrap {
-      position: absolute;
-      top: 18px;
-      left: 565px;
-      width: 1085px;
-      height: 588px;
-      background: #e8a4bc;
-      border-radius: 16px;
-      display: none;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
 
-    .question-category {
-      position: absolute;
-      top: 12px;
-      left: 18px;
-      color: #111;
-      font-size: 28px;
-      font-weight: 800;
-    }
+.cell {
+  height: 90px;
+  background: #f2a7c2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 50px;
+  font-weight: bold;
+  border-radius: 8px;
+}
 
-    .question-value {
-      position: absolute;
-      top: 12px;
-      right: 18px;
-      color: #111;
-      font-size: 28px;
-      font-weight: 800;
-    }
+.cell.used {
+  opacity: 0.3;
+}
 
-    .question-center {
-      position: absolute;
-      top: 58px;
-      left: 34px;
-      right: 34px;
-      bottom: 88px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #111;
-      font-size: 52px;
-      font-weight: 800;
-      line-height: 1.15;
-      box-sizing: border-box;
-      padding: 20px;
-    }
+/* QUESTION PANEL */
+.question-wrap {
+  position: absolute;
+  top: 20px;
+  left: 550px;
+  width: 1100px;
+  height: 580px;
+  background: #e8a4bc;
+  border-radius: 20px;
+  display: none;
+}
 
-    .question-image {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-    }
+.question-category {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  font-size: 30px;
+  font-weight: bold;
+  color: black;
+}
 
-    .answer-box {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: white;
-      color: #111;
-      border-radius: 10px;
-      padding: 10px 20px;
-      font-size: 28px;
-      font-weight: 800;
-      display: none;
-      max-width: 80%;
-      text-align: center;
-    }
+.question-value {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 30px;
+  font-weight: bold;
+  color: black;
+}
 
-    /* Host */
-    .host-box {
-      position: absolute;
-      left: 10px;
-      top: 315px;
-      width: 530px;
-      height: 290px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(18, 18, 22, 0.35);
-    }
+.question-center {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  right: 20px;
+  bottom: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 50px;
+  font-weight: bold;
+  color: black;
+}
 
-    #avatar {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+.question-image {
+  max-width: 100%;
+  max-height: 100%;
+}
 
-    /* 5 Spieler */
-   .players-row {
+.answer-box {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: black;
+  padding: 10px 25px;
+  border-radius: 10px;
+  font-size: 30px;
+  display: none;
+}
+
+/* PLAYERS */
+.players-row {
   position: absolute;
   left: 10px;
   right: 10px;
-  bottom: 95px;
+  bottom: 20px;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  gap: 10px;
 }
 
-    .player-column {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+.player-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-   .player-cam {
-  height: 250px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.45);
-      background: rgba(18, 18, 22, 0.35);
-    }
+.player-cam {
+  height: 240px;
+  border: 4px solid white;
+  border-radius: 20px;
+}
 
-    .player-cam.active {
-      border-color: #ef4444 !important;
-      box-shadow: 0 0 20px #ef4444;
-    }
+.player-cam.active {
+  border-color: red;
+  box-shadow: 0 0 20px red;
+}
 
-    .name-box {
-      height: 58px;
-      background: rgba(255,255,255,0.92);
-      color: #151515;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: 700;
-      text-align: center;
-      padding: 0 10px;
-      box-sizing: border-box;
-    }
+.name-box {
+  background: white;
+  color: black;
+  text-align: center;
+  font-weight: bold;
+  padding: 6px;
+  border-radius: 10px;
+}
 
-    .score-box {
-  height: 64px;
-      background: rgba(18, 18, 22, 0.82);
-      border: 4px solid rgba(255,255,255,0.92);
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      font-weight: 800;
-      color: white;
-    }
-  </style>
+.score-box {
+  background: black;
+  border: 3px solid white;
+  text-align: center;
+  font-size: 24px;
+  border-radius: 10px;
+}
+</style>
 </head>
+
 <body>
-  <div class="stage" id="stage">
-    <div class="canvas" id="canvas">
+<div class="stage">
+<div class="canvas" id="canvas">
 
-    <!-- Board -->
-    <div class="board-wrap" id="boardWrap">
-      <div class="categories" id="categories">
-        <div class="category">Thema 1</div>
-        <div class="category">Thema 2</div>
-        <div class="category">Thema 3</div>
-        <div class="category">Thema 4</div>
-        <div class="category">Thema 5</div>
-      </div>
-      <div class="board" id="board"></div>
-    </div>
+<!-- BOARD -->
+<div class="board-wrap" id="boardWrap">
+  <div class="categories">
+    <div class="category">Thema 1</div>
+    <div class="category">Thema 2</div>
+    <div class="category">Thema 3</div>
+    <div class="category">Thema 4</div>
+    <div class="category">Thema 5</div>
+  </div>
+  <div class="board" id="board"></div>
+</div>
 
-    <!-- Frage/Antwort -->
-    <div class="question-wrap" id="questionWrap">
-      <div class="question-category" id="questionCategory"></div>
-      <div class="question-value" id="questionValue"></div>
-      <div class="question-center" id="questionCenter"></div>
-      <div class="answer-box" id="answerBox"></div>
-    </div>
+<!-- QUESTION -->
+<div class="question-wrap" id="questionWrap">
+  <div class="question-category" id="qCategory"></div>
+  <div class="question-value" id="qValue"></div>
+  <div class="question-center" id="qCenter"></div>
+  <div class="answer-box" id="answerBox"></div>
+</div>
 
-    <!-- Host -->
-    <div class="panel host-box">
-      <img src="avatar.png" id="avatar" alt="Avatar">
-    </div>
+<!-- HOST -->
+<div class="host-box">
+  <img src="avatar.png" id="avatar">
+</div>
 
-    <!-- Spieler -->
-    <div class="players-row">
-      <div class="player-column">
-        <div class="panel player-cam" id="cam1">Slot 1</div>
-        <div class="name-box" id="name1">Leer</div>
-        <div class="score-box" id="score1">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="panel player-cam" id="cam2">Slot 2</div>
-        <div class="name-box" id="name2">Leer</div>
-        <div class="score-box" id="score2">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="panel player-cam" id="cam3">Slot 3</div>
-        <div class="name-box" id="name3">Leer</div>
-        <div class="score-box" id="score3">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="panel player-cam" id="cam4">Slot 4</div>
-        <div class="name-box" id="name4">Leer</div>
-        <div class="score-box" id="score4">0</div>
-      </div>
-
-      <div class="player-column">
-        <div class="panel player-cam" id="cam5">Slot 5</div>
-        <div class="name-box" id="name5">Leer</div>
-        <div class="score-box" id="score5">0</div>
-      </div>
-    </div>
-
+<!-- PLAYERS -->
+<div class="players-row">
+  <div class="player-column">
+    <div class="player-cam" id="cam1"></div>
+    <div class="name-box" id="name1">Leer</div>
+    <div class="score-box" id="score1">0</div>
   </div>
 
-  <script>
-    const socket = io();
+  <div class="player-column">
+    <div class="player-cam" id="cam2"></div>
+    <div class="name-box" id="name2">Leer</div>
+    <div class="score-box" id="score2">0</div>
+  </div>
 
-    const boardWrap = document.getElementById("boardWrap");
-    const questionWrap = document.getElementById("questionWrap");
-    const questionCategory = document.getElementById("questionCategory");
-    const questionValue = document.getElementById("questionValue");
-    const questionCenter = document.getElementById("questionCenter");
-    const answerBox = document.getElementById("answerBox");
-    const boardEl = document.getElementById("board");
+  <div class="player-column">
+    <div class="player-cam" id="cam3"></div>
+    <div class="name-box" id="name3">Leer</div>
+    <div class="score-box" id="score3">0</div>
+  </div>
 
-    const values = [200, 300, 400, 500, 600];
+  <div class="player-column">
+    <div class="player-cam" id="cam4"></div>
+    <div class="name-box" id="name4">Leer</div>
+    <div class="score-box" id="score4">0</div>
+  </div>
 
-    const nameEls = {
-      1: document.getElementById("name1"),
-      2: document.getElementById("name2"),
-      3: document.getElementById("name3"),
-      4: document.getElementById("name4"),
-      5: document.getElementById("name5")
-    };
+  <div class="player-column">
+    <div class="player-cam" id="cam5"></div>
+    <div class="name-box" id="name5">Leer</div>
+    <div class="score-box" id="score5">0</div>
+  </div>
+</div>
 
-    const scoreEls = {
-      1: document.getElementById("score1"),
-      2: document.getElementById("score2"),
-      3: document.getElementById("score3"),
-      4: document.getElementById("score4"),
-      5: document.getElementById("score5")
-    };
+</div>
+</div>
 
-    const camEls = {
-      1: document.getElementById("cam1"),
-      2: document.getElementById("cam2"),
-      3: document.getElementById("cam3"),
-      4: document.getElementById("cam4"),
-      5: document.getElementById("cam5")
-    };
+<script>
+const socket = io();
+const boardWrap = document.getElementById("boardWrap");
+const questionWrap = document.getElementById("questionWrap");
 
-    let slotPlayers = {
-      1: null,
-      2: null,
-      3: null,
-      4: null,
-      5: null
-    };
+const qCategory = document.getElementById("qCategory");
+const qValue = document.getElementById("qValue");
+const qCenter = document.getElementById("qCenter");
+const answerBox = document.getElementById("answerBox");
 
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = values[row];
-        boardEl.appendChild(cell);
-      }
-    }
+const values = [200,300,400,500,600];
+const board = document.getElementById("board");
 
-    function resetLobbyNames() {
-      for (let i = 1; i <= 5; i++) {
-        nameEls[i].textContent = "Leer";
-      }
-    }
+let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
-    socket.on("lobbyUpdate", (players) => {
-      slotPlayers = { 1: null, 2: null, 3: null, 4: null, 5: null };
-      resetLobbyNames();
-
-      players.forEach((player) => {
-        if (nameEls[player.slot]) {
-          slotPlayers[player.slot] = player.name;
-          nameEls[player.slot].textContent = player.name;
-        }
-      });
-    });
-
-    socket.on("syncState", (state) => {
-      // Kategorien
-      if (state.categories && state.categories.length === 5) {
-        const categoryNodes = document.querySelectorAll(".category");
-        state.categories.forEach((cat, i) => {
-          if (categoryNodes[i]) categoryNodes[i].textContent = cat;
-        });
-      }
-
-      // Board-Zellen
-      const allCells = document.querySelectorAll(".cell");
-      allCells.forEach((cell, i) => {
-        cell.classList.toggle("used", (state.usedCells || []).includes(i));
-      });
-
-      // Aktiver Buzzer rot
-      for (let i = 1; i <= 5; i++) {
-        camEls[i].classList.remove("active");
-      }
-      if (state.firstBuzz) {
-        for (let slot = 1; slot <= 5; slot++) {
-          if (slotPlayers[slot] === state.firstBuzz) {
-            camEls[slot].classList.add("active");
-          }
-        }
-      }
-
-      // Scores in Slot-Reihenfolge
-      const scores = state.scores || {};
-      for (let slot = 1; slot <= 5; slot++) {
-        const playerName = slotPlayers[slot];
-        if (playerName && typeof scores[playerName] !== "undefined") {
-          scoreEls[slot].textContent = scores[playerName];
-        } else {
-          scoreEls[slot].textContent = "0";
-        }
-      }
-
-      // Modus umschalten
-     if (state.currentQuestion) {
-  boardWrap.style.display = "none";
-  questionWrap.style.display = "block";
-
-  questionCategory.textContent = state.currentQuestion.category || "";
-  questionValue.textContent = state.currentQuestion.value || "";
-
-  if (state.questionVisible) {
-    if (state.currentQuestion.image) {
-      questionCenter.innerHTML = `<img class="question-image" src="${state.currentQuestion.image}" alt="" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">`;
-    } else {
-      questionCenter.textContent = state.currentQuestion.question || "";
-    }
-  } else {
-    questionCenter.innerHTML = "";
-    questionCenter.textContent = "";
+for(let r=0;r<5;r++){
+  for(let c=0;c<5;c++){
+    const div=document.createElement("div");
+    div.className="cell";
+    div.innerText=values[r];
+    board.appendChild(div);
   }
-
-  if (state.answerVisible) {
-    answerBox.style.display = "block";
-    answerBox.textContent = state.currentQuestion.answer || "";
-  } else {
-    answerBox.style.display = "none";
-    answerBox.textContent = "";
-  }
-} else {
-  boardWrap.style.display = "block";
-  questionWrap.style.display = "none";
-
-  questionCategory.textContent = "";
-  questionValue.textContent = "";
-  questionCenter.innerHTML = "";
-  questionCenter.textContent = "";
-  answerBox.style.display = "none";
-  answerBox.textContent = "";
 }
-    });
-  </script>
+
+socket.on("lobbyUpdate",(players)=>{
+  players.forEach(p=>{
+    slotPlayers[p.slot]=p.name;
+    document.getElementById("name"+p.slot).innerText=p.name;
+  });
+});
+
+socket.on("syncState",(state)=>{
+
+  /* RESET ACTIVE */
+  for(let i=1;i<=5;i++){
+    document.getElementById("cam"+i).classList.remove("active");
+  }
+
+  if(state.firstBuzz){
+    for(let i=1;i<=5;i++){
+      if(slotPlayers[i]===state.firstBuzz){
+        document.getElementById("cam"+i).classList.add("active");
+      }
+    }
+  }
+
+  /* SCORES */
+  for(let i=1;i<=5;i++){
+    let name=slotPlayers[i];
+    document.getElementById("score"+i).innerText =
+      name && state.scores[name] ? state.scores[name] : 0;
+  }
+
+  /* MODE SWITCH */
+  if(state.currentQuestion){
+
+    boardWrap.style.display="none";
+    questionWrap.style.display="block";
+
+    qCategory.innerText=state.currentQuestion.category;
+    qValue.innerText=state.currentQuestion.value;
+
+    if(state.questionVisible){
+      if(state.currentQuestion.image){
+        qCenter.innerHTML=`<img src="${state.currentQuestion.image}" class="question-image">`;
+      }else{
+        qCenter.innerText=state.currentQuestion.question;
+      }
+    }else{
+      qCenter.innerHTML="";
+    }
+
+    if(state.answerVisible){
+      answerBox.style.display="block";
+      answerBox.innerText=state.currentQuestion.answer;
+    }else{
+      answerBox.style.display="none";
+    }
+
+  }else{
+    boardWrap.style.display="block";
+    questionWrap.style.display="none";
+  }
+});
+
+/* AUTO SCALE */
+function fit(){
+  const canvas=document.getElementById("canvas");
+  const scale=Math.min(window.innerWidth/1920, window.innerHeight/1080);
+  canvas.style.transform=`scale(${scale}) translate(-50%,-50%)`;
+  canvas.style.left="50%";
+  canvas.style.top="50%";
+}
+window.addEventListener("resize",fit);
+window.addEventListener("load",fit);
+fit();
+</script>
+
 </body>
 </html>
