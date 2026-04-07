@@ -36,7 +36,6 @@ html, body {
   width: 500px;
   height: 280px;
   border: none;
-  border-radius: 0;
   overflow: hidden;
   box-sizing: border-box;
   background: transparent;
@@ -269,25 +268,21 @@ html, body {
       <div class="name-box" id="name1">Leer</div>
       <div class="score-box" id="score1">0</div>
     </div>
-
     <div class="player-column">
       <div class="player-cam" id="cam2"></div>
       <div class="name-box" id="name2">Leer</div>
       <div class="score-box" id="score2">0</div>
     </div>
-
     <div class="player-column">
       <div class="player-cam" id="cam3"></div>
       <div class="name-box" id="name3">Leer</div>
       <div class="score-box" id="score3">0</div>
     </div>
-
     <div class="player-column">
       <div class="player-cam" id="cam4"></div>
       <div class="name-box" id="name4">Leer</div>
       <div class="score-box" id="score4">0</div>
     </div>
-
     <div class="player-column">
       <div class="player-cam" id="cam5"></div>
       <div class="name-box" id="name5">Leer</div>
@@ -297,6 +292,10 @@ html, body {
 
 </div>
 </div>
+
+<audio id="buzzerSound" src="/buzzer.mp3" preload="auto"></audio>
+<audio id="correctSound" src="/correct.mp3" preload="auto"></audio>
+<audio id="wrongSound" src="/wrong.mp3" preload="auto"></audio>
 
 <script>
 const socket = io();
@@ -310,10 +309,20 @@ const qValue = document.getElementById("qValue");
 const qCenter = document.getElementById("qCenter");
 const answerBox = document.getElementById("answerBox");
 
+const buzzerSound = document.getElementById("buzzerSound");
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
+
 const values = [200, 300, 400, 500, 600];
 const board = document.getElementById("board");
-
 let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+
+function playSound(el) {
+  if (!el) return;
+  el.pause();
+  el.currentTime = 0;
+  el.play().catch(() => {});
+}
 
 for (let r = 0; r < 5; r++) {
   for (let c = 0; c < 5; c++) {
@@ -404,6 +413,18 @@ socket.on("syncState", (state) => {
   } else {
     boardWrap.style.display = "block";
     questionWrap.style.display = "none";
+  }
+});
+
+socket.on("playerBuzzed", () => {
+  playSound(buzzerSound);
+});
+
+socket.on("answerResult", ({ result }) => {
+  if (result === "correct") {
+    playSound(correctSound);
+  } else if (result === "wrong") {
+    playSound(wrongSound);
   }
 });
 
