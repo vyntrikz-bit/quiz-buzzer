@@ -285,11 +285,11 @@
     </div>
 
     <div class="categories" id="categories">
-      <div class="category" contenteditable="true">Thema 1</div>
-      <div class="category" contenteditable="true">Thema 2</div>
-      <div class="category" contenteditable="true">Thema 3</div>
-      <div class="category" contenteditable="true">Thema 4</div>
-      <div class="category" contenteditable="true">Thema 5</div>
+      <div class="category" contenteditable="true">Drachen</div>
+      <div class="category" contenteditable="true">LCK</div>
+      <div class="category" contenteditable="true">Lore</div>
+      <div class="category" contenteditable="true">Riot Pls</div>
+      <div class="category" contenteditable="true">Ordnung muss sein</div>
     </div>
 
     <div class="board" id="board"></div>
@@ -369,7 +369,7 @@
 
     const questionBank = {
       1: [
-        { question: "Wie heißt die Ressource, die Aurelion Sol sammelt ?", answer: "Antwort 1", "Stardust" },
+        { question: "Frage 1", answer: "Antwort 1", image: "" },
         { question: "Frage 2", answer: "Antwort 2", image: "" },
         { question: "Frage 3", answer: "Antwort 3", image: "" },
         { question: "Frage 4", answer: "Antwort 4", image: "" },
@@ -460,45 +460,6 @@
       el.addEventListener("keyup", saveCurrentBoardCategories);
     });
 
-    const cells = [];
-
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = values[row];
-
-        const index = row * 5 + col;
-
-        cell.addEventListener("click", () => {
-          if ((boardUsedCells[activeBoard] || []).includes(index)) return;
-
-          const item = questionBank[activeBoard][index];
-          const cats = boardCategories[activeBoard];
-
-          selectedQuestion = {
-            board: activeBoard,
-            index,
-            category: cats[col],
-            value: values[row],
-            question: item.question,
-            answer: item.answer,
-            image: item.image
-          };
-
-          renderPrivatePreview(selectedQuestion);
-          renderPublicPreview(null, null);
-
-          socket.emit("openQuestion", selectedQuestion);
-
-          statusLine.textContent = `Private Vorschau geladen auf Board ${activeBoard}`;
-        });
-
-        board.appendChild(cell);
-        cells.push(cell);
-      }
-    }
-
     function renderScores(scores, players) {
       const slotMap = { 1: null, 2: null, 3: null, 4: null, 5: null };
       (players || []).forEach((p) => {
@@ -534,28 +495,6 @@
       if (currentValue && [...playerSelect.options].some((o) => o.value === currentValue)) {
         playerSelect.value = currentValue;
       }
-    }
-
-    function paintBoard() {
-      cells.forEach((cell, i) => {
-        cell.classList.toggle("used", (boardUsedCells[activeBoard] || []).includes(i));
-      });
-    }
-
-    function updateBoardButtons() {
-      document.getElementById("board1Btn").classList.toggle("active-board", activeBoard === 1);
-      document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
-    }
-
-    function switchBoard(boardNumber) {
-      saveCurrentBoardCategories();
-      activeBoard = boardNumber;
-      renderCategoriesForBoard();
-      paintBoard();
-      updateBoardButtons();
-
-      socket.emit("setCurrentBoard", boardNumber);
-      statusLine.textContent = `Board ${boardNumber} ausgewählt`;
     }
 
     function renderPrivatePreview(question) {
@@ -616,6 +555,66 @@
       }
     }
 
+    function updateBoardButtons() {
+      document.getElementById("board1Btn").classList.toggle("active-board", activeBoard === 1);
+      document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
+    }
+
+    function buildBoard() {
+      board.innerHTML = "";
+
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.textContent = values[row];
+
+          const index = row * 5 + col;
+
+          if ((boardUsedCells[activeBoard] || []).includes(index)) {
+            cell.classList.add("used");
+          }
+
+          cell.addEventListener("click", () => {
+            if ((boardUsedCells[activeBoard] || []).includes(index)) return;
+
+            const item = questionBank[activeBoard][index];
+            const cats = boardCategories[activeBoard];
+
+            selectedQuestion = {
+              board: activeBoard,
+              index,
+              category: cats[col],
+              value: values[row],
+              question: item.question,
+              answer: item.answer,
+              image: item.image
+            };
+
+            renderPrivatePreview(selectedQuestion);
+            renderPublicPreview(null, null);
+
+            socket.emit("openQuestion", selectedQuestion);
+
+            statusLine.textContent = `Private Vorschau geladen auf Board ${activeBoard}`;
+          });
+
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function switchBoard(boardNumber) {
+      saveCurrentBoardCategories();
+      activeBoard = boardNumber;
+      renderCategoriesForBoard();
+      updateBoardButtons();
+      buildBoard();
+
+      socket.emit("setCurrentBoard", boardNumber);
+      statusLine.textContent = `Board ${boardNumber} ausgewählt`;
+    }
+
     socket.on("lobbyUpdate", (players) => {
       lobbyPlayers = players;
       renderPlayerSelect(players);
@@ -634,7 +633,7 @@
 
       renderCategoriesForBoard();
       updateBoardButtons();
-      paintBoard();
+      buildBoard();
 
       renderScores(state.scores || {}, state.lobbyPlayers || []);
       renderPlayerSelect(state.lobbyPlayers || []);
@@ -739,6 +738,10 @@
       if (!name || points <= 0) return;
       socket.emit("manualSubtractPoints", { name, points });
     };
+
+    renderCategoriesForBoard();
+    updateBoardButtons();
+    buildBoard();
   </script>
 </body>
 </html>
