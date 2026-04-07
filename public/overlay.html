@@ -36,10 +36,8 @@ html, body {
   top: 255px;
   width: 500px;
   height: 280px;
-
-  border: none;          /* ❌ Rahmen weg */
-  border-radius: 0;      /* optional: keine Rundung */
-
+  border: none;
+  border-radius: 0;
   overflow: hidden;
   box-sizing: border-box;
   background: transparent;
@@ -189,23 +187,7 @@ html, body {
   box-sizing: border-box;
 }
 
-.name-box.active {
-  background: #ff3b3b;
-  color: white;
-  animation: buzzGlow 0.8s infinite alternate;
-}
-
-@keyframes buzzGlow {
-  from {
-    transform: scale(1.05);
-    box-shadow: 0 0 10px red;
-  }
-  to {
-    transform: scale(1.12);
-    box-shadow: 0 0 25px red;
-  }
-}
-
+/* NAME */
 .name-box {
   background: white;
   color: black;
@@ -214,17 +196,37 @@ html, body {
   padding: 6px;
   border-radius: 10px;
   font-size: 22px;
+  transition: all 0.2s ease;
 }
 
+/* BUZZ HIGHLIGHT AUF NAME */
+.name-box.active {
+  background: #ff3b3b;
+  color: white;
+  animation: buzzGlow 0.8s infinite alternate;
+}
+
+@keyframes buzzGlow {
+  from {
+    transform: scale(1.04);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.65);
+  }
+  to {
+    transform: scale(1.10);
+    box-shadow: 0 0 24px rgba(255, 0, 0, 0.95);
+  }
+}
+
+/* SCORE */
 .score-box {
   background: black;
   border: 3px solid white;
   text-align: center;
-  font-size: 24px;
+  font-size: 22px;
   border-radius: 10px;
   color: white;
   font-weight: bold;
-  padding: 6px 0;
+  padding: 4px 0;
   box-sizing: border-box;
 }
 </style>
@@ -234,6 +236,7 @@ html, body {
 <div class="stage">
 <div class="canvas" id="canvas">
 
+  <!-- BOARD -->
   <div class="board-wrap" id="boardWrap">
     <div class="categories" id="categories">
       <div class="category">Thema 1</div>
@@ -245,6 +248,7 @@ html, body {
     <div class="board" id="board"></div>
   </div>
 
+  <!-- QUESTION -->
   <div class="question-wrap" id="questionWrap">
     <div class="question-category" id="qCategory"></div>
     <div class="question-value" id="qValue"></div>
@@ -252,10 +256,12 @@ html, body {
     <div class="answer-box" id="answerBox"></div>
   </div>
 
+  <!-- HOST -->
   <div class="host-box">
     <img src="avatar.png" id="avatar" alt="" onerror="this.style.display='none'">
   </div>
 
+  <!-- PLAYERS -->
   <div class="players-row">
     <div class="player-column">
       <div class="player-cam" id="cam1"></div>
@@ -293,6 +299,7 @@ html, body {
 
 <script>
 const socket = io();
+
 const boardWrap = document.getElementById("boardWrap");
 const questionWrap = document.getElementById("questionWrap");
 
@@ -304,8 +311,9 @@ const answerBox = document.getElementById("answerBox");
 const values = [200, 300, 400, 500, 600];
 const board = document.getElementById("board");
 
-let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+let slotPlayers = { 1:null, 2:null, 3:null, 4:null, 5:null };
 
+// Board einmal aufbauen
 for (let r = 0; r < 5; r++) {
   for (let c = 0; c < 5; c++) {
     const div = document.createElement("div");
@@ -316,7 +324,7 @@ for (let r = 0; r < 5; r++) {
 }
 
 socket.on("lobbyUpdate", (players) => {
-  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+  slotPlayers = { 1:null, 2:null, 3:null, 4:null, 5:null };
 
   for (let i = 1; i <= 5; i++) {
     document.getElementById("name" + i).innerText = "Leer";
@@ -329,6 +337,7 @@ socket.on("lobbyUpdate", (players) => {
 });
 
 socket.on("syncState", (state) => {
+  // Kategorien
   const categoryNodes = document.querySelectorAll(".category");
   if (state.categories && state.categories.length === 5) {
     state.categories.forEach((cat, i) => {
@@ -336,24 +345,27 @@ socket.on("syncState", (state) => {
     });
   }
 
+  // Used Cells
   const allCells = document.querySelectorAll(".cell");
   allCells.forEach((cell, i) => {
     cell.classList.toggle("used", (state.usedCells || []).includes(i));
   });
 
-  // Reset
-for (let i = 1; i <= 5; i++) {
-  document.getElementById("name" + i).classList.remove("active");
-}
+  // Buzz-Highlight auf Namen zurücksetzen
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById("name" + i).classList.remove("active");
+  }
 
+  // Buzz-Highlight auf aktuellen Spieler-Namen
   if (state.firstBuzz) {
     for (let i = 1; i <= 5; i++) {
       if (slotPlayers[i] === state.firstBuzz) {
-      
+        document.getElementById("name" + i).classList.add("active");
       }
     }
   }
 
+  // Scores
   for (let i = 1; i <= 5; i++) {
     const name = slotPlayers[i];
     const scoreValue =
@@ -363,6 +375,7 @@ for (let i = 1; i <= 5; i++) {
     document.getElementById("score" + i).innerText = scoreValue;
   }
 
+  // Board / Frage umschalten
   if (state.currentQuestion) {
     boardWrap.style.display = "none";
     questionWrap.style.display = "block";
@@ -392,6 +405,7 @@ for (let i = 1; i <= 5; i++) {
   }
 });
 
+// Auto-Scaling für F11 / Fenstergröße
 function fit() {
   const canvas = document.getElementById("canvas");
   const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
@@ -399,6 +413,7 @@ function fit() {
   canvas.style.left = "50%";
   canvas.style.top = "50%";
 }
+
 window.addEventListener("resize", fit);
 window.addEventListener("load", fit);
 fit();
