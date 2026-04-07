@@ -247,18 +247,6 @@
       font-size: 18px;
       min-height: 28px;
     }
-
-    @media (max-width: 1100px) {
-      .preview-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .categories,
-      .board,
-      .score-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
   </style>
 </head>
 <body>
@@ -338,6 +326,10 @@
     </div>
   </div>
 
+  <audio id="buzzerSound" src="/buzzer.mp3" preload="auto"></audio>
+  <audio id="correctSound" src="/correct.mp3" preload="auto"></audio>
+  <audio id="wrongSound" src="/wrong.mp3" preload="auto"></audio>
+
   <script>
     const socket = io();
 
@@ -359,6 +351,10 @@
     const publicCenter = document.getElementById("publicCenter");
     const publicAnswer = document.getElementById("publicAnswer");
 
+    const buzzerSound = document.getElementById("buzzerSound");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
     const categoryNodes = [...document.querySelectorAll(".category")];
 
     let lobbyPlayers = [];
@@ -370,71 +366,26 @@
     };
 
     const questionBank = {
-      1: [
-        { question: "Wie heißt die Ressource, die Aurelion Sol sammelt?", answer: "Stardust", image: "" },
-        { question: "Frage 2", answer: "Antwort 2", image: "" },
-        { question: "Frage 3", answer: "Antwort 3", image: "" },
-        { question: "Frage 4", answer: "Antwort 4", image: "" },
-        { question: "Frage 5", answer: "Antwort 5", image: "" },
-
-        { question: "Aus welcher Region von Runeterra stammt Smolder?", answer: "Camavor", image: "" },
-        { question: "Frage 7", answer: "Antwort 7", image: "" },
-        { question: "Frage 8", answer: "Antwort 8", image: "" },
-        { question: "Frage 9", answer: "Antwort 9", image: "" },
-        { question: "Frage 10", answer: "Antwort 10", image: "" },
-
-        { question: "Welche Ressource nutzt Shyvana statt Mana?", answer: "Fury", image: "" },
-        { question: "Frage 12", answer: "Antwort 12", image: "" },
-        { question: "Frage 13", answer: "Antwort 13", image: "" },
-        { question: "Frage 14", answer: "Antwort 14", image: "" },
-        { question: "Frage 15", answer: "Antwort 15", image: "" },
-
-        { question: "Welche Art von Execute nutzt Smolder (Flat / Missing HP / Max HP)?", answer: "Max HP", image: "" },
-        { question: "Frage 17", answer: "Antwort 17", image: "" },
-        { question: "Frage 18", answer: "Antwort 18", image: "" },
-        { question: "Frage 19", answer: "Antwort 19", image: "" },
-        { question: "Frage 20", answer: "Antwort 20", image: "" },
-
-        { question: "Frage 21", answer: "Antwort 21", image: "" },
-        { question: "Frage 22", answer: "Antwort 22", image: "" },
-        { question: "Frage 23", answer: "Antwort 23", image: "" },
-        { question: "Frage 24", answer: "Antwort 24", image: "" },
-        { question: "Frage 25", answer: "Antwort 25", image: "" }
-      ],
-      2: [
-        { question: "Frage 26", answer: "Antwort 26", image: "" },
-        { question: "Frage 27", answer: "Antwort 27", image: "" },
-        { question: "Frage 28", answer: "Antwort 28", image: "" },
-        { question: "Frage 29", answer: "Antwort 29", image: "" },
-        { question: "Frage 30", answer: "Antwort 30", image: "" },
-
-        { question: "Frage 31", answer: "Antwort 31", image: "" },
-        { question: "Frage 32", answer: "Antwort 32", image: "" },
-        { question: "Frage 33", answer: "Antwort 33", image: "" },
-        { question: "Frage 34", answer: "Antwort 34", image: "" },
-        { question: "Frage 35", answer: "Antwort 35", image: "" },
-
-        { question: "Frage 36", answer: "Antwort 36", image: "" },
-        { question: "Frage 37", answer: "Antwort 37", image: "" },
-        { question: "Frage 38", answer: "Antwort 38", image: "" },
-        { question: "Frage 39", answer: "Antwort 39", image: "" },
-        { question: "Frage 40", answer: "Antwort 40", image: "" },
-
-        { question: "Frage 41", answer: "Antwort 41", image: "" },
-        { question: "Frage 42", answer: "Antwort 42", image: "" },
-        { question: "Frage 43", answer: "Antwort 43", image: "" },
-        { question: "Frage 44", answer: "Antwort 44", image: "" },
-        { question: "Frage 45", answer: "Antwort 45", image: "" },
-
-        { question: "Frage 46", answer: "Antwort 46", image: "" },
-        { question: "Frage 47", answer: "Antwort 47", image: "" },
-        { question: "Frage 48", answer: "Antwort 48", image: "" },
-        { question: "Frage 49", answer: "Antwort 49", image: "" },
-        { question: "Frage 50", answer: "Antwort 50", image: "" }
-      ]
+      1: Array.from({ length: 25 }, (_, i) => ({
+        question: `Frage ${i + 1}`,
+        answer: `Antwort ${i + 1}`,
+        image: ""
+      })),
+      2: Array.from({ length: 25 }, (_, i) => ({
+        question: `Frage ${i + 26}`,
+        answer: `Antwort ${i + 26}`,
+        image: ""
+      }))
     };
 
     let selectedQuestion = null;
+
+    function playSound(el) {
+      if (!el) return;
+      el.pause();
+      el.currentTime = 0;
+      el.play().catch(() => {});
+    }
 
     function getCurrentCategories() {
       return categoryNodes.map((el) => el.textContent.trim() || "Thema");
@@ -657,10 +608,16 @@
       }
     });
 
+    socket.on("playerBuzzed", () => {
+      playSound(buzzerSound);
+    });
+
     socket.on("answerResult", ({ result, name, points }) => {
       if (result === "correct") {
+        playSound(correctSound);
         statusLine.textContent = `${name} bekommt automatisch +${points} Punkte`;
       } else {
+        playSound(wrongSound);
         statusLine.textContent = `${name} bekommt automatisch -${points} Punkte`;
       }
     });
@@ -729,6 +686,9 @@
 
     document.getElementById("resetBoardBtn").onclick = () => {
       socket.emit("resetCurrentBoard");
+      selectedQuestion = null;
+      renderPrivatePreview(null);
+      renderPublicPreview(null, null);
       statusLine.textContent = `Board ${activeBoard} zurückgesetzt`;
     };
 
