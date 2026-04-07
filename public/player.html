@@ -72,7 +72,26 @@
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
-    /* BOARD */
+    .hint {
+      position: absolute;
+      left: 18px;
+      top: 110px;
+      z-index: 20;
+      font-size: 18px;
+      color: #cbd5e1;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .board-indicator {
+      position: absolute;
+      left: 18px;
+      top: 142px;
+      z-index: 20;
+      font-size: 18px;
+      color: #93c5fd;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
     .board-wrap {
       position: absolute;
       top: 20px;
@@ -116,7 +135,6 @@
       opacity: 0.3;
     }
 
-    /* QUESTION PANEL */
     .question-wrap {
       position: absolute;
       top: 20px;
@@ -188,16 +206,6 @@
       text-align: center;
       font-weight: bold;
     }
-
-    .hint {
-      position: absolute;
-      left: 18px;
-      top: 110px;
-      z-index: 20;
-      font-size: 18px;
-      color: #cbd5e1;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
   </style>
 </head>
 <body>
@@ -211,8 +219,8 @@
 
       <div class="status" id="status"></div>
       <div class="hint">Drücke die Leertaste, sobald die Frage freigegeben ist.</div>
+      <div class="board-indicator" id="boardIndicator"></div>
 
-      <!-- BOARD -->
       <div class="board-wrap" id="boardWrap">
         <div class="categories" id="categories">
           <div class="category">Thema 1</div>
@@ -224,7 +232,6 @@
         <div class="board" id="board"></div>
       </div>
 
-      <!-- QUESTION -->
       <div class="question-wrap" id="questionWrap">
         <div class="question-category" id="qCategory"></div>
         <div class="question-value" id="qValue"></div>
@@ -245,13 +252,13 @@
     const qCenter = document.getElementById("qCenter");
     const answerBox = document.getElementById("answerBox");
     const statusEl = document.getElementById("status");
+    const boardIndicator = document.getElementById("boardIndicator");
     const board = document.getElementById("board");
-    const values = [200, 300, 400, 500, 600];
+    const values = [200,300,400,500,600];
 
     let playerName = localStorage.getItem("playerName") || "";
     document.getElementById("nameInput").value = playerName;
 
-    // Board einmal aufbauen
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const div = document.createElement("div");
@@ -277,7 +284,6 @@
     };
 
     socket.on("syncState", (state) => {
-      // Kategorien
       const categoryNodes = document.querySelectorAll(".category");
       if (state.categories && state.categories.length === 5) {
         state.categories.forEach((cat, i) => {
@@ -285,13 +291,13 @@
         });
       }
 
-      // Used cells
       const allCells = document.querySelectorAll(".cell");
       allCells.forEach((cell, i) => {
         cell.classList.toggle("used", (state.usedCells || []).includes(i));
       });
 
-      // Modus
+      boardIndicator.textContent = `Aktuelles Board: ${state.currentBoard}`;
+
       if (state.currentQuestion) {
         boardWrap.style.display = "none";
         questionWrap.style.display = "block";
@@ -322,7 +328,6 @@
         answerBox.style.display = "none";
       }
 
-      // Status
       if (!playerName) {
         statusEl.textContent = "Bitte zuerst Namen speichern";
         return;
