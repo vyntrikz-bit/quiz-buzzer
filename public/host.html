@@ -48,6 +48,7 @@
     .success { background: #16a34a; }
     .warn { background: #e67e22; }
     .purple { background: #9333ea; }
+    .active-board { background: #16a34a; }
 
     .wrap {
       padding: 14px;
@@ -59,10 +60,6 @@
       margin-bottom: 14px;
       align-items: center;
       flex-wrap: wrap;
-    }
-
-    .board-switch .active-board {
-      background: #16a34a;
     }
 
     .categories {
@@ -306,9 +303,15 @@
     const previewCenter = document.getElementById("previewCenter");
     const previewAnswer = document.getElementById("previewAnswer");
 
+    const categoryNodes = [...document.querySelectorAll(".category")];
+
     let lobbyPlayers = [];
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
+    let boardCategories = {
+      1: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
+      2: ["Thema 6", "Thema 7", "Thema 8", "Thema 9", "Thema 10"]
+    };
 
     const questionBank = {
       1: [
@@ -375,19 +378,28 @@
       ]
     };
 
-    function getCategories() {
-      return [...document.querySelectorAll(".category")].map((el) => el.textContent.trim() || "Thema");
+    function getCurrentCategories() {
+      return categoryNodes.map((el) => el.textContent.trim() || "Thema");
     }
 
-    function sendCategories() {
-      socket.emit("updateCategories", {
-        board: activeBoard,
-        categories: getCategories()
+    function renderCategoriesForBoard() {
+      const cats = boardCategories[activeBoard] || ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"];
+      categoryNodes.forEach((node, i) => {
+        node.textContent = cats[i] || "Thema";
       });
     }
 
-    [...document.querySelectorAll(".category")].forEach((el) => {
-      el.addEventListener("blur", sendCategories);
+    function saveCurrentBoardCategories() {
+      boardCategories[activeBoard] = getCurrentCategories();
+
+      socket.emit("updateCategories", {
+        board: activeBoard,
+        categories: boardCategories[activeBoard]
+      });
+    }
+
+    categoryNodes.forEach((el) => {
+      el.addEventListener("blur", saveCurrentBoardCategories);
     });
 
     const cells = [];
@@ -403,13 +415,13 @@
         cell.addEventListener("click", () => {
           if ((boardUsedCells[activeBoard] || []).includes(index)) return;
 
-          const categories = getCategories();
           const item = questionBank[activeBoard][index];
+          const cats = boardCategories[activeBoard];
 
           socket.emit("openQuestion", {
             board: activeBoard,
             index,
-            category: categories[col],
+            category: cats[col],
             value: values[row],
             question: item.question,
             answer: item.answer,
@@ -472,29 +484,39 @@
       document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
     }
 
+    function switchBoard(boardNumber) {
+      saveCurrentBoardCategories();
+      activeBoard = boardNumber;
+      renderCategoriesForBoard();
+      paintBoard();
+      updateBoardButtons();
+
+      socket.emit("setCurrentBoard", boardNumber);
+      statusLine.textContent = `Board ${boardNumber} ausgewählt`;
+    }
+
     socket.on("lobbyUpdate", (players) => {
       lobbyPlayers = players;
       renderPlayerSelect(players);
     });
 
     socket.on("syncState", (state) => {
-      activeBoard = state.currentBoard || 1;
       boardUsedCells = state.usedCellsBoards || { 1: [], 2: [] };
+      activeBoard = state.currentBoard || 1;
 
+      if (state.categoriesBoards) {
+        boardCategories = {
+          1: state.categoriesBoards[1] || boardCategories[1],
+          2: state.categoriesBoards[2] || boardCategories[2]
+        };
+      }
+
+      renderCategoriesForBoard();
       updateBoardButtons();
       paintBoard();
 
       renderScores(state.scores || {}, state.lobbyPlayers || []);
       renderPlayerSelect(state.lobbyPlayers || []);
-
-      if (state.categories && state.categories.length === 5) {
-        const nodes = document.querySelectorAll(".category");
-        state.categories.forEach((cat, i) => {
-          if (nodes[i] && document.activeElement !== nodes[i]) {
-            nodes[i].textContent = cat;
-          }
-        });
-      }
 
       boardInfo.textContent =
         `Aktiv: Board ${activeBoard} | Board 1 offen: ${25 - (boardUsedCells[1] || []).length} | Board 2 offen: ${25 - (boardUsedCells[2] || []).length}`;
@@ -531,31 +553,8 @@
       }
     });
 
-    socket.on("answerResult", ({ result, name, points }) => {
-      if (result === "correct") {
-        statusLine.textContent = `${name} bekommt automatisch +${points} Punkte`;
-      } else {
-        statusLine.textContent = `${name} bekommt automatisch -${points} Punkte`;
-      }
-    });
-
-    socket.on("manualScoreChanged", ({ type, name, points }) => {
-      if (type === "add") {
-        statusLine.textContent = `${name} hat manuell +${points} Punkte bekommen`;
-      } else {
-        statusLine.textContent = `${name} hat manuell -${points} Punkte verloren`;
-      }
-    });
-
-    document.getElementById("board1Btn").onclick = () => {
-      socket.emit("setCurrentBoard", 1);
-      statusLine.textContent = "Board 1 ausgewählt";
-    };
-
-    document.getElementById("board2Btn").onclick = () => {
-      socket.emit("setCurrentBoard", 2);
-      statusLine.textContent = "Board 2 ausgewählt";
-    };
+    document.getElementById("board1Btn").onclick = () => switchBoard(1);
+    document.getElementById("board2Btn").onclick = () => switchBoard(2);
 
     document.getElementById("showQuestionBtn").onclick = () => {
       socket.emit("showQuestion");
@@ -572,13 +571,8 @@
       statusLine.textContent = "Antwort ausgeblendet";
     };
 
-    document.getElementById("correctBtn").onclick = () => {
-      socket.emit("markCorrect");
-    };
-
-    document.getElementById("wrongBtn").onclick = () => {
-      socket.emit("markWrong");
-    };
+    document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
+    document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
 
     document.getElementById("resetBuzzerBtn").onclick = () => {
       socket.emit("resetBuzzer");
@@ -590,20 +584,9 @@
       statusLine.textContent = "Letzte Aktion rückgängig gemacht";
     };
 
-    document.getElementById("timer20Btn").onclick = () => {
-      socket.emit("timerStart", 20);
-      statusLine.textContent = "Timer gestartet";
-    };
-
-    document.getElementById("timerStopBtn").onclick = () => {
-      socket.emit("timerStop");
-      statusLine.textContent = "Timer gestoppt";
-    };
-
-    document.getElementById("timerResetBtn").onclick = () => {
-      socket.emit("timerReset");
-      statusLine.textContent = "Timer zurückgesetzt";
-    };
+    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
+    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
+    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
