@@ -77,6 +77,7 @@
       font-size: 20px;
       font-weight: 700;
       outline: none;
+      min-height: 28px;
     }
 
     .board {
@@ -246,6 +247,18 @@
       font-size: 18px;
       min-height: 28px;
     }
+
+    @media (max-width: 1100px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .categories,
+      .board,
+      .score-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -286,7 +299,7 @@
     <div class="panel">
       <div class="row">
         <strong>Host Vorschau</strong>
-        <span class="muted">Links siehst du die private Vorschau nur für dich. Rechts siehst du, was öffentlich live wäre.</span>
+        <span class="muted">Links nur für dich, rechts was öffentlich live wäre.</span>
       </div>
 
       <div class="preview-grid">
@@ -350,8 +363,8 @@
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
     let boardCategories = {
-      1: ["Drachen", "LCK", "Lore", "Riot Pls", "Ordnung muss sein"],
-      2: ["Champion Details", "Pick & Ban", "Wer bin ich", "Fähigkeiten", "Troll oder Echt"]
+      1: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
+      2: ["Thema 6", "Thema 7", "Thema 8", "Thema 9", "Thema 10"]
     };
 
     const questionBank = {
@@ -443,6 +456,8 @@
 
     categoryNodes.forEach((el) => {
       el.addEventListener("blur", saveCurrentBoardCategories);
+      el.addEventListener("input", saveCurrentBoardCategories);
+      el.addEventListener("keyup", saveCurrentBoardCategories);
     });
 
     const cells = [];
@@ -472,7 +487,7 @@
           };
 
           renderPrivatePreview(selectedQuestion);
-          renderPublicPreview(null);
+          renderPublicPreview(null, null);
 
           socket.emit("openQuestion", selectedQuestion);
 
@@ -548,6 +563,7 @@
         privateCategory.textContent = "";
         privateValue.textContent = "";
         privateCenter.innerHTML = "";
+        privateCenter.textContent = "";
         privateAnswer.style.display = "none";
         privateAnswer.textContent = "";
         return;
@@ -640,6 +656,22 @@
       }
     });
 
+    socket.on("answerResult", ({ result, name, points }) => {
+      if (result === "correct") {
+        statusLine.textContent = `${name} bekommt automatisch +${points} Punkte`;
+      } else {
+        statusLine.textContent = `${name} bekommt automatisch -${points} Punkte`;
+      }
+    });
+
+    socket.on("manualScoreChanged", ({ type, name, points }) => {
+      if (type === "add") {
+        statusLine.textContent = `${name} hat manuell +${points} Punkte bekommen`;
+      } else {
+        statusLine.textContent = `${name} hat manuell -${points} Punkte verloren`;
+      }
+    });
+
     document.getElementById("board1Btn").onclick = () => switchBoard(1);
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
 
@@ -671,9 +703,20 @@
       statusLine.textContent = "Letzte Aktion rückgängig gemacht";
     };
 
-    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
-    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
-    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
+    document.getElementById("timer20Btn").onclick = () => {
+      socket.emit("timerStart", 20);
+      statusLine.textContent = "Timer gestartet";
+    };
+
+    document.getElementById("timerStopBtn").onclick = () => {
+      socket.emit("timerStop");
+      statusLine.textContent = "Timer gestoppt";
+    };
+
+    document.getElementById("timerResetBtn").onclick = () => {
+      socket.emit("timerReset");
+      statusLine.textContent = "Timer zurückgesetzt";
+    };
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
