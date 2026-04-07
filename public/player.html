@@ -1,349 +1,133 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spieler</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: Arial, sans-serif;
-      color: white;
+<script>
+  const socket = io();
+
+  const boardWrap = document.getElementById("boardWrap");
+  const questionWrap = document.getElementById("questionWrap");
+  const qCategory = document.getElementById("qCategory");
+  const qValue = document.getElementById("qValue");
+  const qCenter = document.getElementById("qCenter");
+  const answerBox = document.getElementById("answerBox");
+  const statusEl = document.getElementById("status");
+  const board = document.getElementById("board");
+  const values = [200,300,400,500,600];
+
+  let playerName = localStorage.getItem("playerName") || "";
+  document.getElementById("nameInput").value = playerName;
+
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.innerText = values[r];
+      board.appendChild(div);
     }
+  }
 
-    .stage {
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
-
-    .canvas {
-      position: absolute;
-      width: 1920px;
-      height: 1080px;
-      transform-origin: top left;
-      background: url("background.png") center/cover no-repeat;
-    }
-
-    .topbar {
-      position: absolute;
-      top: 18px;
-      left: 18px;
-      display: flex;
-      gap: 8px;
-      z-index: 20;
-    }
-
-    input {
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      background: rgba(15, 23, 42, 0.9);
-      color: white;
-      width: 220px;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .status {
-      position: absolute;
-      top: 70px;
-      left: 18px;
-      z-index: 20;
-      font-size: 24px;
-      color: #ffd54a;
-      min-height: 28px;
-    }
-
-    .board-wrap {
-      position: absolute;
-      top: 20px;
-      left: 550px;
-      width: 1100px;
-    }
-
-    .categories {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-
-    .category {
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: white;
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-
-    .cell {
-      height: 90px;
-      background: #f2a7c2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 50px;
-      font-weight: bold;
-      border-radius: 8px;
-      color: #111;
-    }
-
-    .cell.used {
-      opacity: 0.3;
-    }
-
-    .question-wrap {
-      position: absolute;
-      top: 20px;
-      left: 550px;
-      width: 1100px;
-      height: 500px;
-      background: #e8a4bc;
-      border-radius: 20px;
-      display: none;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    .question-category {
-      position: absolute;
-      top: 14px;
-      left: 18px;
-      font-size: 30px;
-      font-weight: bold;
-      color: white;
-    }
-
-    .question-value {
-      position: absolute;
-      top: 14px;
-      right: 18px;
-      font-size: 30px;
-      font-weight: bold;
-      color: white;
-    }
-
-    .question-center {
-      position: absolute;
-      top: 70px;
-      left: 25px;
-      right: 25px;
-      bottom: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 50px;
-      font-weight: bold;
-      color: black;
-    }
-
-    .question-image {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-    }
-
-    .answer-box {
-      position: absolute;
-      bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      color: black;
-      padding: 10px 25px;
-      border-radius: 10px;
-      font-size: 30px;
-      display: none;
-      max-width: 80%;
-      text-align: center;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div class="stage">
-    <div class="canvas" id="canvas">
-
-      <div class="topbar">
-        <input id="nameInput" placeholder="Dein Name">
-        <button id="saveBtn">Name speichern</button>
-      </div>
-
-      <div class="status" id="status"></div>
-
-      <div class="board-wrap" id="boardWrap">
-        <div class="categories" id="categories">
-          <div class="category">Thema 1</div>
-          <div class="category">Thema 2</div>
-          <div class="category">Thema 3</div>
-          <div class="category">Thema 4</div>
-          <div class="category">Thema 5</div>
-        </div>
-        <div class="board" id="board"></div>
-      </div>
-
-      <div class="question-wrap" id="questionWrap">
-        <div class="question-category" id="qCategory"></div>
-        <div class="question-value" id="qValue"></div>
-        <div class="question-center" id="qCenter"></div>
-        <div class="answer-box" id="answerBox"></div>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-
-    const boardWrap = document.getElementById("boardWrap");
-    const questionWrap = document.getElementById("questionWrap");
-    const qCategory = document.getElementById("qCategory");
-    const qValue = document.getElementById("qValue");
-    const qCenter = document.getElementById("qCenter");
-    const answerBox = document.getElementById("answerBox");
-    const statusEl = document.getElementById("status");
-    const board = document.getElementById("board");
-    const values = [200,300,400,500,600];
-
-    let playerName = localStorage.getItem("playerName") || "";
-    document.getElementById("nameInput").value = playerName;
-
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const div = document.createElement("div");
-        div.className = "cell";
-        div.innerText = values[r];
-        board.appendChild(div);
-      }
-    }
-
-    function joinIfPossible() {
-      if (playerName) {
-        socket.emit("joinLobby", playerName);
-      }
-    }
-
-    document.getElementById("saveBtn").onclick = () => {
-      playerName = document.getElementById("nameInput").value.trim().slice(0, 24);
-      if (!playerName) return;
-      localStorage.setItem("playerName", playerName);
+  function joinLobbyFromPlayerView() {
+    if (playerName) {
       socket.emit("joinLobby", playerName);
-      statusEl.textContent = "Name gespeichert";
-    };
+    }
+  }
 
-    socket.on("syncState", (state) => {
-      const categoryNodes = document.querySelectorAll(".category");
-      if (state.categories && state.categories.length === 5) {
-        state.categories.forEach((cat, i) => {
-          if (categoryNodes[i]) categoryNodes[i].textContent = cat;
-        });
-      }
+  document.getElementById("saveBtn").onclick = () => {
+    playerName = document.getElementById("nameInput").value.trim().slice(0, 24);
+    if (!playerName) return;
 
-      const allCells = document.querySelectorAll(".cell");
-      allCells.forEach((cell, i) => {
-        cell.classList.toggle("used", (state.usedCells || []).includes(i));
+    localStorage.setItem("playerName", playerName);
+    socket.emit("joinLobby", playerName);
+    statusEl.textContent = "Name gespeichert";
+  };
+
+  socket.on("syncState", (state) => {
+    const categoryNodes = document.querySelectorAll(".category");
+    if (state.categories && state.categories.length === 5) {
+      state.categories.forEach((cat, i) => {
+        if (categoryNodes[i]) categoryNodes[i].textContent = cat;
       });
-
-      if (state.currentQuestion) {
-        boardWrap.style.display = "none";
-        questionWrap.style.display = "block";
-
-        qCategory.innerText = state.currentQuestion.category || "";
-        qValue.innerText = state.currentQuestion.value || "";
-
-        if (state.questionVisible) {
-          if (state.currentQuestion.image) {
-            qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
-          } else {
-            qCenter.innerText = state.currentQuestion.question || "";
-          }
-        } else {
-          qCenter.innerHTML = "";
-        }
-
-        if (state.answerVisible) {
-          answerBox.style.display = "block";
-          answerBox.innerText = state.currentQuestion.answer || "";
-        } else {
-          answerBox.style.display = "none";
-        }
-      } else {
-        boardWrap.style.display = "block";
-        questionWrap.style.display = "none";
-      }
-
-      if (!playerName) {
-        statusEl.textContent = "Bitte Namen speichern";
-        return;
-      }
-
-      if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
-        statusEl.textContent = "Du bist für diese Frage raus";
-        return;
-      }
-
-      if (state.firstBuzz) {
-        if (state.firstBuzz === playerName) {
-          statusEl.textContent = "Du bist dran!";
-        } else {
-          statusEl.textContent = state.firstBuzz + " ist dran";
-        }
-      } else if (state.questionVisible) {
-        statusEl.textContent = "Leertaste zum Buzzern";
-      } else if (state.currentQuestion) {
-        statusEl.textContent = "Warte auf Freigabe der Frage";
-      } else {
-        statusEl.textContent = "";
-      }
-    });
-
-    window.addEventListener("keydown", (event) => {
-      if (event.code !== "Space") return;
-      event.preventDefault();
-
-      if (!playerName) {
-        statusEl.textContent = "Bitte zuerst Namen speichern";
-        return;
-      }
-
-      socket.emit("buzz", playerName);
-    });
-
-    function fit() {
-      const canvas = document.getElementById("canvas");
-      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-      canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
-      canvas.style.left = "50%";
-      canvas.style.top = "50%";
     }
 
-    window.addEventListener("resize", fit);
-    window.addEventListener("load", () => {
-      fit();
-      joinIfPossible();
+    const allCells = document.querySelectorAll(".cell");
+    allCells.forEach((cell, i) => {
+      cell.classList.toggle("used", (state.usedCells || []).includes(i));
     });
+
+    if (state.currentQuestion) {
+      boardWrap.style.display = "none";
+      questionWrap.style.display = "block";
+
+      qCategory.innerText = state.currentQuestion.category || "";
+      qValue.innerText = state.currentQuestion.value || "";
+
+      if (state.questionVisible) {
+        if (state.currentQuestion.image) {
+          qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
+        } else {
+          qCenter.innerText = state.currentQuestion.question || "";
+        }
+      } else {
+        qCenter.innerHTML = "";
+      }
+
+      if (state.answerVisible) {
+        answerBox.style.display = "block";
+        answerBox.innerText = state.currentQuestion.answer || "";
+      } else {
+        answerBox.style.display = "none";
+      }
+    } else {
+      boardWrap.style.display = "block";
+      questionWrap.style.display = "none";
+    }
+
+    if (!playerName) {
+      statusEl.textContent = "Bitte Namen speichern";
+      return;
+    }
+
+    if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
+      statusEl.textContent = "Du bist für diese Frage raus";
+      return;
+    }
+
+    if (state.firstBuzz) {
+      if (state.firstBuzz === playerName) {
+        statusEl.textContent = "Du bist dran!";
+      } else {
+        statusEl.textContent = state.firstBuzz + " ist dran";
+      }
+    } else if (state.questionVisible) {
+      statusEl.textContent = "Leertaste zum Buzzern";
+    } else if (state.currentQuestion) {
+      statusEl.textContent = "Warte auf Freigabe der Frage";
+    } else {
+      statusEl.textContent = "";
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.code !== "Space") return;
+    event.preventDefault();
+
+    if (!playerName) {
+      statusEl.textContent = "Bitte zuerst Namen speichern";
+      return;
+    }
+
+    socket.emit("buzz", playerName);
+  });
+
+  function fit() {
+    const canvas = document.getElementById("canvas");
+    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
+    canvas.style.left = "50%";
+    canvas.style.top = "50%";
+  }
+
+  window.addEventListener("resize", fit);
+  window.addEventListener("load", () => {
     fit();
-  </script>
-</body>
-</html>
+    joinLobbyFromPlayerView();
+  });
+  fit();
+</script>
