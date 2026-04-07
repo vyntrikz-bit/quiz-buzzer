@@ -149,8 +149,27 @@
       font-size: 14px;
     }
 
-    .big-preview {
+    .preview-grid {
       margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .preview-block {
+      background: #0f172a;
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .preview-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #93c5fd;
+    }
+
+    .big-preview {
       background: #e8a4bc;
       color: #111;
       border-radius: 20px;
@@ -209,6 +228,8 @@
       font-size: 28px;
       font-weight: 800;
       display: none;
+      max-width: 80%;
+      text-align: center;
     }
 
     .manual-box {
@@ -264,15 +285,30 @@
 
     <div class="panel">
       <div class="row">
-        <strong>Aktuelle Vorschau</strong>
-        <span class="muted">Hier siehst du, wie das große Overlay-Feld aussehen wird.</span>
+        <strong>Host Vorschau</strong>
+        <span class="muted">Links siehst du die private Vorschau nur für dich. Rechts siehst du, was öffentlich live wäre.</span>
       </div>
 
-      <div class="big-preview">
-        <div class="preview-category" id="previewCategory"></div>
-        <div class="preview-value" id="previewValue"></div>
-        <div class="preview-center" id="previewCenter"></div>
-        <div class="preview-answer" id="previewAnswer"></div>
+      <div class="preview-grid">
+        <div class="preview-block">
+          <div class="preview-title">Private Vorschau für Host</div>
+          <div class="big-preview">
+            <div class="preview-category" id="privateCategory"></div>
+            <div class="preview-value" id="privateValue"></div>
+            <div class="preview-center" id="privateCenter"></div>
+            <div class="preview-answer" id="privateAnswer"></div>
+          </div>
+        </div>
+
+        <div class="preview-block">
+          <div class="preview-title">Öffentliche Ansicht</div>
+          <div class="big-preview">
+            <div class="preview-category" id="publicCategory"></div>
+            <div class="preview-value" id="publicValue"></div>
+            <div class="preview-center" id="publicCenter"></div>
+            <div class="preview-answer" id="publicAnswer"></div>
+          </div>
+        </div>
       </div>
 
       <div class="manual-box">
@@ -298,10 +334,15 @@
     const statusLine = document.getElementById("statusLine");
     const boardInfo = document.getElementById("boardInfo");
 
-    const previewCategory = document.getElementById("previewCategory");
-    const previewValue = document.getElementById("previewValue");
-    const previewCenter = document.getElementById("previewCenter");
-    const previewAnswer = document.getElementById("previewAnswer");
+    const privateCategory = document.getElementById("privateCategory");
+    const privateValue = document.getElementById("privateValue");
+    const privateCenter = document.getElementById("privateCenter");
+    const privateAnswer = document.getElementById("privateAnswer");
+
+    const publicCategory = document.getElementById("publicCategory");
+    const publicValue = document.getElementById("publicValue");
+    const publicCenter = document.getElementById("publicCenter");
+    const publicAnswer = document.getElementById("publicAnswer");
 
     const categoryNodes = [...document.querySelectorAll(".category")];
 
@@ -378,6 +419,8 @@
       ]
     };
 
+    let selectedQuestion = null;
+
     function getCurrentCategories() {
       return categoryNodes.map((el) => el.textContent.trim() || "Thema");
     }
@@ -418,7 +461,7 @@
           const item = questionBank[activeBoard][index];
           const cats = boardCategories[activeBoard];
 
-          socket.emit("openQuestion", {
+          selectedQuestion = {
             board: activeBoard,
             index,
             category: cats[col],
@@ -426,9 +469,14 @@
             question: item.question,
             answer: item.answer,
             image: item.image
-          });
+          };
 
-          statusLine.textContent = `Fragenfeld auf Board ${activeBoard} geöffnet`;
+          renderPrivatePreview(selectedQuestion);
+          renderPublicPreview(null);
+
+          socket.emit("openQuestion", selectedQuestion);
+
+          statusLine.textContent = `Private Vorschau geladen auf Board ${activeBoard}`;
         });
 
         board.appendChild(cell);
@@ -495,6 +543,63 @@
       statusLine.textContent = `Board ${boardNumber} ausgewählt`;
     }
 
+    function renderPrivatePreview(question) {
+      if (!question) {
+        privateCategory.textContent = "";
+        privateValue.textContent = "";
+        privateCenter.innerHTML = "";
+        privateAnswer.style.display = "none";
+        privateAnswer.textContent = "";
+        return;
+      }
+
+      privateCategory.textContent = question.category || "";
+      privateValue.textContent = question.value || "";
+
+      if (question.image) {
+        privateCenter.innerHTML = `<img class="preview-image" src="${question.image}" alt="">`;
+      } else {
+        privateCenter.textContent = question.question || "";
+      }
+
+      privateAnswer.style.display = "block";
+      privateAnswer.textContent = question.answer || "";
+    }
+
+    function renderPublicPreview(stateQuestion, state) {
+      if (!stateQuestion) {
+        publicCategory.textContent = "";
+        publicValue.textContent = "";
+        publicCenter.innerHTML = "";
+        publicCenter.textContent = "";
+        publicAnswer.style.display = "none";
+        publicAnswer.textContent = "";
+        return;
+      }
+
+      publicCategory.textContent = stateQuestion.category || "";
+      publicValue.textContent = stateQuestion.value || "";
+
+      if (state && state.questionVisible) {
+        if (stateQuestion.image) {
+          publicCenter.innerHTML = `<img class="preview-image" src="${stateQuestion.image}" alt="">`;
+        } else {
+          publicCenter.textContent = stateQuestion.question || "";
+        }
+      } else {
+        publicCenter.innerHTML = "";
+        publicCenter.textContent = "";
+      }
+
+      if (state && state.answerVisible) {
+        publicAnswer.style.display = "block";
+        publicAnswer.textContent = stateQuestion.answer || "";
+      } else {
+        publicAnswer.style.display = "none";
+        publicAnswer.textContent = "";
+      }
+    }
+
     socket.on("lobbyUpdate", (players) => {
       lobbyPlayers = players;
       renderPlayerSelect(players);
@@ -521,35 +626,17 @@
       boardInfo.textContent =
         `Aktiv: Board ${activeBoard} | Board 1 offen: ${25 - (boardUsedCells[1] || []).length} | Board 2 offen: ${25 - (boardUsedCells[2] || []).length}`;
 
-      if (state.currentQuestion && state.questionPanelOpen) {
-        previewCategory.textContent = state.currentQuestion.category || "";
-        previewValue.textContent = state.currentQuestion.value || "";
+      if (state.currentQuestion) {
+        selectedQuestion = state.currentQuestion;
+      }
 
-        if (state.questionVisible) {
-          if (state.currentQuestion.image) {
-            previewCenter.innerHTML = `<img class="preview-image" src="${state.currentQuestion.image}" alt="">`;
-          } else {
-            previewCenter.textContent = state.currentQuestion.question || "";
-          }
-        } else {
-          previewCenter.innerHTML = "";
-          previewCenter.textContent = "";
-        }
+      renderPrivatePreview(selectedQuestion);
+      renderPublicPreview(state.currentQuestion, state);
 
-        if (state.answerVisible) {
-          previewAnswer.style.display = "block";
-          previewAnswer.textContent = state.currentQuestion.answer || "";
-        } else {
-          previewAnswer.style.display = "none";
-          previewAnswer.textContent = "";
-        }
-      } else {
-        previewCategory.textContent = "";
-        previewValue.textContent = "";
-        previewCenter.innerHTML = "";
-        previewCenter.textContent = "";
-        previewAnswer.style.display = "none";
-        previewAnswer.textContent = "";
+      if (!state.currentQuestion && !state.questionPanelOpen) {
+        selectedQuestion = null;
+        renderPrivatePreview(null);
+        renderPublicPreview(null, null);
       }
     });
 
@@ -558,17 +645,17 @@
 
     document.getElementById("showQuestionBtn").onclick = () => {
       socket.emit("showQuestion");
-      statusLine.textContent = "Frage eingeblendet";
+      statusLine.textContent = "Frage öffentlich eingeblendet";
     };
 
     document.getElementById("showAnswerBtn").onclick = () => {
       socket.emit("showAnswer");
-      statusLine.textContent = "Antwort eingeblendet";
+      statusLine.textContent = "Antwort öffentlich eingeblendet";
     };
 
     document.getElementById("hideAnswerBtn").onclick = () => {
       socket.emit("hideAnswer");
-      statusLine.textContent = "Antwort ausgeblendet";
+      statusLine.textContent = "Antwort öffentlich ausgeblendet";
     };
 
     document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
@@ -590,6 +677,9 @@
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
+      selectedQuestion = null;
+      renderPrivatePreview(null);
+      renderPublicPreview(null, null);
       statusLine.textContent = "Frage geschlossen";
     };
 
