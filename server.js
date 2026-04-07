@@ -360,29 +360,29 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("markCorrect", () => {
-    if (!state.currentQuestion) return;
-    if (!state.firstBuzz) return;
+ socket.on("markCorrect", () => {
+  if (!state.currentQuestion) return;
+  if (!state.firstBuzz) return;
 
-    saveLastAction();
+  saveLastAction();
 
-    const name = state.firstBuzz;
-    const points = state.currentQuestion.value * getCurrentMultiplier();
+  const name = String(state.firstBuzz).trim();
+  const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
+  if (!(name in state.scores)) {
+    state.scores[name] = 0;
+  }
 
-    state.scores[name] += points;
+  state.scores[name] += points;
 
-    io.emit("answerResult", {
-      result: "correct",
-      name,
-      points
-    });
-
-    emitState();
+  io.emit("answerResult", {
+    result: "correct",
+    name,
+    points
   });
+
+  emitState();
+});
 
   socket.on("markWrong", () => {
     if (!state.currentQuestion) return;
