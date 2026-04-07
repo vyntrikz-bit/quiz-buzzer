@@ -385,35 +385,35 @@ io.on("connection", (socket) => {
 });
 
   socket.on("markWrong", () => {
-    if (!state.currentQuestion) return;
-    if (!state.firstBuzz) return;
+  if (!state.currentQuestion) return;
+  if (!state.firstBuzz) return;
 
-    saveLastAction();
+  saveLastAction();
 
-    const name = state.firstBuzz;
-    const points = state.currentQuestion.value * getCurrentMultiplier();
+  const name = String(state.firstBuzz).trim();
+  const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-    if (!(name in state.scores)) {
-      state.scores[name] = 0;
-    }
+  if (!(name in state.scores)) {
+    state.scores[name] = 0;
+  }
 
-    state.scores[name] -= points;
+  state.scores[name] -= points;
 
-    if (!state.eliminatedPlayers.includes(name)) {
-      state.eliminatedPlayers.push(name);
-    }
+  if (!state.eliminatedPlayers.includes(name)) {
+    state.eliminatedPlayers.push(name);
+  }
 
-    state.firstBuzz = null;
-    state.buzzLocked = false;
+  state.firstBuzz = null;
+  state.buzzLocked = false;
 
-    io.emit("answerResult", {
-      result: "wrong",
-      name,
-      points
-    });
-
-    emitState();
+  io.emit("answerResult", {
+    result: "wrong",
+    name,
+    points
   });
+
+  emitState();
+});
 
   socket.on("manualAddPoints", ({ name, points }) => {
     const playerName = String(name || "").trim().slice(0, 24);
