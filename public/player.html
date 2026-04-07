@@ -38,6 +38,8 @@
       display: flex;
       gap: 8px;
       z-index: 20;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     input {
@@ -59,6 +61,21 @@
       font-weight: bold;
       cursor: pointer;
       font-size: 15px;
+    }
+
+    .volume-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.92);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .volume-wrap input[type="range"] {
+      width: 120px;
+      padding: 0;
     }
 
     .status {
@@ -215,6 +232,12 @@
       <div class="topbar">
         <input id="nameInput" placeholder="Dein Name">
         <button id="saveBtn">Name speichern</button>
+
+        <label class="volume-wrap">
+          Sound
+          <input id="volumeSlider" type="range" min="0" max="100" value="60">
+          <span id="volumeValue">60%</span>
+        </label>
       </div>
 
       <div class="status" id="status"></div>
@@ -264,8 +287,31 @@
     const correctSound = document.getElementById("correctSound");
     const wrongSound = document.getElementById("wrongSound");
 
+    const volumeSlider = document.getElementById("volumeSlider");
+    const volumeValue = document.getElementById("volumeValue");
+
     let playerName = localStorage.getItem("playerName") || "";
     document.getElementById("nameInput").value = playerName;
+
+    function applyVolume(volume) {
+      const v = Math.max(0, Math.min(1, volume));
+      buzzerSound.volume = v;
+      correctSound.volume = v;
+      wrongSound.volume = v;
+    }
+
+    const savedVolume = localStorage.getItem("playerVolume");
+    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.6;
+    volumeSlider.value = Math.round(startVolume * 100);
+    volumeValue.textContent = `${Math.round(startVolume * 100)}%`;
+    applyVolume(startVolume);
+
+    volumeSlider.addEventListener("input", () => {
+      const newVolume = Number(volumeSlider.value) / 100;
+      volumeValue.textContent = `${volumeSlider.value}%`;
+      localStorage.setItem("playerVolume", String(newVolume));
+      applyVolume(newVolume);
+    });
 
     function playSound(el) {
       if (!el) return;
