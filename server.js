@@ -41,8 +41,8 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server);
 
-const defaultCategories1 = ["Drachen", "LCK", "Lore", "Riot PLS", "Ordnung muss sein"];
-const defaultCategories2 = ["Champion Details", "Pick & Ban", "Wer bin ich", "Fähigkeiten", "Troll oder Echt"];
+const defaultCategories1 = ["Drachen", "LCK", "Lore", "Riot Pls", "Ordnung muss sein"];
+const defaultCategories2 = ["Champion Details", "Pick & Ban", "Wer bin Ich", "Fähigkeiten", "Ingame Quest"];
 
 const state = {
   currentBoard: 1,
