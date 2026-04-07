@@ -41,19 +41,33 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server);
 
+const defaultCategories1 = ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"];
+const defaultCategories2 = ["Thema 6", "Thema 7", "Thema 8", "Thema 9", "Thema 10"];
+
 const state = {
-  categories: ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"],
-  usedCells: [],
+  currentBoard: 1,
+  categoriesBoards: {
+    1: [...defaultCategories1],
+    2: [...defaultCategories2]
+  },
+  usedCellsBoards: {
+    1: [],
+    2: []
+  },
+
   currentQuestion: null,
   questionPanelOpen: false,
   questionVisible: false,
   answerVisible: false,
+
   firstBuzz: null,
   buzzLocked: false,
   eliminatedPlayers: [],
+
   scores: {},
   lastAction: null,
   lobbyPlayers: [],
+
   timer: {
     total: 0,
     remaining: 0,
@@ -61,12 +75,30 @@ const state = {
   }
 };
 
-function getRemainingCellCount() {
-  return 25 - state.usedCells.length;
+function getUsedCells(boardNumber) {
+  return state.usedCellsBoards[boardNumber] || [];
+}
+
+function getCategories(boardNumber) {
+  return state.categoriesBoards[boardNumber] || [];
+}
+
+function getRemainingCellCount(boardNumber) {
+  return 25 - getUsedCells(boardNumber).length;
 }
 
 function getCurrentMultiplier() {
-  return getRemainingCellCount() <= 5 ? 2 : 1;
+  return getRemainingCellCount(state.currentBoard) <= 5 ? 2 : 1;
+}
+
+function boardFinished(boardNumber) {
+  return getUsedCells(boardNumber).length >= 25;
+}
+
+function maybeAutoSwitchToBoard2() {
+  if (boardFinished(1) && !boardFinished(2) && state.currentBoard === 1) {
+    state.currentBoard = 2;
+  }
 }
 
 function getFreeSlot() {
@@ -99,8 +131,12 @@ function stopTimer() {
 function emitState() {
   io.emit("syncState", {
     ...state,
-    remainingCells: getRemainingCellCount(),
-    currentMultiplier: getCurrentMultiplier()
+    categories: getCategories(state.currentBoard),
+    usedCells: getUsedCells(state.currentBoard),
+    remainingCells: getRemainingCellCount(state.currentBoard),
+    currentMultiplier: getCurrentMultiplier(),
+    board1Finished: boardFinished(1),
+    board2Finished: boardFinished(2)
   });
 }
 
@@ -119,7 +155,9 @@ function upsertLobbyPlayer(socketId, name) {
     return player;
   }
 
-  player = state.lobbyPlayers.find((p) => p.name.toLowerCase() === cleanName.toLowerCase());
+  player = state.lobbyPlayers.find(
+    (p) => p.name.toLowerCase() === cleanName.toLowerCase()
+  );
   if (player) {
     player.socketId = socketId;
     player.name = cleanName;
@@ -155,14 +193,28 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("updateCategories", (categories) => {
+  socket.on("setCurrentBoard", (boardNumber) => {
+    const board = Number(boardNumber);
+    if (board !== 1 && board !== 2) return;
+    state.currentBoard = board;
+    emitState();
+  });
+
+  socket.on("updateCategories", ({ board, categories }) => {
+    const boardNumber = Number(board);
+    if (boardNumber !== 1 && boardNumber !== 2) return;
     if (!Array.isArray(categories) || categories.length !== 5) return;
-    state.categories = categories.map((x) => String(x || "").trim().slice(0, 40) || "Thema");
+
+    state.categoriesBoards[boardNumber] = categories.map(
+      (x) => String(x || "").trim().slice(0, 40) || "Thema"
+    );
+
     emitState();
   });
 
   socket.on("openQuestion", (payload) => {
     const {
+      board,
       index,
       category,
       value,
@@ -171,9 +223,14 @@ io.on("connection", (socket) => {
       image = ""
     } = payload || {};
 
+    const boardNumber = Number(board);
+    if (boardNumber !== 1 && boardNumber !== 2) return;
     if (!Number.isInteger(index)) return;
 
+    state.currentBoard = boardNumber;
+
     state.currentQuestion = {
+      board: boardNumber,
       index,
       category: String(category || ""),
       value: Number(value) || 0,
@@ -190,14 +247,15 @@ io.on("connection", (socket) => {
     state.eliminatedPlayers = [];
     state.lastAction = null;
 
-    if (!state.usedCells.includes(index)) {
-      state.usedCells.push(index);
+    if (!state.usedCellsBoards[boardNumber].includes(index)) {
+      state.usedCellsBoards[boardNumber].push(index);
     }
 
     stopTimer();
     state.timer.total = 0;
     state.timer.remaining = 0;
 
+    maybeAutoSwitchToBoard2();
     emitState();
   });
 
@@ -232,6 +290,7 @@ io.on("connection", (socket) => {
     state.timer.total = 0;
     state.timer.remaining = 0;
 
+    maybeAutoSwitchToBoard2();
     emitState();
   });
 
