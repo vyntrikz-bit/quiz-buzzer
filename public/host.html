@@ -738,7 +738,10 @@
       if (!name || points <= 0) return;
       socket.emit("manualSubtractPoints", { name, points });
     };
-
+    
+<button id="resetBoardBtn" class="danger">Board Reset</button>
+    <button id="resetBoardBtn" class="danger">Board Reset</button>
+    
     renderCategoriesForBoard();
     updateBoardButtons();
     buildBoard();
