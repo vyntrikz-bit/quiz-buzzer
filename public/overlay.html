@@ -29,7 +29,6 @@ html, body {
   background: url("background.png") center/cover no-repeat;
 }
 
-/* HOST */
 .host-box {
   position: absolute;
   left: 20px;
@@ -50,7 +49,16 @@ html, body {
   display: block;
 }
 
-/* BOARD */
+.board-indicator {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 26px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+}
+
 .board-wrap {
   position: absolute;
   top: 20px;
@@ -93,7 +101,6 @@ html, body {
   opacity: 0.3;
 }
 
-/* QUESTION PANEL */
 .question-wrap {
   position: absolute;
   top: 20px;
@@ -163,7 +170,6 @@ html, body {
   font-weight: bold;
 }
 
-/* PLAYERS */
 .players-row {
   position: absolute;
   left: 10px;
@@ -187,7 +193,6 @@ html, body {
   box-sizing: border-box;
 }
 
-/* NAME */
 .name-box {
   background: white;
   color: black;
@@ -199,7 +204,6 @@ html, body {
   transition: all 0.2s ease;
 }
 
-/* BUZZ HIGHLIGHT AUF NAME */
 .name-box.active {
   background: #ff3b3b;
   color: white;
@@ -217,7 +221,6 @@ html, body {
   }
 }
 
-/* SCORE */
 .score-box {
   background: black;
   border: 3px solid white;
@@ -236,7 +239,8 @@ html, body {
 <div class="stage">
 <div class="canvas" id="canvas">
 
-  <!-- BOARD -->
+  <div class="board-indicator" id="boardIndicator"></div>
+
   <div class="board-wrap" id="boardWrap">
     <div class="categories" id="categories">
       <div class="category">Thema 1</div>
@@ -248,7 +252,6 @@ html, body {
     <div class="board" id="board"></div>
   </div>
 
-  <!-- QUESTION -->
   <div class="question-wrap" id="questionWrap">
     <div class="question-category" id="qCategory"></div>
     <div class="question-value" id="qValue"></div>
@@ -256,12 +259,10 @@ html, body {
     <div class="answer-box" id="answerBox"></div>
   </div>
 
-  <!-- HOST -->
   <div class="host-box">
     <img src="avatar.png" id="avatar" alt="" onerror="this.style.display='none'">
   </div>
 
-  <!-- PLAYERS -->
   <div class="players-row">
     <div class="player-column">
       <div class="player-cam" id="cam1"></div>
@@ -302,6 +303,7 @@ const socket = io();
 
 const boardWrap = document.getElementById("boardWrap");
 const questionWrap = document.getElementById("questionWrap");
+const boardIndicator = document.getElementById("boardIndicator");
 
 const qCategory = document.getElementById("qCategory");
 const qValue = document.getElementById("qValue");
@@ -311,9 +313,8 @@ const answerBox = document.getElementById("answerBox");
 const values = [200, 300, 400, 500, 600];
 const board = document.getElementById("board");
 
-let slotPlayers = { 1:null, 2:null, 3:null, 4:null, 5:null };
+let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
-// Board einmal aufbauen
 for (let r = 0; r < 5; r++) {
   for (let c = 0; c < 5; c++) {
     const div = document.createElement("div");
@@ -324,7 +325,7 @@ for (let r = 0; r < 5; r++) {
 }
 
 socket.on("lobbyUpdate", (players) => {
-  slotPlayers = { 1:null, 2:null, 3:null, 4:null, 5:null };
+  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
   for (let i = 1; i <= 5; i++) {
     document.getElementById("name" + i).innerText = "Leer";
@@ -337,7 +338,8 @@ socket.on("lobbyUpdate", (players) => {
 });
 
 socket.on("syncState", (state) => {
-  // Kategorien
+  boardIndicator.textContent = `Board ${state.currentBoard}`;
+
   const categoryNodes = document.querySelectorAll(".category");
   if (state.categories && state.categories.length === 5) {
     state.categories.forEach((cat, i) => {
@@ -345,27 +347,28 @@ socket.on("syncState", (state) => {
     });
   }
 
-  // Used Cells
   const allCells = document.querySelectorAll(".cell");
   allCells.forEach((cell, i) => {
     cell.classList.toggle("used", (state.usedCells || []).includes(i));
   });
 
-  // Buzz-Highlight auf Namen zurücksetzen
   for (let i = 1; i <= 5; i++) {
     document.getElementById("name" + i).classList.remove("active");
   }
 
-  // Buzz-Highlight auf aktuellen Spieler-Namen
   if (state.firstBuzz) {
     for (let i = 1; i <= 5; i++) {
-      if (slotPlayers[i] === state.firstBuzz) {
+      const player = slotPlayers[i];
+      if (
+        player &&
+        state.firstBuzz &&
+        player.trim().toLowerCase() === state.firstBuzz.trim().toLowerCase()
+      ) {
         document.getElementById("name" + i).classList.add("active");
       }
     }
   }
 
-  // Scores
   for (let i = 1; i <= 5; i++) {
     const name = slotPlayers[i];
     const scoreValue =
@@ -375,7 +378,6 @@ socket.on("syncState", (state) => {
     document.getElementById("score" + i).innerText = scoreValue;
   }
 
-  // Board / Frage umschalten
   if (state.currentQuestion) {
     boardWrap.style.display = "none";
     questionWrap.style.display = "block";
@@ -405,7 +407,6 @@ socket.on("syncState", (state) => {
   }
 });
 
-// Auto-Scaling für F11 / Fenstergröße
 function fit() {
   const canvas = document.getElementById("canvas");
   const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
@@ -413,7 +414,7 @@ function fit() {
   canvas.style.left = "50%";
   canvas.style.top = "50%";
 }
-console.log("Buzz:", state.firstBuzz);
+
 window.addEventListener("resize", fit);
 window.addEventListener("load", fit);
 fit();
