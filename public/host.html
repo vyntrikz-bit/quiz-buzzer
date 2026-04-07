@@ -22,6 +22,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      align-items: center;
     }
 
     button, select, input {
@@ -38,7 +39,7 @@
       color: white;
     }
 
-    select, input {
+    select, input[type="number"] {
       background: #1f2937;
       color: white;
     }
@@ -49,6 +50,21 @@
     .warn { background: #e67e22; }
     .purple { background: #9333ea; }
     .active-board { background: #16a34a; }
+
+    .volume-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1f2937;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .volume-wrap input[type="range"] {
+      padding: 0;
+      width: 130px;
+    }
 
     .wrap {
       padding: 14px;
@@ -247,6 +263,17 @@
       font-size: 18px;
       min-height: 28px;
     }
+
+    @media (max-width: 1100px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+      .categories,
+      .board,
+      .score-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -264,6 +291,12 @@
     <button id="closeQuestionBtn">Frage schließen</button>
     <button id="resetBoardBtn">Aktuelles Board resetten</button>
     <button class="danger" id="newGameBtn">Neues Spiel</button>
+
+    <label class="volume-wrap">
+      Sound
+      <input id="volumeSlider" type="range" min="0" max="100" value="60">
+      <span id="volumeValue">60%</span>
+    </label>
   </div>
 
   <div class="wrap">
@@ -355,9 +388,11 @@
     const correctSound = document.getElementById("correctSound");
     const wrongSound = document.getElementById("wrongSound");
 
+    const volumeSlider = document.getElementById("volumeSlider");
+    const volumeValue = document.getElementById("volumeValue");
+
     const categoryNodes = [...document.querySelectorAll(".category")];
 
-    let lobbyPlayers = [];
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
     let boardCategories = {
@@ -380,6 +415,26 @@
 
     let selectedQuestion = null;
 
+    function applyVolume(volume) {
+      const v = Math.max(0, Math.min(1, volume));
+      buzzerSound.volume = v;
+      correctSound.volume = v;
+      wrongSound.volume = v;
+    }
+
+    const savedVolume = localStorage.getItem("hostVolume");
+    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.6;
+    volumeSlider.value = Math.round(startVolume * 100);
+    volumeValue.textContent = `${Math.round(startVolume * 100)}%`;
+    applyVolume(startVolume);
+
+    volumeSlider.addEventListener("input", () => {
+      const newVolume = Number(volumeSlider.value) / 100;
+      volumeValue.textContent = `${volumeSlider.value}%`;
+      localStorage.setItem("hostVolume", String(newVolume));
+      applyVolume(newVolume);
+    });
+
     function playSound(el) {
       if (!el) return;
       el.pause();
@@ -400,7 +455,6 @@
 
     function saveCurrentBoardCategories() {
       boardCategories[activeBoard] = getCurrentCategories();
-
       socket.emit("updateCategories", {
         board: activeBoard,
         categories: boardCategories[activeBoard]
@@ -437,14 +491,12 @@
     function renderPlayerSelect(players) {
       const currentValue = playerSelect.value;
       playerSelect.innerHTML = "";
-
       players.forEach((player) => {
         const option = document.createElement("option");
         option.value = player.name;
         option.textContent = `${player.name} (Slot ${player.slot})`;
         playerSelect.appendChild(option);
       });
-
       if (currentValue && [...playerSelect.options].some((o) => o.value === currentValue)) {
         playerSelect.value = currentValue;
       }
@@ -548,7 +600,6 @@
             renderPublicPreview(null, null);
 
             socket.emit("openQuestion", selectedQuestion);
-
             statusLine.textContent = `Private Vorschau geladen auf Board ${activeBoard}`;
           });
 
@@ -563,13 +614,11 @@
       renderCategoriesForBoard();
       updateBoardButtons();
       buildBoard();
-
       socket.emit("setCurrentBoard", boardNumber);
       statusLine.textContent = `Board ${boardNumber} ausgewählt`;
     }
 
     socket.on("lobbyUpdate", (players) => {
-      lobbyPlayers = players;
       renderPlayerSelect(players);
     });
 
@@ -632,56 +681,22 @@
 
     document.getElementById("board1Btn").onclick = () => switchBoard(1);
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
-
-    document.getElementById("showQuestionBtn").onclick = () => {
-      socket.emit("showQuestion");
-      statusLine.textContent = "Frage öffentlich eingeblendet";
-    };
-
-    document.getElementById("showAnswerBtn").onclick = () => {
-      socket.emit("showAnswer");
-      statusLine.textContent = "Antwort öffentlich eingeblendet";
-    };
-
-    document.getElementById("hideAnswerBtn").onclick = () => {
-      socket.emit("hideAnswer");
-      statusLine.textContent = "Antwort öffentlich ausgeblendet";
-    };
-
+    document.getElementById("showQuestionBtn").onclick = () => socket.emit("showQuestion");
+    document.getElementById("showAnswerBtn").onclick = () => socket.emit("showAnswer");
+    document.getElementById("hideAnswerBtn").onclick = () => socket.emit("hideAnswer");
     document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
     document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
-
-    document.getElementById("resetBuzzerBtn").onclick = () => {
-      socket.emit("resetBuzzer");
-      statusLine.textContent = "Buzzer zurückgesetzt";
-    };
-
-    document.getElementById("undoBtn").onclick = () => {
-      socket.emit("undoLastAction");
-      statusLine.textContent = "Letzte Aktion rückgängig gemacht";
-    };
-
-    document.getElementById("timer20Btn").onclick = () => {
-      socket.emit("timerStart", 20);
-      statusLine.textContent = "Timer gestartet";
-    };
-
-    document.getElementById("timerStopBtn").onclick = () => {
-      socket.emit("timerStop");
-      statusLine.textContent = "Timer gestoppt";
-    };
-
-    document.getElementById("timerResetBtn").onclick = () => {
-      socket.emit("timerReset");
-      statusLine.textContent = "Timer zurückgesetzt";
-    };
+    document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
+    document.getElementById("undoBtn").onclick = () => socket.emit("undoLastAction");
+    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
+    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
+    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
       selectedQuestion = null;
       renderPrivatePreview(null);
       renderPublicPreview(null, null);
-      statusLine.textContent = "Frage geschlossen";
     };
 
     document.getElementById("resetBoardBtn").onclick = () => {
@@ -689,16 +704,14 @@
       selectedQuestion = null;
       renderPrivatePreview(null);
       renderPublicPreview(null, null);
-      statusLine.textContent = `Board ${activeBoard} zurückgesetzt`;
     };
 
     document.getElementById("newGameBtn").onclick = () => {
-      if (!confirm("Wirklich neues Spiel starten? Boards, Fragen und Punkte werden zurückgesetzt.")) return;
+      if (!confirm("Wirklich neues Spiel starten?")) return;
       socket.emit("newGameReset");
       selectedQuestion = null;
       renderPrivatePreview(null);
       renderPublicPreview(null, null);
-      statusLine.textContent = "Neues Spiel gestartet";
     };
 
     document.getElementById("manualAddBtn").onclick = () => {
