@@ -242,6 +242,10 @@
     </div>
   </div>
 
+  <audio id="buzzerSound" src="/buzzer.mp3" preload="auto"></audio>
+  <audio id="correctSound" src="/correct.mp3" preload="auto"></audio>
+  <audio id="wrongSound" src="/wrong.mp3" preload="auto"></audio>
+
   <script>
     const socket = io();
 
@@ -256,8 +260,19 @@
     const board = document.getElementById("board");
     const values = [200,300,400,500,600];
 
+    const buzzerSound = document.getElementById("buzzerSound");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
     let playerName = localStorage.getItem("playerName") || "";
     document.getElementById("nameInput").value = playerName;
+
+    function playSound(el) {
+      if (!el) return;
+      el.pause();
+      el.currentTime = 0;
+      el.play().catch(() => {});
+    }
 
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
@@ -350,6 +365,21 @@
         statusEl.textContent = "Warte auf Freigabe der Frage";
       } else {
         statusEl.textContent = "";
+      }
+    });
+
+    socket.on("playerBuzzed", () => {
+      playSound(buzzerSound);
+    });
+
+    socket.on("answerResult", ({ result, name }) => {
+      if (!playerName) return;
+      if (!name || name.trim().toLowerCase() !== playerName.trim().toLowerCase()) return;
+
+      if (result === "correct") {
+        playSound(correctSound);
+      } else if (result === "wrong") {
+        playSound(wrongSound);
       }
     });
 
