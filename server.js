@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
     }
 
     res.writeHead(200, {
-      "Content-Type": contentTypes[ext] || "application/octet-stream",
+      "Content-Type": contentTypes[ext] || "application/octet-stream"
     });
     res.end(content);
   });
@@ -44,36 +44,40 @@ const io = new Server(server);
 const defaultCategories1 = ["Drachen", "LCK", "Lore", "Riot Pls", "Ordnung muss sein"];
 const defaultCategories2 = ["Champion Details", "Pick & Ban", "Wer bin Ich", "Fähigkeiten", "Ingame Quest"];
 
-const state = {
-  currentBoard: 1,
-  categoriesBoards: {
-    1: [...defaultCategories1],
-    2: [...defaultCategories2]
-  },
-  usedCellsBoards: {
-    1: [],
-    2: []
-  },
+function createInitialState() {
+  return {
+    currentBoard: 1,
+    categoriesBoards: {
+      1: [...defaultCategories1],
+      2: [...defaultCategories2]
+    },
+    usedCellsBoards: {
+      1: [],
+      2: []
+    },
 
-  currentQuestion: null,
-  questionPanelOpen: false,
-  questionVisible: false,
-  answerVisible: false,
+    currentQuestion: null,
+    questionPanelOpen: false,
+    questionVisible: false,
+    answerVisible: false,
 
-  firstBuzz: null,
-  buzzLocked: false,
-  eliminatedPlayers: [],
+    firstBuzz: null,
+    buzzLocked: false,
+    eliminatedPlayers: [],
 
-  scores: {},
-  lastAction: null,
-  lobbyPlayers: [],
+    scores: {},
+    lastAction: null,
+    lobbyPlayers: [],
 
-  timer: {
-    total: 0,
-    remaining: 0,
-    running: false
-  }
-};
+    timer: {
+      total: 0,
+      remaining: 0,
+      running: false
+    }
+  };
+}
+
+let state = createInitialState();
 
 function getUsedCells(boardNumber) {
   return state.usedCellsBoards[boardNumber] || [];
@@ -360,60 +364,60 @@ io.on("connection", (socket) => {
     emitState();
   });
 
- socket.on("markCorrect", () => {
-  if (!state.currentQuestion) return;
-  if (!state.firstBuzz) return;
+  socket.on("markCorrect", () => {
+    if (!state.currentQuestion) return;
+    if (!state.firstBuzz) return;
 
-  saveLastAction();
+    saveLastAction();
 
-  const name = String(state.firstBuzz).trim();
-  const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
+    const name = String(state.firstBuzz).trim();
+    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-  if (!(name in state.scores)) {
-    state.scores[name] = 0;
-  }
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
 
-  state.scores[name] += points;
+    state.scores[name] += points;
 
-  io.emit("answerResult", {
-    result: "correct",
-    name,
-    points
+    io.emit("answerResult", {
+      result: "correct",
+      name,
+      points
+    });
+
+    emitState();
   });
-
-  emitState();
-});
 
   socket.on("markWrong", () => {
-  if (!state.currentQuestion) return;
-  if (!state.firstBuzz) return;
+    if (!state.currentQuestion) return;
+    if (!state.firstBuzz) return;
 
-  saveLastAction();
+    saveLastAction();
 
-  const name = String(state.firstBuzz).trim();
-  const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
+    const name = String(state.firstBuzz).trim();
+    const points = Number(state.currentQuestion.value || 0) * getCurrentMultiplier();
 
-  if (!(name in state.scores)) {
-    state.scores[name] = 0;
-  }
+    if (!(name in state.scores)) {
+      state.scores[name] = 0;
+    }
 
-  state.scores[name] -= points;
+    state.scores[name] -= points;
 
-  if (!state.eliminatedPlayers.includes(name)) {
-    state.eliminatedPlayers.push(name);
-  }
+    if (!state.eliminatedPlayers.includes(name)) {
+      state.eliminatedPlayers.push(name);
+    }
 
-  state.firstBuzz = null;
-  state.buzzLocked = false;
+    state.firstBuzz = null;
+    state.buzzLocked = false;
 
-  io.emit("answerResult", {
-    result: "wrong",
-    name,
-    points
+    io.emit("answerResult", {
+      result: "wrong",
+      name,
+      points
+    });
+
+    emitState();
   });
-
-  emitState();
-});
 
   socket.on("manualAddPoints", ({ name, points }) => {
     const playerName = String(name || "").trim().slice(0, 24);
@@ -471,6 +475,40 @@ io.on("connection", (socket) => {
     emitState();
   });
 
+  socket.on("resetCurrentBoard", () => {
+    state.usedCellsBoards[state.currentBoard] = [];
+
+    if (state.currentQuestion && state.currentQuestion.board === state.currentBoard) {
+      state.currentQuestion = null;
+      state.questionPanelOpen = false;
+      state.questionVisible = false;
+      state.answerVisible = false;
+      state.firstBuzz = null;
+      state.buzzLocked = false;
+      state.eliminatedPlayers = [];
+    }
+
+    stopTimer();
+    state.timer.total = 0;
+    state.timer.remaining = 0;
+
+    emitState();
+  });
+
+  socket.on("newGameReset", () => {
+    const oldLobbyPlayers = [...state.lobbyPlayers];
+    state = createInitialState();
+    state.lobbyPlayers = oldLobbyPlayers;
+
+    for (const p of state.lobbyPlayers) {
+      if (!(p.name in state.scores)) state.scores[p.name] = 0;
+    }
+
+    stopTimer();
+    emitLobby();
+    emitState();
+  });
+
   socket.on("disconnect", () => {
     const before = state.lobbyPlayers.length;
     state.lobbyPlayers = state.lobbyPlayers.filter((p) => p.socketId !== socket.id);
@@ -480,16 +518,6 @@ io.on("connection", (socket) => {
       emitState();
     }
   });
-});
-
-socket.on("resetBoard", () => {
-  state.usedCellsBoards = { 1: [], 2: [] };
-  state.currentQuestion = null;
-  state.questionPanelOpen = false;
-  state.questionVisible = false;
-  state.answerVisible = false;
-
-  io.emit("syncState", state);
 });
 
 const PORT = process.env.PORT || 3000;
