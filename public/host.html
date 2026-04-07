@@ -53,6 +53,18 @@
       padding: 14px;
     }
 
+    .board-switch {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .board-switch .active-board {
+      background: #16a34a;
+    }
+
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -234,6 +246,13 @@
   </div>
 
   <div class="wrap">
+    <div class="board-switch">
+      <strong>Board wechseln:</strong>
+      <button id="board1Btn">Board 1</button>
+      <button id="board2Btn">Board 2</button>
+      <span class="muted" id="boardInfo"></span>
+    </div>
+
     <div class="categories" id="categories">
       <div class="category" contenteditable="true">Thema 1</div>
       <div class="category" contenteditable="true">Thema 2</div>
@@ -252,11 +271,11 @@
         <span class="muted">Hier siehst du, wie das große Overlay-Feld aussehen wird.</span>
       </div>
 
-      <div class="big-preview" id="preview">
+      <div class="big-preview">
         <div class="preview-category" id="previewCategory"></div>
         <div class="preview-value" id="previewValue"></div>
         <div class="preview-center" id="previewCenter"></div>
-        <div class="preview-answer" id="previewAnswer" style="display:none;"></div>
+        <div class="preview-answer" id="previewAnswer"></div>
       </div>
 
       <div class="manual-box">
@@ -280,6 +299,7 @@
     const playerSelect = document.getElementById("playerSelect");
     const manualPointsInput = document.getElementById("manualPointsInput");
     const statusLine = document.getElementById("statusLine");
+    const boardInfo = document.getElementById("boardInfo");
 
     const previewCategory = document.getElementById("previewCategory");
     const previewValue = document.getElementById("previewValue");
@@ -287,45 +307,83 @@
     const previewAnswer = document.getElementById("previewAnswer");
 
     let lobbyPlayers = [];
+    let activeBoard = 1;
+    let boardUsedCells = { 1: [], 2: [] };
 
-    const questionBank = [
-      { question: "Frage 1", answer: "Antwort 1", image: "" },
-      { question: "Frage 2", answer: "Antwort 2", image: "" },
-      { question: "Frage 3", answer: "Antwort 3", image: "" },
-      { question: "Frage 4", answer: "Antwort 4", image: "" },
-      { question: "Frage 5", answer: "Antwort 5", image: "" },
+    const questionBank = {
+      1: [
+        { question: "Frage 1", answer: "Antwort 1", image: "" },
+        { question: "Frage 2", answer: "Antwort 2", image: "" },
+        { question: "Frage 3", answer: "Antwort 3", image: "" },
+        { question: "Frage 4", answer: "Antwort 4", image: "" },
+        { question: "Frage 5", answer: "Antwort 5", image: "" },
 
-      { question: "Frage 6", answer: "Antwort 6", image: "" },
-      { question: "Frage 7", answer: "Antwort 7", image: "" },
-      { question: "Frage 8", answer: "Antwort 8", image: "" },
-      { question: "Frage 9", answer: "Antwort 9", image: "" },
-      { question: "Frage 10", answer: "Antwort 10", image: "" },
+        { question: "Frage 6", answer: "Antwort 6", image: "" },
+        { question: "Frage 7", answer: "Antwort 7", image: "" },
+        { question: "Frage 8", answer: "Antwort 8", image: "" },
+        { question: "Frage 9", answer: "Antwort 9", image: "" },
+        { question: "Frage 10", answer: "Antwort 10", image: "" },
 
-      { question: "Frage 11", answer: "Antwort 11", image: "" },
-      { question: "Frage 12", answer: "Antwort 12", image: "" },
-      { question: "Frage 13", answer: "Antwort 13", image: "" },
-      { question: "Frage 14", answer: "Antwort 14", image: "" },
-      { question: "Frage 15", answer: "Antwort 15", image: "" },
+        { question: "Frage 11", answer: "Antwort 11", image: "" },
+        { question: "Frage 12", answer: "Antwort 12", image: "" },
+        { question: "Frage 13", answer: "Antwort 13", image: "" },
+        { question: "Frage 14", answer: "Antwort 14", image: "" },
+        { question: "Frage 15", answer: "Antwort 15", image: "" },
 
-      { question: "Frage 16", answer: "Antwort 16", image: "" },
-      { question: "Frage 17", answer: "Antwort 17", image: "" },
-      { question: "Frage 18", answer: "Antwort 18", image: "" },
-      { question: "Frage 19", answer: "Antwort 19", image: "" },
-      { question: "Frage 20", answer: "Antwort 20", image: "" },
+        { question: "Frage 16", answer: "Antwort 16", image: "" },
+        { question: "Frage 17", answer: "Antwort 17", image: "" },
+        { question: "Frage 18", answer: "Antwort 18", image: "" },
+        { question: "Frage 19", answer: "Antwort 19", image: "" },
+        { question: "Frage 20", answer: "Antwort 20", image: "" },
 
-      { question: "Frage 21", answer: "Antwort 21", image: "" },
-      { question: "Frage 22", answer: "Antwort 22", image: "" },
-      { question: "Frage 23", answer: "Antwort 23", image: "" },
-      { question: "Frage 24", answer: "Antwort 24", image: "" },
-      { question: "Frage 25", answer: "Antwort 25", image: "" }
-    ];
+        { question: "Frage 21", answer: "Antwort 21", image: "" },
+        { question: "Frage 22", answer: "Antwort 22", image: "" },
+        { question: "Frage 23", answer: "Antwort 23", image: "" },
+        { question: "Frage 24", answer: "Antwort 24", image: "" },
+        { question: "Frage 25", answer: "Antwort 25", image: "" }
+      ],
+      2: [
+        { question: "Frage 26", answer: "Antwort 26", image: "" },
+        { question: "Frage 27", answer: "Antwort 27", image: "" },
+        { question: "Frage 28", answer: "Antwort 28", image: "" },
+        { question: "Frage 29", answer: "Antwort 29", image: "" },
+        { question: "Frage 30", answer: "Antwort 30", image: "" },
+
+        { question: "Frage 31", answer: "Antwort 31", image: "" },
+        { question: "Frage 32", answer: "Antwort 32", image: "" },
+        { question: "Frage 33", answer: "Antwort 33", image: "" },
+        { question: "Frage 34", answer: "Antwort 34", image: "" },
+        { question: "Frage 35", answer: "Antwort 35", image: "" },
+
+        { question: "Frage 36", answer: "Antwort 36", image: "" },
+        { question: "Frage 37", answer: "Antwort 37", image: "" },
+        { question: "Frage 38", answer: "Antwort 38", image: "" },
+        { question: "Frage 39", answer: "Antwort 39", image: "" },
+        { question: "Frage 40", answer: "Antwort 40", image: "" },
+
+        { question: "Frage 41", answer: "Antwort 41", image: "" },
+        { question: "Frage 42", answer: "Antwort 42", image: "" },
+        { question: "Frage 43", answer: "Antwort 43", image: "" },
+        { question: "Frage 44", answer: "Antwort 44", image: "" },
+        { question: "Frage 45", answer: "Antwort 45", image: "" },
+
+        { question: "Frage 46", answer: "Antwort 46", image: "" },
+        { question: "Frage 47", answer: "Antwort 47", image: "" },
+        { question: "Frage 48", answer: "Antwort 48", image: "" },
+        { question: "Frage 49", answer: "Antwort 49", image: "" },
+        { question: "Frage 50", answer: "Antwort 50", image: "" }
+      ]
+    };
 
     function getCategories() {
       return [...document.querySelectorAll(".category")].map((el) => el.textContent.trim() || "Thema");
     }
 
     function sendCategories() {
-      socket.emit("updateCategories", getCategories());
+      socket.emit("updateCategories", {
+        board: activeBoard,
+        categories: getCategories()
+      });
     }
 
     [...document.querySelectorAll(".category")].forEach((el) => {
@@ -343,12 +401,13 @@
         const index = row * 5 + col;
 
         cell.addEventListener("click", () => {
-          if (cell.classList.contains("used")) return;
+          if ((boardUsedCells[activeBoard] || []).includes(index)) return;
 
           const categories = getCategories();
-          const item = questionBank[index];
+          const item = questionBank[activeBoard][index];
 
           socket.emit("openQuestion", {
+            board: activeBoard,
             index,
             category: categories[col],
             value: values[row],
@@ -357,7 +416,7 @@
             image: item.image
           });
 
-          statusLine.textContent = "Fragenfeld geöffnet";
+          statusLine.textContent = `Fragenfeld auf Board ${activeBoard} geöffnet`;
         });
 
         board.appendChild(cell);
@@ -402,12 +461,32 @@
       }
     }
 
+    function paintBoard() {
+      cells.forEach((cell, i) => {
+        cell.classList.toggle("used", (boardUsedCells[activeBoard] || []).includes(i));
+      });
+    }
+
+    function updateBoardButtons() {
+      document.getElementById("board1Btn").classList.toggle("active-board", activeBoard === 1);
+      document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
+    }
+
     socket.on("lobbyUpdate", (players) => {
       lobbyPlayers = players;
       renderPlayerSelect(players);
     });
 
     socket.on("syncState", (state) => {
+      activeBoard = state.currentBoard || 1;
+      boardUsedCells = state.usedCellsBoards || { 1: [], 2: [] };
+
+      updateBoardButtons();
+      paintBoard();
+
+      renderScores(state.scores || {}, state.lobbyPlayers || []);
+      renderPlayerSelect(state.lobbyPlayers || []);
+
       if (state.categories && state.categories.length === 5) {
         const nodes = document.querySelectorAll(".category");
         state.categories.forEach((cat, i) => {
@@ -417,12 +496,8 @@
         });
       }
 
-      cells.forEach((cell, i) => {
-        cell.classList.toggle("used", (state.usedCells || []).includes(i));
-      });
-
-      renderScores(state.scores || {}, state.lobbyPlayers || []);
-      renderPlayerSelect(state.lobbyPlayers || []);
+      boardInfo.textContent =
+        `Aktiv: Board ${activeBoard} | Board 1 offen: ${25 - (boardUsedCells[1] || []).length} | Board 2 offen: ${25 - (boardUsedCells[2] || []).length}`;
 
       if (state.currentQuestion && state.questionPanelOpen) {
         previewCategory.textContent = state.currentQuestion.category || "";
@@ -471,6 +546,16 @@
         statusLine.textContent = `${name} hat manuell -${points} Punkte verloren`;
       }
     });
+
+    document.getElementById("board1Btn").onclick = () => {
+      socket.emit("setCurrentBoard", 1);
+      statusLine.textContent = "Board 1 ausgewählt";
+    };
+
+    document.getElementById("board2Btn").onclick = () => {
+      socket.emit("setCurrentBoard", 2);
+      statusLine.textContent = "Board 2 ausgewählt";
+    };
 
     document.getElementById("showQuestionBtn").onclick = () => {
       socket.emit("showQuestion");
