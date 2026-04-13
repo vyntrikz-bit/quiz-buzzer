@@ -22,13 +22,14 @@ const server = http.createServer((req, res) => {
     ".webp": "image/webp",
     ".gif": "image/gif",
     ".mp3": "audio/mpeg",
-    ".ogg": "audio/ogg"
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav"
   };
 
   fs.readFile(filePath, (err, content) => {
     if (err) {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Datei nicht gefunden");
+      res.end("File not found");
       return;
     }
 
@@ -41,8 +42,8 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server);
 
-const defaultCategories1 = ["Drachen", "LCK", "Lore", "Riot Pls", "Ordnung muss sein"];
-const defaultCategories2 = ["Champion Details", "Pick & Ban", "Wer bin Ich", "Fähigkeiten", "Ingame Quest"];
+const defaultCategories1 = ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"];
+const defaultCategories2 = ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"];
 
 function createInitialState() {
   return {
@@ -210,7 +211,7 @@ io.on("connection", (socket) => {
     if (!Array.isArray(categories) || categories.length !== 5) return;
 
     state.categoriesBoards[boardNumber] = categories.map(
-      (x) => String(x || "").trim().slice(0, 40) || "Thema"
+      (x) => String(x || "").trim().slice(0, 40) || "Category"
     );
 
     emitState();
@@ -522,5 +523,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server läuft auf Port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
