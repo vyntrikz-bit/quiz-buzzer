@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,11 +113,11 @@
 </head>
 <body>
   <h1>Quiz Lobby</h1>
-  <div class="sub">Gib deinen Namen ein und trete dem Spiel bei.</div>
+  <div class="sub">Enter your name and join the game.</div>
 
   <div class="join-box">
-    <input id="nameInput" placeholder="Dein Name">
-    <button id="joinBtn">Beitreten</button>
+    <input id="nameInput" placeholder="Your name">
+    <button id="joinBtn">Join</button>
   </div>
 
   <div class="status" id="status"></div>
@@ -125,7 +125,7 @@
   <div class="players" id="players"></div>
 
   <div class="footer-note">
-    Nach dem Beitritt wirst du automatisch zur Spieleransicht weitergeleitet.
+    After joining, you will automatically be redirected to the player view.
   </div>
 
   <script>
@@ -150,7 +150,7 @@
         div.className = "card";
         div.innerHTML = `
           <div class="slot">Slot ${slot}</div>
-          <div class="name">${player ? player.name : "Leer"}</div>
+          <div class="name">${player ? player.name : "Empty"}</div>
         `;
         playersEl.appendChild(div);
       }
@@ -159,13 +159,13 @@
     function joinLobby() {
       const name = nameInput.value.trim().slice(0, 24);
       if (!name) {
-        statusEl.textContent = "Bitte gib zuerst einen Namen ein.";
+        statusEl.textContent = "Please enter a name first.";
         return;
       }
 
       localStorage.setItem("playerName", name);
       socket.emit("joinLobby", name);
-      statusEl.textContent = "Beitritt wird verarbeitet...";
+      statusEl.textContent = "Joining...";
       joined = true;
     }
 
@@ -186,7 +186,7 @@
       );
 
       if (joined && existsInLobby) {
-        statusEl.textContent = "Erfolgreich beigetreten – Weiterleitung...";
+        statusEl.textContent = "Joined successfully – redirecting...";
         setTimeout(() => {
           window.location.href = "/player.html";
         }, 400);
@@ -195,7 +195,7 @@
 
     socket.on("lobbyFull", () => {
       joined = false;
-      statusEl.textContent = "Die Lobby ist voll.";
+      statusEl.textContent = "The lobby is full.";
     });
   </script>
 </body>
