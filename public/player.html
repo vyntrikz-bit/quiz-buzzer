@@ -306,7 +306,7 @@
     }
 
     const savedVolume = localStorage.getItem("playerVolume");
-    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.25;
+    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.15;
 
     volumeSlider.value = Math.round(startVolume * 100);
     volumeValue.textContent = `${Math.round(startVolume * 100)}%`;
