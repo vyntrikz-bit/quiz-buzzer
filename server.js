@@ -42,8 +42,8 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server);
 
-const defaultCategories1 = ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"];
-const defaultCategories2 = ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"];
+const defaultCategories1 = ["Basics", "Warframes", "Weapons", "Enemies", "Mods"];
+const defaultCategories2 = ["Planets & Locations", "Resources & Crafting", "Abilites & Energie", "Companions", "Game Modes"];
 
 function createInitialState() {
   return {
