@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -278,19 +278,19 @@
 </head>
 <body>
   <div class="topbar">
-    <button class="primary" id="showQuestionBtn">Frage anzeigen</button>
-    <button class="success" id="showAnswerBtn">Antwort anzeigen</button>
-    <button id="hideAnswerBtn">Antwort ausblenden</button>
-    <button class="success" id="correctBtn">Richtig</button>
-    <button class="danger" id="wrongBtn">Falsch</button>
-    <button class="warn" id="resetBuzzerBtn">Buzzer Reset</button>
+    <button class="primary" id="showQuestionBtn">Show Question</button>
+    <button class="success" id="showAnswerBtn">Show Answer</button>
+    <button id="hideAnswerBtn">Hide Answer</button>
+    <button class="success" id="correctBtn">Correct</button>
+    <button class="danger" id="wrongBtn">Wrong</button>
+    <button class="warn" id="resetBuzzerBtn">Reset Buzzer</button>
     <button class="purple" id="undoBtn">Undo</button>
-    <button id="timer20Btn">Timer 20s</button>
-    <button id="timerStopBtn">Timer Stop</button>
-    <button id="timerResetBtn">Timer Reset</button>
-    <button id="closeQuestionBtn">Frage schließen</button>
-    <button id="resetBoardBtn">Aktuelles Board resetten</button>
-    <button class="danger" id="newGameBtn">Neues Spiel</button>
+    <button id="timer20Btn">20s Timer</button>
+    <button id="timerStopBtn">Stop Timer</button>
+    <button id="timerResetBtn">Reset Timer</button>
+    <button id="closeQuestionBtn">Close Question</button>
+    <button id="resetBoardBtn">Reset Current Board</button>
+    <button class="danger" id="newGameBtn">New Game</button>
 
     <label class="volume-wrap">
       Sound
@@ -301,18 +301,18 @@
 
   <div class="wrap">
     <div class="board-switch">
-      <strong>Board wechseln:</strong>
+      <strong>Switch board:</strong>
       <button id="board1Btn">Board 1</button>
       <button id="board2Btn">Board 2</button>
       <span class="muted" id="boardInfo"></span>
     </div>
 
     <div class="categories" id="categories">
-      <div class="category" contenteditable="true">Drachen</div>
+      <div class="category" contenteditable="true">Dragons</div>
       <div class="category" contenteditable="true">LCK</div>
       <div class="category" contenteditable="true">Lore</div>
       <div class="category" contenteditable="true">Riot Pls</div>
-      <div class="category" contenteditable="true">Ordnung muss sein</div>
+      <div class="category" contenteditable="true">Order Must Be</div>
     </div>
 
     <div class="board" id="board"></div>
@@ -321,13 +321,13 @@
 
     <div class="panel">
       <div class="row">
-        <strong>Host Vorschau</strong>
-        <span class="muted">Links nur für dich, rechts was öffentlich live wäre.</span>
+        <strong>Host Preview</strong>
+        <span class="muted">Left is private for you, right is the public live view.</span>
       </div>
 
       <div class="preview-grid">
         <div class="preview-block">
-          <div class="preview-title">Private Vorschau für Host</div>
+          <div class="preview-title">Private Host Preview</div>
           <div class="big-preview">
             <div class="preview-category" id="privateCategory"></div>
             <div class="preview-value" id="privateValue"></div>
@@ -337,7 +337,7 @@
         </div>
 
         <div class="preview-block">
-          <div class="preview-title">Öffentliche Ansicht</div>
+          <div class="preview-title">Public View</div>
           <div class="big-preview">
             <div class="preview-category" id="publicCategory"></div>
             <div class="preview-value" id="publicValue"></div>
@@ -348,11 +348,11 @@
       </div>
 
       <div class="manual-box">
-        <strong>Backup Punkte:</strong>
+        <strong>Backup points:</strong>
         <select id="playerSelect"></select>
         <input id="manualPointsInput" type="number" min="1" step="1" value="100">
-        <button class="success" id="manualAddBtn">Punkte geben</button>
-        <button class="danger" id="manualSubtractBtn">Punkte abziehen</button>
+        <button class="success" id="manualAddBtn">Add Points</button>
+        <button class="danger" id="manualSubtractBtn">Subtract Points</button>
       </div>
 
       <div class="status-line" id="statusLine"></div>
@@ -396,75 +396,23 @@
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
     let boardCategories = {
-      1: ["Drachen", "LCK", "Lore", "Riot Pls", "Ordnung muss sein"],
-      2: ["Champion Details", "Pick & Ban", "Wer bin Ich", "Fähigkeiten", "Ingame Quest"]
+      1: ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"],
+      2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
     };
 
     const questionBank = {
-  1: [
-    { question: "Wie heißt die Ressource, die Aurelion Sol sammelt?", answer: "Stardust", image: "" },
-    { question: "Frage2", answer: "Antwort2", image: "" },
-    { question: "Frage3", answer: "Antwort3", image: "" },
-    { question: "Frage4", answer: "Antwort4", image: "" },
-    { question: "Frage5", answer: "Antwort5", image: "" },
+      1: Array.from({ length: 25 }, (_, i) => ({
+        question: `Question ${i + 1}`,
+        answer: `Answer ${i + 1}`,
+        image: ""
+      })),
+      2: Array.from({ length: 25 }, (_, i) => ({
+        question: `Question ${i + 26}`,
+        answer: `Answer ${i + 26}`,
+        image: ""
+      }))
+    };
 
-    { question: "Aus welcher Region von Runeterra stammt Smolder?", answer: "Camavor", image: "" },
-    { question: "Frage 7", answer: "Antwort 7", image: "" },
-    { question: "Frage 8", answer: "Antwort 8", image: "" },
-    { question: "Frage 9", answer: "Antwort 9", image: "" },
-    { question: "Frage 10", answer: "Antwort 10", image: "" },
-
-    { question: "Welche Ressource nutzt Shyvana statt Mana?", answer: "Fury", image: "" },
-    { question: "Frage 12", answer: "Antwort 12", image: "" },
-    { question: "Frage 13", answer: "Antwort 13", image: "" },
-    { question: "Frage 14", answer: "Antwort 14", image: "" },
-    { question: "Frage 15", answer: "Antwort 15", image: "" },
-
-    { question: "Welche Art von Execute nutzt Smolder ", answer: "Max HP", image: "" },
-    { question: "Frage 17", answer: "Antwort 17", image: "" },
-    { question: "Frage 18", answer: "Antwort 18", image: "" },
-    { question: "Frage 19", answer: "Antwort 19", image: "" },
-    { question: "Frage 20", answer: "Antwort 20", image: "" },
-
-    { question: "Frage 21", answer: "Antwort 21", image: "" },
-    { question: "Frage 22", answer: "Antwort 22", image: "" },
-    { question: "Frage 23", answer: "Antwort 23", image: "" },
-    { question: "Frage 24", answer: "Antwort 24", image: "" },
-    { question: "Frage 25", answer: "Antwort 25", image: "" }
-  ],
-
-  2: [
-    { question: "Welcher Champion hat 2 Pistolen und ein komplexes Kit?", answer: "Aphelios", image: "" },
-    { question: "Was bedeutet First Pick im Draft?", answer: "Erste Auswahl eines Champions", image: "" },
-    { question: "Ich bin ein Yordle mit Pilzen. Wer bin ich?", answer: "Teemo", image: "" },
-    { question: "Welche Fähigkeit von Blitzcrank zieht Gegner heran?", answer: "Q", image: "" },
-    { question: "Welche Ingame-Quest gibt es zwischen Kha'Zix und Rengar?", answer: "Die Jagd", image: "" },
-
-    { question: "Frage 31", answer: "Antwort 31", image: "" },
-    { question: "Frage 32", answer: "Antwort 32", image: "" },
-    { question: "Frage 33", answer: "Antwort 33", image: "" },
-    { question: "Frage 34", answer: "Antwort 34", image: "" },
-    { question: "Frage 35", answer: "Antwort 35", image: "" },
-
-    { question: "Frage 36", answer: "Antwort 36", image: "" },
-    { question: "Frage 37", answer: "Antwort 37", image: "" },
-    { question: "Frage 38", answer: "Antwort 38", image: "" },
-    { question: "Frage 39", answer: "Antwort 39", image: "" },
-    { question: "Frage 40", answer: "Antwort 40", image: "" },
-
-    { question: "Frage 41", answer: "Antwort 41", image: "" },
-    { question: "Frage 42", answer: "Antwort 42", image: "" },
-    { question: "Frage 43", answer: "Antwort 43", image: "" },
-    { question: "Frage 44", answer: "Antwort 44", image: "" },
-    { question: "Frage 45", answer: "Antwort 45", image: "" },
-
-    { question: "Frage 46", answer: "Antwort 46", image: "" },
-    { question: "Frage 47", answer: "Antwort 47", image: "" },
-    { question: "Frage 48", answer: "Antwort 48", image: "" },
-    { question: "Frage 49", answer: "Antwort 49", image: "" },
-    { question: "Frage 50", answer: "Antwort 50", image: "" }
-  ]
-};
     let selectedQuestion = null;
 
     function applyVolume(volume) {
@@ -495,13 +443,13 @@
     }
 
     function getCurrentCategories() {
-      return categoryNodes.map((el) => el.textContent.trim() || "Thema");
+      return categoryNodes.map((el) => el.textContent.trim() || "Category");
     }
 
     function renderCategoriesForBoard() {
-      const cats = boardCategories[activeBoard] || ["Thema 1", "Thema 2", "Thema 3", "Thema 4", "Thema 5"];
+      const cats = boardCategories[activeBoard] || ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"];
       categoryNodes.forEach((node, i) => {
-        node.textContent = cats[i] || "Thema";
+        node.textContent = cats[i] || "Category";
       });
     }
 
@@ -652,7 +600,7 @@
             renderPublicPreview(null, null);
 
             socket.emit("openQuestion", selectedQuestion);
-            statusLine.textContent = `Private Vorschau geladen auf Board ${activeBoard}`;
+            statusLine.textContent = `Private preview loaded on board ${activeBoard}`;
           });
 
           board.appendChild(cell);
@@ -667,7 +615,7 @@
       updateBoardButtons();
       buildBoard();
       socket.emit("setCurrentBoard", boardNumber);
-      statusLine.textContent = `Board ${boardNumber} ausgewählt`;
+      statusLine.textContent = `Board ${boardNumber} selected`;
     }
 
     socket.on("lobbyUpdate", (players) => {
@@ -693,7 +641,7 @@
       renderPlayerSelect(state.lobbyPlayers || []);
 
       boardInfo.textContent =
-        `Aktiv: Board ${activeBoard} | Board 1 offen: ${25 - (boardUsedCells[1] || []).length} | Board 2 offen: ${25 - (boardUsedCells[2] || []).length}`;
+        `Active: Board ${activeBoard} | Board 1 open: ${25 - (boardUsedCells[1] || []).length} | Board 2 open: ${25 - (boardUsedCells[2] || []).length}`;
 
       if (state.currentQuestion) {
         selectedQuestion = state.currentQuestion;
@@ -716,18 +664,18 @@
     socket.on("answerResult", ({ result, name, points }) => {
       if (result === "correct") {
         playSound(correctSound);
-        statusLine.textContent = `${name} bekommt automatisch +${points} Punkte`;
+        statusLine.textContent = `${name} gets +${points} points automatically`;
       } else {
         playSound(wrongSound);
-        statusLine.textContent = `${name} bekommt automatisch -${points} Punkte`;
+        statusLine.textContent = `${name} gets -${points} points automatically`;
       }
     });
 
     socket.on("manualScoreChanged", ({ type, name, points }) => {
       if (type === "add") {
-        statusLine.textContent = `${name} hat manuell +${points} Punkte bekommen`;
+        statusLine.textContent = `${name} got +${points} points manually`;
       } else {
-        statusLine.textContent = `${name} hat manuell -${points} Punkte verloren`;
+        statusLine.textContent = `${name} lost -${points} points manually`;
       }
     });
 
@@ -759,7 +707,7 @@
     };
 
     document.getElementById("newGameBtn").onclick = () => {
-      if (!confirm("Wirklich neues Spiel starten?")) return;
+      if (!confirm("Do you really want to start a new game?")) return;
       socket.emit("newGameReset");
       selectedQuestion = null;
       renderPrivatePreview(null);
