@@ -413,16 +413,16 @@
           <div class="editor-grid">
             <div class="muted" id="selectedCellInfo">Select a cell first, then edit the question.</div>
 
-          <div class="editor-row two">
-  <div>
-    <label class="simple-label" for="editorCategory">Category</label>
-    <select id="editorCategory"></select>
-  </div>
-  <div>
-    <label class="simple-label" for="editorValue">Value</label>
-    <input id="editorValue" type="text" readonly>
-  </div>
-</div>
+            <div class="editor-row two">
+              <div>
+                <label class="simple-label" for="editorCategory">Category</label>
+                <select id="editorCategory"></select>
+              </div>
+              <div>
+                <label class="simple-label" for="editorValue">Value</label>
+                <input id="editorValue" type="text" readonly>
+              </div>
+            </div>
 
             <div>
               <label class="simple-label" for="editorQuestion">Question</label>
@@ -543,16 +543,18 @@
       2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
     };
 
-    const STORAGE_KEY = "quizQuestionBank_editor_v3";
+    const STORAGE_KEY = "quizQuestionBank_editor_v4";
 
     function createDefaultQuestionBank() {
       return {
         1: Array.from({ length: 25 }, (_, i) => ({
+          category: "",
           question: `Question ${i + 1}`,
           answer: `Answer ${i + 1}`,
           image: ""
         })),
         2: Array.from({ length: 25 }, (_, i) => ({
+          category: "",
           question: `Question ${i + 26}`,
           answer: `Answer ${i + 26}`,
           image: ""
@@ -607,18 +609,29 @@
       el.play().catch(() => {});
     }
 
-   function renderCategoriesForBoard() {
-  const cats = boardCategories[activeBoard];
-  document.querySelectorAll(".category").forEach((node, i) => {
-    node.textContent = cats[i] || "Category";
-  });
+    function refreshEditorCategoryOptions() {
+      editorCategory.innerHTML = "";
+      (boardCategories[activeBoard] || []).forEach((cat) => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        editorCategory.appendChild(option);
+      });
+    }
 
-  catInputs.forEach((input, i) => {
-    input.value = cats[i] || "";
-  });
+    function renderCategoriesForBoard() {
+      const cats = boardCategories[activeBoard];
 
-  refreshEditorCategoryOptions();
-}
+      document.querySelectorAll(".category").forEach((node, i) => {
+        node.textContent = cats[i] || "Category";
+      });
+
+      catInputs.forEach((input, i) => {
+        input.value = cats[i] || "";
+      });
+
+      refreshEditorCategoryOptions();
+    }
 
     function saveCategoriesFromInputs() {
       boardCategories[activeBoard] = catInputs.map(input => input.value.trim() || "Category");
@@ -632,17 +645,7 @@
         loadSelectedIntoEditor();
       }
     }
-    
-function refreshEditorCategoryOptions() {
-  editorCategory.innerHTML = "";
 
-  (boardCategories[activeBoard] || []).forEach((cat) => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    editorCategory.appendChild(option);
-  });
-}
     function renderScores(scores, players) {
       const slotMap = { 1: null, 2: null, 3: null, 4: null, 5: null };
       (players || []).forEach((p) => {
@@ -770,6 +773,7 @@ function refreshEditorCategoryOptions() {
             selectedIndex = index;
             loadSelectedIntoEditor();
             highlightSelectedCell();
+            statusLine.textContent = `Cell selected on Board ${activeBoard}`;
           });
 
           board.appendChild(cell);
@@ -793,18 +797,22 @@ function refreshEditorCategoryOptions() {
       const col = selectedIndex % 5;
       const item = questionBank[activeBoard][selectedIndex];
 
+      const categoryValue = item.category || boardCategories[activeBoard][col];
+
       selectedQuestion = {
         board: activeBoard,
         index: selectedIndex,
-        category: boardCategories[activeBoard][col],
+        category: categoryValue,
         value: values[row],
         question: item.question || "",
         answer: item.answer || "",
         image: item.image || ""
       };
 
-      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${boardCategories[activeBoard][col]} | ${values[row]}`;
-      editorCategory.value = selectedQuestion.category;
+      refreshEditorCategoryOptions();
+
+      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${categoryValue} | ${values[row]}`;
+      editorCategory.value = categoryValue;
       editorValue.value = selectedQuestion.value;
       editorQuestion.value = selectedQuestion.question;
       editorAnswer.value = selectedQuestion.answer;
@@ -820,6 +828,7 @@ function refreshEditorCategoryOptions() {
       }
 
       questionBank[activeBoard][selectedIndex] = {
+        category: editorCategory.value.trim(),
         question: editorQuestion.value.trim(),
         answer: editorAnswer.value.trim(),
         image: editorImage.value.trim()
@@ -855,18 +864,10 @@ function refreshEditorCategoryOptions() {
 
     document.getElementById("toggleCategoryEditorBtn").onclick = () => togglePanel("categories");
     document.getElementById("toggleQuestionEditorBtn").onclick = () => togglePanel("question");
-
     document.getElementById("saveCategoriesBtn").onclick = saveCategoriesFromInputs;
-
     document.getElementById("saveQuestionBtn").onclick = saveSelectedQuestion;
-
-    document.getElementById("clearImageBtn").onclick = () => {
-      editorImage.value = "";
-    };
-
-    document.getElementById("loadSelectedBtn").onclick = () => {
-      loadSelectedIntoEditor();
-    };
+    document.getElementById("clearImageBtn").onclick = () => { editorImage.value = ""; };
+    document.getElementById("loadSelectedBtn").onclick = () => { loadSelectedIntoEditor(); };
 
     socket.on("lobbyUpdate", (players) => {
       renderPlayerSelect(players);
@@ -935,7 +936,7 @@ function refreshEditorCategoryOptions() {
       selectedQuestion = {
         board: activeBoard,
         index: selectedIndex,
-        category: boardCategories[activeBoard][col],
+        category: item.category || boardCategories[activeBoard][col],
         value: values[row],
         question: item.question || "",
         answer: item.answer || "",
