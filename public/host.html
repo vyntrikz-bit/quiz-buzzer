@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz Host</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
@@ -25,23 +25,31 @@
       align-items: center;
     }
 
-    button, select, input {
-      padding: 12px 16px;
+    button, select, input, textarea {
       border: none;
       border-radius: 10px;
       font-size: 15px;
+      box-sizing: border-box;
     }
 
     button {
+      padding: 12px 16px;
       font-weight: bold;
       cursor: pointer;
       background: #334155;
       color: white;
     }
 
-    select, input[type="number"] {
+    input, select, textarea {
       background: #1f2937;
       color: white;
+      padding: 12px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      width: 100%;
     }
 
     .primary { background: #2563eb; }
@@ -62,8 +70,9 @@
     }
 
     .volume-wrap input[type="range"] {
-      padding: 0;
       width: 130px;
+      padding: 0;
+      background: transparent;
     }
 
     .wrap {
@@ -114,11 +123,29 @@
       font-weight: 900;
       cursor: pointer;
       user-select: none;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
     }
 
     .cell.used {
       opacity: 0.28;
       cursor: default;
+    }
+
+    .cell.selected {
+      outline: 4px solid #60a5fa;
+      outline-offset: -4px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+      margin-top: 18px;
     }
 
     .score-grid {
@@ -148,17 +175,16 @@
     }
 
     .panel {
-      margin-top: 18px;
       background: #111827;
       border-radius: 14px;
       padding: 18px;
     }
 
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
+    .panel-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #93c5fd;
     }
 
     .muted {
@@ -166,8 +192,36 @@
       font-size: 14px;
     }
 
+    .editor-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .editor-row {
+      display: grid;
+      gap: 10px;
+    }
+
+    .editor-row.two {
+      grid-template-columns: 1fr 140px;
+    }
+
+    .editor-row label,
+    .simple-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
     .preview-grid {
-      margin-top: 14px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
@@ -264,14 +318,29 @@
       min-height: 28px;
     }
 
-    @media (max-width: 1100px) {
+    .editor-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 1200px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
       .preview-grid {
         grid-template-columns: 1fr;
       }
+
       .categories,
       .board,
       .score-grid {
         grid-template-columns: repeat(2, 1fr);
+      }
+
+      .editor-row.two {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -319,43 +388,87 @@
 
     <div class="score-grid" id="scoreGrid"></div>
 
-    <div class="panel">
-      <div class="row">
-        <strong>Host Preview</strong>
-        <span class="muted">Left is private for you, right is the public live view.</span>
-      </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">Question Editor</div>
 
-      <div class="preview-grid">
-        <div class="preview-block">
-          <div class="preview-title">Private Host Preview</div>
-          <div class="big-preview">
-            <div class="preview-category" id="privateCategory"></div>
-            <div class="preview-value" id="privateValue"></div>
-            <div class="preview-center" id="privateCenter"></div>
-            <div class="preview-answer" id="privateAnswer"></div>
+        <div class="editor-grid">
+          <div class="muted" id="selectedCellInfo">Select a cell to edit its question.</div>
+
+          <div class="editor-row two">
+            <div>
+              <label class="simple-label" for="editorCategory">Category</label>
+              <input id="editorCategory" type="text" readonly>
+            </div>
+            <div>
+              <label class="simple-label" for="editorValue">Value</label>
+              <input id="editorValue" type="text" readonly>
+            </div>
+          </div>
+
+          <div>
+            <label class="simple-label" for="editorQuestion">Question</label>
+            <textarea id="editorQuestion" placeholder="Type the question here..."></textarea>
+          </div>
+
+          <div>
+            <label class="simple-label" for="editorAnswer">Answer</label>
+            <textarea id="editorAnswer" placeholder="Type the answer here..."></textarea>
+          </div>
+
+          <div>
+            <label class="simple-label" for="editorImage">Image URL (optional)</label>
+            <input id="editorImage" type="text" placeholder="/images/example.png">
+          </div>
+
+          <div class="editor-actions">
+            <button class="success" id="saveQuestionBtn">Save Question</button>
+            <button id="clearImageBtn">Clear Image</button>
+            <button id="loadSelectedBtn">Reload Selected</button>
+          </div>
+
+          <div class="small-note">
+            Tip: Click a board cell, edit the question here, then press <strong>Save Question</strong>.
+            Questions are saved in your browser.
           </div>
         </div>
 
-        <div class="preview-block">
-          <div class="preview-title">Public View</div>
-          <div class="big-preview">
-            <div class="preview-category" id="publicCategory"></div>
-            <div class="preview-value" id="publicValue"></div>
-            <div class="preview-center" id="publicCenter"></div>
-            <div class="preview-answer" id="publicAnswer"></div>
-          </div>
+        <div class="status-line" id="statusLine"></div>
+
+        <div class="manual-box">
+          <strong>Backup points:</strong>
+          <select id="playerSelect"></select>
+          <input id="manualPointsInput" type="number" min="1" step="1" value="100">
+          <button class="success" id="manualAddBtn">Add Points</button>
+          <button class="danger" id="manualSubtractBtn">Subtract Points</button>
         </div>
       </div>
 
-      <div class="manual-box">
-        <strong>Backup points:</strong>
-        <select id="playerSelect"></select>
-        <input id="manualPointsInput" type="number" min="1" step="1" value="100">
-        <button class="success" id="manualAddBtn">Add Points</button>
-        <button class="danger" id="manualSubtractBtn">Subtract Points</button>
-      </div>
+      <div class="panel">
+        <div class="panel-title">Preview</div>
 
-      <div class="status-line" id="statusLine"></div>
+        <div class="preview-grid">
+          <div class="preview-block">
+            <div class="preview-title">Private Host Preview</div>
+            <div class="big-preview">
+              <div class="preview-category" id="privateCategory"></div>
+              <div class="preview-value" id="privateValue"></div>
+              <div class="preview-center" id="privateCenter"></div>
+              <div class="preview-answer" id="privateAnswer"></div>
+            </div>
+          </div>
+
+          <div class="preview-block">
+            <div class="preview-title">Public View</div>
+            <div class="big-preview">
+              <div class="preview-category" id="publicCategory"></div>
+              <div class="preview-value" id="publicValue"></div>
+              <div class="preview-center" id="publicCenter"></div>
+              <div class="preview-answer" id="publicAnswer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -384,6 +497,13 @@
     const publicCenter = document.getElementById("publicCenter");
     const publicAnswer = document.getElementById("publicAnswer");
 
+    const editorCategory = document.getElementById("editorCategory");
+    const editorValue = document.getElementById("editorValue");
+    const editorQuestion = document.getElementById("editorQuestion");
+    const editorAnswer = document.getElementById("editorAnswer");
+    const editorImage = document.getElementById("editorImage");
+    const selectedCellInfo = document.getElementById("selectedCellInfo");
+
     const buzzerSound = document.getElementById("buzzerSound");
     const correctSound = document.getElementById("correctSound");
     const wrongSound = document.getElementById("wrongSound");
@@ -396,24 +516,46 @@
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
     let boardCategories = {
-      1: ["Basics", "Warframes", "Weapons", "Enemies", "Mods"],
-      2: ["Planets & Locations", "Resources & Crafting", "Abilities & Energie", "Companions", "Game Modes"]
+      1: ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"],
+      2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
     };
 
-    const questionBank = {
-      1: Array.from({ length: 25 }, (_, i) => ({
-        question: `Question ${i + 1}`,
-        answer: `Answer ${i + 1}`,
-        image: ""
-      })),
-      2: Array.from({ length: 25 }, (_, i) => ({
-        question: `Question ${i + 26}`,
-        answer: `Answer ${i + 26}`,
-        image: ""
-      }))
-    };
+    const STORAGE_KEY = "quizQuestionBank_v2_en";
 
+    function createDefaultQuestionBank() {
+      return {
+        1: Array.from({ length: 25 }, (_, i) => ({
+          question: `Question ${i + 1}`,
+          answer: `Answer ${i + 1}`,
+          image: ""
+        })),
+        2: Array.from({ length: 25 }, (_, i) => ({
+          question: `Question ${i + 26}`,
+          answer: `Answer ${i + 26}`,
+          image: ""
+        }))
+      };
+    }
+
+    function loadQuestionBank() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return createDefaultQuestionBank();
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed["1"] || !parsed["2"]) return createDefaultQuestionBank();
+        return parsed;
+      } catch {
+        return createDefaultQuestionBank();
+      }
+    }
+
+    function saveQuestionBank() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(questionBank));
+    }
+
+    let questionBank = loadQuestionBank();
     let selectedQuestion = null;
+    let selectedIndex = null;
 
     function applyVolume(volume) {
       const v = Math.max(0, Math.min(1, volume));
@@ -565,6 +707,58 @@
       document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
     }
 
+    function updateEditorFields() {
+      if (selectedIndex === null) {
+        selectedCellInfo.textContent = "Select a cell to edit its question.";
+        editorCategory.value = "";
+        editorValue.value = "";
+        editorQuestion.value = "";
+        editorAnswer.value = "";
+        editorImage.value = "";
+        return;
+      }
+
+      const col = selectedIndex % 5;
+      const row = Math.floor(selectedIndex / 5);
+      const item = questionBank[activeBoard][selectedIndex];
+
+      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${boardCategories[activeBoard][col]} | ${values[row]}`;
+      editorCategory.value = boardCategories[activeBoard][col] || "";
+      editorValue.value = values[row];
+      editorQuestion.value = item.question || "";
+      editorAnswer.value = item.answer || "";
+      editorImage.value = item.image || "";
+    }
+
+    function highlightSelectedCell() {
+      const cells = board.querySelectorAll(".cell");
+      cells.forEach((cell, i) => {
+        cell.classList.toggle("selected", i === selectedIndex);
+      });
+    }
+
+    function selectCell(index) {
+      selectedIndex = index;
+      const col = index % 5;
+      const row = Math.floor(index / 5);
+      const item = questionBank[activeBoard][index];
+
+      selectedQuestion = {
+        board: activeBoard,
+        index,
+        category: boardCategories[activeBoard][col],
+        value: values[row],
+        question: item.question || "",
+        answer: item.answer || "",
+        image: item.image || ""
+      };
+
+      updateEditorFields();
+      highlightSelectedCell();
+      renderPrivatePreview(selectedQuestion);
+      renderPublicPreview(null, null);
+    }
+
     function buildBoard() {
       board.innerHTML = "";
 
@@ -580,27 +774,12 @@
             cell.classList.add("used");
           }
 
+          if (selectedIndex === index) {
+            cell.classList.add("selected");
+          }
+
           cell.addEventListener("click", () => {
-            if ((boardUsedCells[activeBoard] || []).includes(index)) return;
-
-            const item = questionBank[activeBoard][index];
-            const cats = boardCategories[activeBoard];
-
-            selectedQuestion = {
-              board: activeBoard,
-              index,
-              category: cats[col],
-              value: values[row],
-              question: item.question,
-              answer: item.answer,
-              image: item.image
-            };
-
-            renderPrivatePreview(selectedQuestion);
-            renderPublicPreview(null, null);
-
-            socket.emit("openQuestion", selectedQuestion);
-            statusLine.textContent = `Private preview loaded on board ${activeBoard}`;
+            selectCell(index);
           });
 
           board.appendChild(cell);
@@ -611,12 +790,57 @@
     function switchBoard(boardNumber) {
       saveCurrentBoardCategories();
       activeBoard = boardNumber;
+      selectedIndex = null;
+      selectedQuestion = null;
       renderCategoriesForBoard();
       updateBoardButtons();
       buildBoard();
+      updateEditorFields();
+      renderPrivatePreview(null);
+      renderPublicPreview(null, null);
       socket.emit("setCurrentBoard", boardNumber);
       statusLine.textContent = `Board ${boardNumber} selected`;
     }
+
+    document.getElementById("saveQuestionBtn").onclick = () => {
+      if (selectedIndex === null) {
+        statusLine.textContent = "Please select a cell first";
+        return;
+      }
+
+      questionBank[activeBoard][selectedIndex] = {
+        question: editorQuestion.value.trim(),
+        answer: editorAnswer.value.trim(),
+        image: editorImage.value.trim()
+      };
+
+      saveQuestionBank();
+
+      const col = selectedIndex % 5;
+      const row = Math.floor(selectedIndex / 5);
+
+      selectedQuestion = {
+        board: activeBoard,
+        index: selectedIndex,
+        category: boardCategories[activeBoard][col],
+        value: values[row],
+        question: questionBank[activeBoard][selectedIndex].question,
+        answer: questionBank[activeBoard][selectedIndex].answer,
+        image: questionBank[activeBoard][selectedIndex].image
+      };
+
+      renderPrivatePreview(selectedQuestion);
+      statusLine.textContent = `Question saved for Board ${activeBoard}`;
+    };
+
+    document.getElementById("clearImageBtn").onclick = () => {
+      editorImage.value = "";
+    };
+
+    document.getElementById("loadSelectedBtn").onclick = () => {
+      updateEditorFields();
+      if (selectedQuestion) renderPrivatePreview(selectedQuestion);
+    };
 
     socket.on("lobbyUpdate", (players) => {
       renderPlayerSelect(players);
@@ -643,18 +867,7 @@
       boardInfo.textContent =
         `Active: Board ${activeBoard} | Board 1 open: ${25 - (boardUsedCells[1] || []).length} | Board 2 open: ${25 - (boardUsedCells[2] || []).length}`;
 
-      if (state.currentQuestion) {
-        selectedQuestion = state.currentQuestion;
-      }
-
-      renderPrivatePreview(selectedQuestion);
       renderPublicPreview(state.currentQuestion, state);
-
-      if (!state.currentQuestion && !state.questionPanelOpen) {
-        selectedQuestion = null;
-        renderPrivatePreview(null);
-        renderPublicPreview(null, null);
-      }
     });
 
     socket.on("playerBuzzed", () => {
@@ -681,9 +894,43 @@
 
     document.getElementById("board1Btn").onclick = () => switchBoard(1);
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
-    document.getElementById("showQuestionBtn").onclick = () => socket.emit("showQuestion");
-    document.getElementById("showAnswerBtn").onclick = () => socket.emit("showAnswer");
-    document.getElementById("hideAnswerBtn").onclick = () => socket.emit("hideAnswer");
+
+    document.getElementById("showQuestionBtn").onclick = () => {
+      if (selectedIndex === null) {
+        statusLine.textContent = "Please select a cell first";
+        return;
+      }
+
+      const col = selectedIndex % 5;
+      const row = Math.floor(selectedIndex / 5);
+      const item = questionBank[activeBoard][selectedIndex];
+
+      selectedQuestion = {
+        board: activeBoard,
+        index: selectedIndex,
+        category: boardCategories[activeBoard][col],
+        value: values[row],
+        question: item.question || "",
+        answer: item.answer || "",
+        image: item.image || ""
+      };
+
+      renderPrivatePreview(selectedQuestion);
+      socket.emit("openQuestion", selectedQuestion);
+      socket.emit("showQuestion");
+      statusLine.textContent = "Question shown publicly";
+    };
+
+    document.getElementById("showAnswerBtn").onclick = () => {
+      socket.emit("showAnswer");
+      statusLine.textContent = "Answer shown publicly";
+    };
+
+    document.getElementById("hideAnswerBtn").onclick = () => {
+      socket.emit("hideAnswer");
+      statusLine.textContent = "Answer hidden";
+    };
+
     document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
     document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
     document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
@@ -694,24 +941,19 @@
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
-      selectedQuestion = null;
-      renderPrivatePreview(null);
       renderPublicPreview(null, null);
+      statusLine.textContent = "Question closed";
     };
 
     document.getElementById("resetBoardBtn").onclick = () => {
       socket.emit("resetCurrentBoard");
-      selectedQuestion = null;
-      renderPrivatePreview(null);
-      renderPublicPreview(null, null);
+      statusLine.textContent = `Board ${activeBoard} reset`;
     };
 
     document.getElementById("newGameBtn").onclick = () => {
       if (!confirm("Do you really want to start a new game?")) return;
       socket.emit("newGameReset");
-      selectedQuestion = null;
-      renderPrivatePreview(null);
-      renderPublicPreview(null, null);
+      statusLine.textContent = "New game started";
     };
 
     document.getElementById("manualAddBtn").onclick = () => {
@@ -731,6 +973,7 @@
     renderCategoriesForBoard();
     updateBoardButtons();
     buildBoard();
+    updateEditorFields();
   </script>
 </body>
 </html>
