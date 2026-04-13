@@ -21,7 +21,7 @@
       background: #121a2d;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
       align-items: center;
     }
 
@@ -101,7 +101,6 @@
       text-align: center;
       font-size: 20px;
       font-weight: 700;
-      outline: none;
       min-height: 28px;
     }
 
@@ -143,7 +142,7 @@
 
     .grid-2 {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1.1fr 0.9fr;
       gap: 16px;
       margin-top: 18px;
     }
@@ -192,6 +191,10 @@
       font-size: 14px;
     }
 
+    .hidden {
+      display: none;
+    }
+
     .editor-grid {
       display: grid;
       gap: 10px;
@@ -206,19 +209,16 @@
       grid-template-columns: 1fr 140px;
     }
 
-    .editor-row label,
+    .editor-row.five {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
     .simple-label {
       display: block;
       font-size: 13px;
       font-weight: 700;
       color: #cbd5e1;
       margin-bottom: 6px;
-    }
-
-    .small-note {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #94a3b8;
     }
 
     .preview-grid {
@@ -318,12 +318,6 @@
       min-height: 28px;
     }
 
-    .editor-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     @media (max-width: 1200px) {
       .grid-2 {
         grid-template-columns: 1fr;
@@ -335,7 +329,8 @@
 
       .categories,
       .board,
-      .score-grid {
+      .score-grid,
+      .editor-row.five {
         grid-template-columns: repeat(2, 1fr);
       }
 
@@ -373,15 +368,19 @@
       <strong>Switch board:</strong>
       <button id="board1Btn">Board 1</button>
       <button id="board2Btn">Board 2</button>
+
+      <button id="toggleCategoryEditorBtn">Edit Categories</button>
+      <button id="toggleQuestionEditorBtn">Edit Question</button>
+
       <span class="muted" id="boardInfo"></span>
     </div>
 
     <div class="categories" id="categories">
-      <div class="category" contenteditable="true">Dragons</div>
-      <div class="category" contenteditable="true">LCK</div>
-      <div class="category" contenteditable="true">Lore</div>
-      <div class="category" contenteditable="true">Riot Pls</div>
-      <div class="category" contenteditable="true">Order Must Be</div>
+      <div class="category">Dragons</div>
+      <div class="category">LCK</div>
+      <div class="category">Lore</div>
+      <div class="category">Riot Pls</div>
+      <div class="category">Order Must Be</div>
     </div>
 
     <div class="board" id="board"></div>
@@ -390,46 +389,61 @@
 
     <div class="grid-2">
       <div class="panel">
-        <div class="panel-title">Question Editor</div>
+        <div class="panel-title">Editor</div>
 
-        <div class="editor-grid">
-          <div class="muted" id="selectedCellInfo">Select a cell to edit its question.</div>
+        <div id="categoryEditor" class="hidden">
+          <div class="editor-grid">
+            <div class="muted">Edit the 5 categories for the current board, then save.</div>
 
-          <div class="editor-row two">
-            <div>
-              <label class="simple-label" for="editorCategory">Category</label>
-              <input id="editorCategory" type="text" readonly>
+            <div class="editor-row five">
+              <input id="cat1" type="text" />
+              <input id="cat2" type="text" />
+              <input id="cat3" type="text" />
+              <input id="cat4" type="text" />
+              <input id="cat5" type="text" />
             </div>
+
             <div>
-              <label class="simple-label" for="editorValue">Value</label>
-              <input id="editorValue" type="text" readonly>
+              <button class="success" id="saveCategoriesBtn">Save Categories</button>
             </div>
           </div>
+        </div>
 
-          <div>
-            <label class="simple-label" for="editorQuestion">Question</label>
-            <textarea id="editorQuestion" placeholder="Type the question here..."></textarea>
-          </div>
+        <div id="questionEditor" class="hidden">
+          <div class="editor-grid">
+            <div class="muted" id="selectedCellInfo">Select a cell first, then edit the question.</div>
 
-          <div>
-            <label class="simple-label" for="editorAnswer">Answer</label>
-            <textarea id="editorAnswer" placeholder="Type the answer here..."></textarea>
-          </div>
+            <div class="editor-row two">
+              <div>
+                <label class="simple-label" for="editorCategory">Category</label>
+                <input id="editorCategory" type="text" readonly>
+              </div>
+              <div>
+                <label class="simple-label" for="editorValue">Value</label>
+                <input id="editorValue" type="text" readonly>
+              </div>
+            </div>
 
-          <div>
-            <label class="simple-label" for="editorImage">Image URL (optional)</label>
-            <input id="editorImage" type="text" placeholder="/images/example.png">
-          </div>
+            <div>
+              <label class="simple-label" for="editorQuestion">Question</label>
+              <textarea id="editorQuestion" placeholder="Type the question here..."></textarea>
+            </div>
 
-          <div class="editor-actions">
-            <button class="success" id="saveQuestionBtn">Save Question</button>
-            <button id="clearImageBtn">Clear Image</button>
-            <button id="loadSelectedBtn">Reload Selected</button>
-          </div>
+            <div>
+              <label class="simple-label" for="editorAnswer">Answer</label>
+              <textarea id="editorAnswer" placeholder="Type the answer here..."></textarea>
+            </div>
 
-          <div class="small-note">
-            Tip: Click a board cell, edit the question here, then press <strong>Save Question</strong>.
-            Questions are saved in your browser.
+            <div>
+              <label class="simple-label" for="editorImage">Image URL (optional)</label>
+              <input id="editorImage" type="text" placeholder="/images/example.png">
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="success" id="saveQuestionBtn">Save Question</button>
+              <button id="clearImageBtn">Clear Image</button>
+              <button id="loadSelectedBtn">Reload Selected</button>
+            </div>
           </div>
         </div>
 
@@ -497,12 +511,23 @@
     const publicCenter = document.getElementById("publicCenter");
     const publicAnswer = document.getElementById("publicAnswer");
 
+    const categoryEditor = document.getElementById("categoryEditor");
+    const questionEditor = document.getElementById("questionEditor");
+
     const editorCategory = document.getElementById("editorCategory");
     const editorValue = document.getElementById("editorValue");
     const editorQuestion = document.getElementById("editorQuestion");
     const editorAnswer = document.getElementById("editorAnswer");
     const editorImage = document.getElementById("editorImage");
     const selectedCellInfo = document.getElementById("selectedCellInfo");
+
+    const catInputs = [
+      document.getElementById("cat1"),
+      document.getElementById("cat2"),
+      document.getElementById("cat3"),
+      document.getElementById("cat4"),
+      document.getElementById("cat5")
+    ];
 
     const buzzerSound = document.getElementById("buzzerSound");
     const correctSound = document.getElementById("correctSound");
@@ -511,8 +536,6 @@
     const volumeSlider = document.getElementById("volumeSlider");
     const volumeValue = document.getElementById("volumeValue");
 
-    const categoryNodes = [...document.querySelectorAll(".category")];
-
     let activeBoard = 1;
     let boardUsedCells = { 1: [], 2: [] };
     let boardCategories = {
@@ -520,7 +543,7 @@
       2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
     };
 
-    const STORAGE_KEY = "quizQuestionBank_v2_en";
+    const STORAGE_KEY = "quizQuestionBank_editor_v3";
 
     function createDefaultQuestionBank() {
       return {
@@ -584,30 +607,29 @@
       el.play().catch(() => {});
     }
 
-    function getCurrentCategories() {
-      return categoryNodes.map((el) => el.textContent.trim() || "Category");
-    }
-
     function renderCategoriesForBoard() {
-      const cats = boardCategories[activeBoard] || ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"];
-      categoryNodes.forEach((node, i) => {
+      const cats = boardCategories[activeBoard];
+      document.querySelectorAll(".category").forEach((node, i) => {
         node.textContent = cats[i] || "Category";
+      });
+
+      catInputs.forEach((input, i) => {
+        input.value = cats[i] || "";
       });
     }
 
-    function saveCurrentBoardCategories() {
-      boardCategories[activeBoard] = getCurrentCategories();
+    function saveCategoriesFromInputs() {
+      boardCategories[activeBoard] = catInputs.map(input => input.value.trim() || "Category");
+      renderCategoriesForBoard();
       socket.emit("updateCategories", {
         board: activeBoard,
         categories: boardCategories[activeBoard]
       });
+      statusLine.textContent = `Categories saved for Board ${activeBoard}`;
+      if (selectedIndex !== null) {
+        loadSelectedIntoEditor();
+      }
     }
-
-    categoryNodes.forEach((el) => {
-      el.addEventListener("blur", saveCurrentBoardCategories);
-      el.addEventListener("input", saveCurrentBoardCategories);
-      el.addEventListener("keyup", saveCurrentBoardCategories);
-    });
 
     function renderScores(scores, players) {
       const slotMap = { 1: null, 2: null, 3: null, 4: null, 5: null };
@@ -707,29 +729,6 @@
       document.getElementById("board2Btn").classList.toggle("active-board", activeBoard === 2);
     }
 
-    function updateEditorFields() {
-      if (selectedIndex === null) {
-        selectedCellInfo.textContent = "Select a cell to edit its question.";
-        editorCategory.value = "";
-        editorValue.value = "";
-        editorQuestion.value = "";
-        editorAnswer.value = "";
-        editorImage.value = "";
-        return;
-      }
-
-      const col = selectedIndex % 5;
-      const row = Math.floor(selectedIndex / 5);
-      const item = questionBank[activeBoard][selectedIndex];
-
-      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${boardCategories[activeBoard][col]} | ${values[row]}`;
-      editorCategory.value = boardCategories[activeBoard][col] || "";
-      editorValue.value = values[row];
-      editorQuestion.value = item.question || "";
-      editorAnswer.value = item.answer || "";
-      editorImage.value = item.image || "";
-    }
-
     function highlightSelectedCell() {
       const cells = board.querySelectorAll(".cell");
       cells.forEach((cell, i) => {
@@ -737,38 +736,15 @@
       });
     }
 
-    function selectCell(index) {
-      selectedIndex = index;
-      const col = index % 5;
-      const row = Math.floor(index / 5);
-      const item = questionBank[activeBoard][index];
-
-      selectedQuestion = {
-        board: activeBoard,
-        index,
-        category: boardCategories[activeBoard][col],
-        value: values[row],
-        question: item.question || "",
-        answer: item.answer || "",
-        image: item.image || ""
-      };
-
-      updateEditorFields();
-      highlightSelectedCell();
-      renderPrivatePreview(selectedQuestion);
-      renderPublicPreview(null, null);
-    }
-
     function buildBoard() {
       board.innerHTML = "";
 
       for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
+          const index = row * 5 + col;
           const cell = document.createElement("div");
           cell.className = "cell";
           cell.textContent = values[row];
-
-          const index = row * 5 + col;
 
           if ((boardUsedCells[activeBoard] || []).includes(index)) {
             cell.classList.add("used");
@@ -779,7 +755,9 @@
           }
 
           cell.addEventListener("click", () => {
-            selectCell(index);
+            selectedIndex = index;
+            loadSelectedIntoEditor();
+            highlightSelectedCell();
           });
 
           board.appendChild(cell);
@@ -787,22 +765,43 @@
       }
     }
 
-    function switchBoard(boardNumber) {
-      saveCurrentBoardCategories();
-      activeBoard = boardNumber;
-      selectedIndex = null;
-      selectedQuestion = null;
-      renderCategoriesForBoard();
-      updateBoardButtons();
-      buildBoard();
-      updateEditorFields();
-      renderPrivatePreview(null);
-      renderPublicPreview(null, null);
-      socket.emit("setCurrentBoard", boardNumber);
-      statusLine.textContent = `Board ${boardNumber} selected`;
+    function loadSelectedIntoEditor() {
+      if (selectedIndex === null) {
+        selectedCellInfo.textContent = "Select a cell first, then edit the question.";
+        editorCategory.value = "";
+        editorValue.value = "";
+        editorQuestion.value = "";
+        editorAnswer.value = "";
+        editorImage.value = "";
+        renderPrivatePreview(null);
+        return;
+      }
+
+      const row = Math.floor(selectedIndex / 5);
+      const col = selectedIndex % 5;
+      const item = questionBank[activeBoard][selectedIndex];
+
+      selectedQuestion = {
+        board: activeBoard,
+        index: selectedIndex,
+        category: boardCategories[activeBoard][col],
+        value: values[row],
+        question: item.question || "",
+        answer: item.answer || "",
+        image: item.image || ""
+      };
+
+      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${boardCategories[activeBoard][col]} | ${values[row]}`;
+      editorCategory.value = selectedQuestion.category;
+      editorValue.value = selectedQuestion.value;
+      editorQuestion.value = selectedQuestion.question;
+      editorAnswer.value = selectedQuestion.answer;
+      editorImage.value = selectedQuestion.image;
+
+      renderPrivatePreview(selectedQuestion);
     }
 
-    document.getElementById("saveQuestionBtn").onclick = () => {
+    function saveSelectedQuestion() {
       if (selectedIndex === null) {
         statusLine.textContent = "Please select a cell first";
         return;
@@ -815,31 +814,46 @@
       };
 
       saveQuestionBank();
-
-      const col = selectedIndex % 5;
-      const row = Math.floor(selectedIndex / 5);
-
-      selectedQuestion = {
-        board: activeBoard,
-        index: selectedIndex,
-        category: boardCategories[activeBoard][col],
-        value: values[row],
-        question: questionBank[activeBoard][selectedIndex].question,
-        answer: questionBank[activeBoard][selectedIndex].answer,
-        image: questionBank[activeBoard][selectedIndex].image
-      };
-
-      renderPrivatePreview(selectedQuestion);
+      loadSelectedIntoEditor();
       statusLine.textContent = `Question saved for Board ${activeBoard}`;
-    };
+    }
+
+    function switchBoard(boardNumber) {
+      activeBoard = boardNumber;
+      selectedIndex = null;
+      selectedQuestion = null;
+      renderCategoriesForBoard();
+      updateBoardButtons();
+      buildBoard();
+      loadSelectedIntoEditor();
+      renderPublicPreview(null, null);
+      socket.emit("setCurrentBoard", boardNumber);
+      statusLine.textContent = `Board ${boardNumber} selected`;
+    }
+
+    function togglePanel(panel) {
+      if (panel === "categories") {
+        categoryEditor.classList.toggle("hidden");
+        questionEditor.classList.add("hidden");
+      } else {
+        questionEditor.classList.toggle("hidden");
+        categoryEditor.classList.add("hidden");
+      }
+    }
+
+    document.getElementById("toggleCategoryEditorBtn").onclick = () => togglePanel("categories");
+    document.getElementById("toggleQuestionEditorBtn").onclick = () => togglePanel("question");
+
+    document.getElementById("saveCategoriesBtn").onclick = saveCategoriesFromInputs;
+
+    document.getElementById("saveQuestionBtn").onclick = saveSelectedQuestion;
 
     document.getElementById("clearImageBtn").onclick = () => {
       editorImage.value = "";
     };
 
     document.getElementById("loadSelectedBtn").onclick = () => {
-      updateEditorFields();
-      if (selectedQuestion) renderPrivatePreview(selectedQuestion);
+      loadSelectedIntoEditor();
     };
 
     socket.on("lobbyUpdate", (players) => {
@@ -860,6 +874,7 @@
       renderCategoriesForBoard();
       updateBoardButtons();
       buildBoard();
+      highlightSelectedCell();
 
       renderScores(state.scores || {}, state.lobbyPlayers || []);
       renderPlayerSelect(state.lobbyPlayers || []);
@@ -901,8 +916,8 @@
         return;
       }
 
-      const col = selectedIndex % 5;
       const row = Math.floor(selectedIndex / 5);
+      const col = selectedIndex % 5;
       const item = questionBank[activeBoard][selectedIndex];
 
       selectedQuestion = {
@@ -941,7 +956,6 @@
 
     document.getElementById("closeQuestionBtn").onclick = () => {
       socket.emit("closeQuestion");
-      renderPublicPreview(null, null);
       statusLine.textContent = "Question closed";
     };
 
@@ -973,7 +987,7 @@
     renderCategoriesForBoard();
     updateBoardButtons();
     buildBoard();
-    updateEditorFields();
+    loadSelectedIntoEditor();
   </script>
 </body>
 </html>
