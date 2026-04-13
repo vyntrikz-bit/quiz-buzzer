@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spieler</title>
+  <title>Player</title>
   <script src="/socket.io/socket.io.js"></script>
 
   <style>
@@ -230,8 +230,8 @@
     <div class="canvas" id="canvas">
 
       <div class="topbar">
-        <input id="nameInput" placeholder="Dein Name">
-        <button id="saveBtn">Name speichern</button>
+        <input id="nameInput" placeholder="Your name">
+        <button id="saveBtn">Save Name</button>
 
         <label class="volume-wrap">
           Sound
@@ -241,16 +241,16 @@
       </div>
 
       <div class="status" id="status"></div>
-      <div class="hint">Drücke die Leertaste, sobald die Frage freigegeben ist.</div>
+      <div class="hint">Press space to buzz when the question is live.</div>
       <div class="board-indicator" id="boardIndicator"></div>
 
       <div class="board-wrap" id="boardWrap">
         <div class="categories" id="categories">
-          <div class="category">Thema 1</div>
-          <div class="category">Thema 2</div>
-          <div class="category">Thema 3</div>
-          <div class="category">Thema 4</div>
-          <div class="category">Thema 5</div>
+          <div class="category">Category 1</div>
+          <div class="category">Category 2</div>
+          <div class="category">Category 3</div>
+          <div class="category">Category 4</div>
+          <div class="category">Category 5</div>
         </div>
         <div class="board" id="board"></div>
       </div>
@@ -341,7 +341,7 @@
 
       localStorage.setItem("playerName", playerName);
       socket.emit("joinLobby", playerName);
-      statusEl.textContent = "Name gespeichert";
+      statusEl.textContent = "Name saved";
     };
 
     socket.on("syncState", (state) => {
@@ -357,7 +357,7 @@
         cell.classList.toggle("used", (state.usedCells || []).includes(i));
       });
 
-      boardIndicator.textContent = `Aktuelles Board: ${state.currentBoard}`;
+      boardIndicator.textContent = `Current board: ${state.currentBoard}`;
 
       if (state.currentQuestion) {
         boardWrap.style.display = "none";
@@ -390,25 +390,25 @@
       }
 
       if (!playerName) {
-        statusEl.textContent = "Bitte zuerst Namen speichern";
+        statusEl.textContent = "Please save your name first";
         return;
       }
 
       if (state.eliminatedPlayers && state.eliminatedPlayers.includes(playerName)) {
-        statusEl.textContent = "Du bist für diese Frage raus";
+        statusEl.textContent = "You are out for this question";
         return;
       }
 
       if (state.firstBuzz) {
         if (state.firstBuzz === playerName) {
-          statusEl.textContent = "Du bist dran!";
+          statusEl.textContent = "You are up!";
         } else {
-          statusEl.textContent = state.firstBuzz + " ist dran";
+          statusEl.textContent = `${state.firstBuzz} is up`;
         }
       } else if (state.questionVisible) {
-        statusEl.textContent = "Leertaste zum Buzzern";
+        statusEl.textContent = "Press space to buzz";
       } else if (state.currentQuestion) {
-        statusEl.textContent = "Warte auf Freigabe der Frage";
+        statusEl.textContent = "Waiting for the question to go live";
       } else {
         statusEl.textContent = "";
       }
@@ -434,7 +434,7 @@
       event.preventDefault();
 
       if (!playerName) {
-        statusEl.textContent = "Bitte zuerst Namen speichern";
+        statusEl.textContent = "Please save your name first";
         return;
       }
 
