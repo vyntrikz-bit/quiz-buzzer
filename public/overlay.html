@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>OBS Overlay</title>
@@ -242,11 +242,11 @@ html, body {
 
   <div class="board-wrap" id="boardWrap">
     <div class="categories" id="categories">
-      <div class="category">Thema 1</div>
-      <div class="category">Thema 2</div>
-      <div class="category">Thema 3</div>
-      <div class="category">Thema 4</div>
-      <div class="category">Thema 5</div>
+      <div class="category">Category 1</div>
+      <div class="category">Category 2</div>
+      <div class="category">Category 3</div>
+      <div class="category">Category 4</div>
+      <div class="category">Category 5</div>
     </div>
     <div class="board" id="board"></div>
   </div>
@@ -265,27 +265,27 @@ html, body {
   <div class="players-row">
     <div class="player-column">
       <div class="player-cam" id="cam1"></div>
-      <div class="name-box" id="name1">Leer</div>
+      <div class="name-box" id="name1">Empty</div>
       <div class="score-box" id="score1">0</div>
     </div>
     <div class="player-column">
       <div class="player-cam" id="cam2"></div>
-      <div class="name-box" id="name2">Leer</div>
+      <div class="name-box" id="name2">Empty</div>
       <div class="score-box" id="score2">0</div>
     </div>
     <div class="player-column">
       <div class="player-cam" id="cam3"></div>
-      <div class="name-box" id="name3">Leer</div>
+      <div class="name-box" id="name3">Empty</div>
       <div class="score-box" id="score3">0</div>
     </div>
     <div class="player-column">
       <div class="player-cam" id="cam4"></div>
-      <div class="name-box" id="name4">Leer</div>
+      <div class="name-box" id="name4">Empty</div>
       <div class="score-box" id="score4">0</div>
     </div>
     <div class="player-column">
       <div class="player-cam" id="cam5"></div>
-      <div class="name-box" id="name5">Leer</div>
+      <div class="name-box" id="name5">Empty</div>
       <div class="score-box" id="score5">0</div>
     </div>
   </div>
@@ -337,7 +337,7 @@ socket.on("lobbyUpdate", (players) => {
   slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
   for (let i = 1; i <= 5; i++) {
-    document.getElementById("name" + i).innerText = "Leer";
+    document.getElementById("name" + i).innerText = "Empty";
   }
 
   players.forEach((p) => {
