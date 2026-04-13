@@ -607,16 +607,18 @@
       el.play().catch(() => {});
     }
 
-    function renderCategoriesForBoard() {
-      const cats = boardCategories[activeBoard];
-      document.querySelectorAll(".category").forEach((node, i) => {
-        node.textContent = cats[i] || "Category";
-      });
+   function renderCategoriesForBoard() {
+  const cats = boardCategories[activeBoard];
+  document.querySelectorAll(".category").forEach((node, i) => {
+    node.textContent = cats[i] || "Category";
+  });
 
-      catInputs.forEach((input, i) => {
-        input.value = cats[i] || "";
-      });
-    }
+  catInputs.forEach((input, i) => {
+    input.value = cats[i] || "";
+  });
+
+  refreshEditorCategoryOptions();
+}
 
     function saveCategoriesFromInputs() {
       boardCategories[activeBoard] = catInputs.map(input => input.value.trim() || "Category");
@@ -630,7 +632,17 @@
         loadSelectedIntoEditor();
       }
     }
+    
+function refreshEditorCategoryOptions() {
+  editorCategory.innerHTML = "";
 
+  (boardCategories[activeBoard] || []).forEach((cat) => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    editorCategory.appendChild(option);
+  });
+}
     function renderScores(scores, players) {
       const slotMap = { 1: null, 2: null, 3: null, 4: null, 5: null };
       (players || []).forEach((p) => {
