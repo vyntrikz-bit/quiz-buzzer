@@ -64,13 +64,18 @@
     }
 
     .volume-wrap {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 20;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       background: rgba(15, 23, 42, 0.92);
-      padding: 8px 12px;
-      border-radius: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
       font-weight: bold;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     }
 
     .volume-wrap input[type="range"] {
@@ -232,17 +237,17 @@
       <div class="topbar">
         <input id="nameInput" placeholder="Your name">
         <button id="saveBtn">Save Name</button>
-
-        <label class="volume-wrap">
-          Sound
-          <input id="volumeSlider" type="range" min="0" max="100" value="60">
-          <span id="volumeValue">60%</span>
-        </label>
       </div>
 
       <div class="status" id="status"></div>
       <div class="hint">Press space to buzz when the question is live.</div>
       <div class="board-indicator" id="boardIndicator"></div>
+
+      <div class="volume-wrap">
+        <span>Sound</span>
+        <input id="volumeSlider" type="range" min="0" max="100" value="25">
+        <span id="volumeValue">25%</span>
+      </div>
 
       <div class="board-wrap" id="boardWrap">
         <div class="categories" id="categories">
@@ -281,7 +286,7 @@
     const statusEl = document.getElementById("status");
     const boardIndicator = document.getElementById("boardIndicator");
     const board = document.getElementById("board");
-    const values = [200,300,400,500,600];
+    const values = [200, 300, 400, 500, 600];
 
     const buzzerSound = document.getElementById("buzzerSound");
     const correctSound = document.getElementById("correctSound");
@@ -301,7 +306,8 @@
     }
 
     const savedVolume = localStorage.getItem("playerVolume");
-    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.6;
+    const startVolume = savedVolume !== null ? Number(savedVolume) : 0.25;
+
     volumeSlider.value = Math.round(startVolume * 100);
     volumeValue.textContent = `${Math.round(startVolume * 100)}%`;
     applyVolume(startVolume);
