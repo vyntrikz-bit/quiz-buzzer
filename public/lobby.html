@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Lobby</title>
   <script src="/socket.io/socket.io.js"></script>
-
   <style>
     body {
       margin: 0;
@@ -17,19 +16,16 @@
       box-sizing: border-box;
       text-align: center;
     }
-
     h1 {
       margin-top: 10px;
       margin-bottom: 10px;
       font-size: 42px;
     }
-
     .sub {
       color: #cbd5e1;
       margin-bottom: 30px;
       font-size: 18px;
     }
-
     .join-box {
       display: flex;
       justify-content: center;
@@ -37,7 +33,6 @@
       flex-wrap: wrap;
       margin-bottom: 24px;
     }
-
     input {
       padding: 14px;
       border-radius: 10px;
@@ -47,7 +42,6 @@
       background: #162038;
       color: white;
     }
-
     button {
       padding: 14px 20px;
       border-radius: 10px;
@@ -58,56 +52,44 @@
       font-size: 16px;
       cursor: pointer;
     }
-
     .status {
       min-height: 30px;
       font-size: 20px;
       color: #ffd54a;
       margin-bottom: 20px;
     }
-
     .players {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 14px;
       margin-top: 20px;
     }
-
     .card {
       background: #162038;
       border-radius: 14px;
       padding: 18px 10px;
       box-sizing: border-box;
     }
-
     .slot {
       font-size: 15px;
       color: #cbd5e1;
       margin-bottom: 8px;
     }
-
     .name {
       font-size: 24px;
       font-weight: 800;
       word-break: break-word;
     }
-
     .footer-note {
       margin-top: 28px;
       color: #94a3b8;
       font-size: 15px;
     }
-
     @media (max-width: 1100px) {
-      .players {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .players { grid-template-columns: repeat(2, 1fr); }
     }
-
     @media (max-width: 700px) {
-      .players {
-        grid-template-columns: 1fr;
-      }
+      .players { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -121,7 +103,6 @@
   </div>
 
   <div class="status" id="status"></div>
-
   <div class="players" id="players"></div>
 
   <div class="footer-note">
@@ -137,7 +118,6 @@
     const joinBtn = document.getElementById("joinBtn");
 
     let joined = false;
-
     nameInput.value = localStorage.getItem("playerName") || "";
 
     function renderPlayers(players) {
@@ -170,11 +150,8 @@
     }
 
     joinBtn.addEventListener("click", joinLobby);
-
     nameInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        joinLobby();
-      }
+      if (event.key === "Enter") joinLobby();
     });
 
     socket.on("lobbyUpdate", (players) => {
