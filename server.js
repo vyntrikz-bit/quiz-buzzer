@@ -53,8 +53,18 @@ let state = {
 function broadcast() {
   io.emit("syncState", {
     ...state,
-    categories: state.categoriesBoards[state.currentBoard],
-    usedCells: state.usedCellsBoards[state.currentBoard]
+    currentBoard: state.currentBoard,
+    currentQuestion: state.currentQuestion,
+    questionVisible: state.questionVisible,
+    answerVisible: state.answerVisible,
+    usedCellsBoards: state.usedCellsBoards,
+    usedCells: state.usedCellsBoards[state.currentBoard] || [],
+    categoriesBoards: quizData.categories,
+    categories: quizData.categories[state.currentBoard] || [],
+    scores: state.scores,
+    lobbyPlayers: state.lobbyPlayers,
+    firstBuzz: state.firstBuzz,
+    eliminatedPlayers: state.eliminatedPlayers
   });
 }
 
@@ -94,24 +104,42 @@ io.on("connection", (socket) => {
   });
 
   // ===== QUESTION CONTROL =====
-  socket.on("openQuestion", (q) => {
-    state.currentQuestion = q;
-    state.questionVisible = false;
-    state.answerVisible = false;
-    state.firstBuzz = null;
-    state.eliminatedPlayers = [];
+socket.on("openQuestion", (q) => {
+  if (!q) return;
 
-    if (!state.usedCellsBoards[q.board].includes(q.index)) {
-      state.usedCellsBoards[q.board].push(q.index);
-    }
+  state.currentBoard = Number(q.board) || 1;
+  state.currentQuestion = {
+    board: Number(q.board) || 1,
+    index: Number(q.index) || 0,
+    category: String(q.category || ""),
+    value: Number(q.value) || 0,
+    question: String(q.question || ""),
+    answer: String(q.answer || ""),
+    image: String(q.image || "")
+  };
+
+  state.questionVisible = false;
+  state.answerVisible = false;
+  state.firstBuzz = null;
+  state.eliminatedPlayers = [];
+
+  if (!state.usedCellsBoards[state.currentBoard].includes(state.currentQuestion.index)) {
+    state.usedCellsBoards[state.currentBoard].push(state.currentQuestion.index);
+  }
+
+  broadcast();
+});
 
     broadcast();
   });
 
-  socket.on("showQuestion", () => {
-    state.questionVisible = true;
-    broadcast();
-  });
+ socket.on("saveQuestion", ({ board, index, data }) => {
+  if (!quizData.questions[board]) quizData.questions[board] = {};
+  quizData.questions[board][index] = data;
+  saveData();
+  io.emit("quizData", quizData);
+  broadcast();
+});
 
   socket.on("showAnswer", () => {
     state.answerVisible = true;
@@ -193,11 +221,12 @@ io.on("connection", (socket) => {
 
   // ===== SAVE DATA =====
   socket.on("saveCategories", ({ board, categories }) => {
-    quizData.categories[board] = categories;
-    state.categoriesBoards = quizData.categories;
-    saveData();
-    broadcast();
-  });
+  quizData.categories[board] = categories;
+  state.categoriesBoards = quizData.categories;
+  saveData();
+  io.emit("quizData", quizData);
+  broadcast();
+});
 
   socket.on("saveQuestion", ({ board, index, data }) => {
     if (!quizData.questions[board]) quizData.questions[board] = {};
