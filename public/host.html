@@ -12,33 +12,7 @@
       color: white;
       font-family: Arial, sans-serif;
     }
-    .login-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(4, 10, 22, 0.95);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    .login-card {
-      width: min(420px, 92vw);
-      background: #111827;
-      border-radius: 16px;
-      padding: 24px;
-      box-sizing: border-box;
-    }
-    .login-card h2 {
-      margin: 0 0 10px;
-    }
-    .login-card p {
-      color: #cbd5e1;
-      margin-bottom: 16px;
-    }
-    .login-card input {
-      width: 100%;
-      margin-bottom: 12px;
-    }
+
     .topbar {
       display: flex;
       gap: 10px;
@@ -50,12 +24,14 @@
       z-index: 20;
       align-items: center;
     }
+
     button, select, input, textarea {
       border: none;
       border-radius: 10px;
       font-size: 15px;
       box-sizing: border-box;
     }
+
     button {
       padding: 12px 16px;
       font-weight: bold;
@@ -63,22 +39,26 @@
       background: #334155;
       color: white;
     }
+
     input, select, textarea {
       background: #1f2937;
       color: white;
       padding: 12px;
     }
+
     textarea {
       resize: vertical;
       min-height: 90px;
       width: 100%;
     }
+
     .primary { background: #2563eb; }
     .danger { background: #dc2626; }
     .success { background: #16a34a; }
     .warn { background: #e67e22; }
     .purple { background: #9333ea; }
     .active-board { background: #16a34a; }
+
     .volume-wrap {
       display: flex;
       align-items: center;
@@ -88,14 +68,17 @@
       border-radius: 10px;
       font-weight: bold;
     }
+
     .volume-wrap input[type="range"] {
       width: 130px;
       padding: 0;
       background: transparent;
     }
+
     .wrap {
       padding: 14px;
     }
+
     .board-switch {
       display: flex;
       gap: 8px;
@@ -103,12 +86,14 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       margin-bottom: 8px;
     }
+
     .category {
       background: #162038;
       border-radius: 10px;
@@ -118,11 +103,13 @@
       font-weight: 700;
       min-height: 28px;
     }
+
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
+
     .cell {
       height: 94px;
       background: #f2a7c2;
@@ -137,18 +124,22 @@
       user-select: none;
       transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
     }
+
     .cell:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0,0,0,0.22);
     }
+
     .cell.used {
       opacity: 0.28;
       cursor: default;
     }
+
     .cell.selected {
       outline: 4px solid #60a5fa;
       outline-offset: -4px;
     }
+
     .grid-2 {
       display: grid;
       grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
@@ -156,28 +147,33 @@
       margin-top: 18px;
       align-items: start;
     }
+
     .score-grid {
       margin-top: 16px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
+
     .score-card {
       background: #162038;
       border-radius: 10px;
       padding: 12px;
       text-align: center;
     }
+
     .score-name {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 6px;
     }
+
     .score-points {
       font-size: 28px;
       font-weight: 800;
       color: #ffd54a;
     }
+
     .panel {
       background: #111827;
       border-radius: 14px;
@@ -185,34 +181,42 @@
       min-width: 0;
       overflow: hidden;
     }
+
     .panel-title {
       font-size: 18px;
       font-weight: 800;
       margin-bottom: 12px;
       color: #93c5fd;
     }
+
     .muted {
       color: #cbd5e1;
       font-size: 14px;
     }
+
     .hidden {
       display: none;
     }
+
     .editor-grid {
       display: grid;
       gap: 10px;
     }
+
     .editor-row {
       display: grid;
       gap: 10px;
     }
+
     .editor-row.two {
       grid-template-columns: minmax(0, 1fr) 120px;
       align-items: end;
     }
+
     .editor-row.five {
       grid-template-columns: repeat(5, 1fr);
     }
+
     .simple-label {
       display: block;
       font-size: 13px;
@@ -220,30 +224,40 @@
       color: #cbd5e1;
       margin-bottom: 6px;
     }
-    #editorCategory, #editorValue, #editorQuestion, #editorAnswer, #editorImage {
+
+    #editorCategory,
+    #editorValue,
+    #editorQuestion,
+    #editorAnswer,
+    #editorImage {
       width: 100%;
       min-width: 0;
     }
+
     #editorValue {
       text-align: center;
       font-weight: 700;
     }
+
     .preview-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 14px;
     }
+
     .preview-block {
       background: #0f172a;
       border-radius: 16px;
       padding: 14px;
     }
+
     .preview-title {
       font-size: 18px;
       font-weight: 800;
       margin-bottom: 10px;
       color: #93c5fd;
     }
+
     .big-preview {
       background: #e8a4bc;
       color: #111;
@@ -253,6 +267,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .preview-category {
       position: absolute;
       top: 16px;
@@ -260,6 +275,7 @@
       font-size: 28px;
       font-weight: 800;
     }
+
     .preview-value {
       position: absolute;
       top: 16px;
@@ -267,6 +283,7 @@
       font-size: 28px;
       font-weight: 800;
     }
+
     .preview-center {
       height: 100%;
       min-height: 260px;
@@ -280,12 +297,14 @@
       font-weight: 800;
       line-height: 1.2;
     }
+
     .preview-image {
       max-width: 100%;
       max-height: 220px;
       object-fit: contain;
       border-radius: 8px;
     }
+
     .preview-answer {
       position: absolute;
       left: 50%;
@@ -301,6 +320,7 @@
       max-width: 80%;
       text-align: center;
     }
+
     .manual-box {
       margin-top: 14px;
       display: flex;
@@ -308,19 +328,26 @@
       flex-wrap: wrap;
       align-items: center;
     }
+
     .status-line {
       margin-top: 12px;
       color: #ffd54a;
       font-size: 18px;
       min-height: 28px;
     }
+
     @media (max-width: 1200px) {
       .grid-2 {
         grid-template-columns: 1fr;
       }
-      .categories, .board, .score-grid, .editor-row.five {
+
+      .categories,
+      .board,
+      .score-grid,
+      .editor-row.five {
         grid-template-columns: repeat(2, 1fr);
       }
+
       .editor-row.two {
         grid-template-columns: 1fr;
       }
@@ -328,30 +355,20 @@
   </style>
 </head>
 <body>
-  <div class="login-overlay" id="loginOverlay">
-    <div class="login-card">
-      <h2>Host Login</h2>
-      <p>Enter the host password to unlock editing and controls.</p>
-      <input id="hostPasswordInput" type="password" placeholder="Host password">
-      <button class="primary" id="hostLoginBtn">Login as Host</button>
-      <div class="status-line" id="hostLoginStatus"></div>
-    </div>
-  </div>
-
   <div class="topbar">
-    <button class="primary host-only" id="showQuestionBtn">Show Question</button>
-    <button class="success host-only" id="showAnswerBtn">Show Answer</button>
-    <button class="host-only" id="hideAnswerBtn">Hide Answer</button>
-    <button class="success host-only" id="correctBtn">Correct</button>
-    <button class="danger host-only" id="wrongBtn">Wrong</button>
-    <button class="warn host-only" id="resetBuzzerBtn">Reset Buzzer</button>
-    <button class="purple host-only" id="undoBtn">Undo</button>
-    <button class="host-only" id="timer20Btn">20s Timer</button>
-    <button class="host-only" id="timerStopBtn">Stop Timer</button>
-    <button class="host-only" id="timerResetBtn">Reset Timer</button>
-    <button class="host-only" id="closeQuestionBtn">Close Question</button>
-    <button class="host-only" id="resetBoardBtn">Reset Current Board</button>
-    <button class="danger host-only" id="newGameBtn">New Game</button>
+    <button class="primary" id="showQuestionBtn">Show Question</button>
+    <button class="success" id="showAnswerBtn">Show Answer</button>
+    <button id="hideAnswerBtn">Hide Answer</button>
+    <button class="success" id="correctBtn">Correct</button>
+    <button class="danger" id="wrongBtn">Wrong</button>
+    <button class="warn" id="resetBuzzerBtn">Reset Buzzer</button>
+    <button class="purple" id="undoBtn">Undo</button>
+    <button id="timer20Btn">20s Timer</button>
+    <button id="timerStopBtn">Stop Timer</button>
+    <button id="timerResetBtn">Reset Timer</button>
+    <button id="closeQuestionBtn">Close Question</button>
+    <button id="resetBoardBtn">Reset Current Board</button>
+    <button class="danger" id="newGameBtn">New Game</button>
 
     <label class="volume-wrap">
       Sound
@@ -363,10 +380,12 @@
   <div class="wrap">
     <div class="board-switch">
       <strong>Switch board:</strong>
-      <button class="host-only" id="board1Btn">Board 1</button>
-      <button class="host-only" id="board2Btn">Board 2</button>
-      <button class="host-only" id="toggleCategoryEditorBtn">Edit Categories</button>
-      <button class="host-only" id="toggleQuestionEditorBtn">Edit Question</button>
+      <button id="board1Btn">Board 1</button>
+      <button id="board2Btn">Board 2</button>
+
+      <button id="toggleCategoryEditorBtn">Edit Categories</button>
+      <button id="toggleQuestionEditorBtn">Edit Question</button>
+
       <span class="muted" id="boardInfo"></span>
     </div>
 
@@ -388,6 +407,7 @@
         <div id="categoryEditor" class="hidden">
           <div class="editor-grid">
             <div class="muted">Edit the 5 categories for the current board, then save.</div>
+
             <div class="editor-row five">
               <input id="cat1" type="text" />
               <input id="cat2" type="text" />
@@ -395,8 +415,9 @@
               <input id="cat4" type="text" />
               <input id="cat5" type="text" />
             </div>
+
             <div>
-              <button class="success host-only" id="saveCategoriesBtn">Save Categories</button>
+              <button class="success" id="saveCategoriesBtn">Save Categories</button>
             </div>
           </div>
         </div>
@@ -432,8 +453,8 @@
             </div>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <button class="success host-only" id="saveQuestionBtn">Save Question</button>
-              <button class="host-only" id="clearImageBtn">Clear Image</button>
+              <button class="success" id="saveQuestionBtn">Save Question</button>
+              <button id="clearImageBtn">Clear Image</button>
               <button id="loadSelectedBtn">Reload Selected</button>
             </div>
           </div>
@@ -445,8 +466,8 @@
           <strong>Backup points:</strong>
           <select id="playerSelect"></select>
           <input id="manualPointsInput" type="number" min="1" step="1" value="100">
-          <button class="success host-only" id="manualAddBtn">Add Points</button>
-          <button class="danger host-only" id="manualSubtractBtn">Subtract Points</button>
+          <button class="success" id="manualAddBtn">Add Points</button>
+          <button class="danger" id="manualSubtractBtn">Subtract Points</button>
         </div>
       </div>
 
@@ -478,14 +499,9 @@
     </div>
   </div>
 
-  <audio id="buzzerSound" src="/buzzer.mp3" preload="auto"></audio>
-  <audio id="correctSound" src="/correct.mp3" preload="auto"></audio>
-  <audio id="wrongSound" src="/wrong.mp3" preload="auto"></audio>
-
   <script>
     const socket = io();
 
-    let isHost = false;
     let quizData = null;
     let activeBoard = 1;
     let selectedIndex = null;
@@ -533,41 +549,90 @@
       document.getElementById("cat5")
     ];
 
-    const loginOverlay = document.getElementById("loginOverlay");
-    const hostPasswordInput = document.getElementById("hostPasswordInput");
-    const hostLoginBtn = document.getElementById("hostLoginBtn");
-    const hostLoginStatus = document.getElementById("hostLoginStatus");
-
-    const buzzerSound = document.getElementById("buzzerSound");
-    const correctSound = document.getElementById("correctSound");
-    const wrongSound = document.getElementById("wrongSound");
-
     const volumeSlider = document.getElementById("volumeSlider");
     const volumeValue = document.getElementById("volumeValue");
 
-    function setHostUI(enabled) {
-      document.querySelectorAll(".host-only").forEach((el) => {
-        el.disabled = !enabled;
-        el.style.opacity = enabled ? "1" : "0.55";
-        el.style.pointerEvents = enabled ? "auto" : "none";
-      });
+    let masterVolume = 0.35;
+    let audioCtx = null;
 
-      [
-        editorCategory,
-        editorQuestion,
-        editorAnswer,
-        editorImage,
-        ...catInputs
-      ].forEach((el) => {
-        el.disabled = !enabled;
-      });
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
     }
 
     function applyVolume(volume) {
-      const v = Math.max(0, Math.min(1, volume));
-      buzzerSound.volume = v;
-      correctSound.volume = v;
-      wrongSound.volume = v;
+      masterVolume = Math.max(0, Math.min(1, volume));
+    }
+
+    function playBuzzer() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "square";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.45), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.22);
+    }
+
+    function playCorrect() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.linearRampToValueAtTime(860, now + 0.2);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.35), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+
+    function playWrong() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(85, now + 0.28);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.35), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.31);
     }
 
     const savedVolume = localStorage.getItem("hostVolume");
@@ -582,13 +647,6 @@
       localStorage.setItem("hostVolume", String(newVolume));
       applyVolume(newVolume);
     });
-
-    function playSound(el) {
-      if (!el) return;
-      el.pause();
-      el.currentTime = 0;
-      el.play().catch(() => {});
-    }
 
     function getQuestionItem(boardNum, index) {
       return quizData?.questions?.[boardNum]?.[index] || {
@@ -797,13 +855,11 @@
     }
 
     function saveCategoriesFromInputs() {
-      if (!isHost) return;
       const categories = catInputs.map(input => input.value.trim() || "Category");
       socket.emit("saveCategories", { board: activeBoard, categories });
     }
 
     function saveSelectedQuestion() {
-      if (!isHost) return;
       if (selectedIndex === null) {
         statusLine.textContent = "Please select a cell first";
         return;
@@ -822,7 +878,6 @@
     }
 
     function switchBoard(boardNumber) {
-      if (!isHost) return;
       activeBoard = boardNumber;
       selectedIndex = null;
       selectedQuestion = null;
@@ -836,7 +891,6 @@
     }
 
     function togglePanel(panel) {
-      if (!isHost) return;
       if (panel === "categories") {
         categoryEditor.classList.toggle("hidden");
         questionEditor.classList.add("hidden");
@@ -846,31 +900,11 @@
       }
     }
 
-    hostLoginBtn.onclick = () => {
-      socket.emit("hostLogin", { password: hostPasswordInput.value });
-    };
-
-    hostPasswordInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") hostLoginBtn.click();
-    });
-
-    socket.on("hostAuthStatus", ({ ok }) => {
-      isHost = !!ok;
-      setHostUI(isHost);
-
-      if (ok) {
-        loginOverlay.style.display = "none";
-        statusLine.textContent = "Host login successful";
-      } else {
-        hostLoginStatus.textContent = "Wrong password";
-      }
-    });
-
     document.getElementById("toggleCategoryEditorBtn").onclick = () => togglePanel("categories");
     document.getElementById("toggleQuestionEditorBtn").onclick = () => togglePanel("question");
     document.getElementById("saveCategoriesBtn").onclick = saveCategoriesFromInputs;
     document.getElementById("saveQuestionBtn").onclick = saveSelectedQuestion;
-    document.getElementById("clearImageBtn").onclick = () => { if (isHost) editorImage.value = ""; };
+    document.getElementById("clearImageBtn").onclick = () => { editorImage.value = ""; };
     document.getElementById("loadSelectedBtn").onclick = () => { loadSelectedIntoEditor(); };
 
     socket.on("quizData", (data) => {
@@ -908,15 +942,15 @@
     });
 
     socket.on("playerBuzzed", () => {
-      playSound(buzzerSound);
+      playBuzzer();
     });
 
     socket.on("answerResult", ({ result, name, points }) => {
       if (result === "correct") {
-        playSound(correctSound);
+        playCorrect();
         statusLine.textContent = `${name} gets +${points} points automatically`;
       } else {
-        playSound(wrongSound);
+        playWrong();
         statusLine.textContent = `${name} gets -${points} points automatically`;
       }
     });
@@ -933,7 +967,6 @@
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
 
     document.getElementById("showQuestionBtn").onclick = () => {
-      if (!isHost) return;
       if (selectedIndex === null) {
         statusLine.textContent = "Please select a cell first";
         return;
@@ -959,25 +992,31 @@
       statusLine.textContent = "Question shown publicly";
     };
 
-    document.getElementById("showAnswerBtn").onclick = () => { if (isHost) socket.emit("showAnswer"); };
-    document.getElementById("hideAnswerBtn").onclick = () => { if (isHost) socket.emit("hideAnswer"); };
-    document.getElementById("correctBtn").onclick = () => { if (isHost) socket.emit("markCorrect"); };
-    document.getElementById("wrongBtn").onclick = () => { if (isHost) socket.emit("markWrong"); };
-    document.getElementById("resetBuzzerBtn").onclick = () => { if (isHost) socket.emit("resetBuzzer"); };
-    document.getElementById("undoBtn").onclick = () => { if (isHost) socket.emit("undoLastAction"); };
-    document.getElementById("timer20Btn").onclick = () => { if (isHost) socket.emit("timerStart", 20); };
-    document.getElementById("timerStopBtn").onclick = () => { if (isHost) socket.emit("timerStop"); };
-    document.getElementById("timerResetBtn").onclick = () => { if (isHost) socket.emit("timerReset"); };
-    document.getElementById("closeQuestionBtn").onclick = () => { if (isHost) socket.emit("closeQuestion"); };
-    document.getElementById("resetBoardBtn").onclick = () => { if (isHost) socket.emit("resetCurrentBoard"); };
+    document.getElementById("showAnswerBtn").onclick = () => {
+      socket.emit("showAnswer");
+      statusLine.textContent = "Answer shown publicly";
+    };
+
+    document.getElementById("hideAnswerBtn").onclick = () => {
+      socket.emit("hideAnswer");
+      statusLine.textContent = "Answer hidden";
+    };
+
+    document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
+    document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
+    document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
+    document.getElementById("undoBtn").onclick = () => socket.emit("undoLastAction");
+    document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
+    document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
+    document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
+    document.getElementById("closeQuestionBtn").onclick = () => socket.emit("closeQuestion");
+    document.getElementById("resetBoardBtn").onclick = () => socket.emit("resetCurrentBoard");
     document.getElementById("newGameBtn").onclick = () => {
-      if (!isHost) return;
       if (!confirm("Do you really want to start a new game?")) return;
       socket.emit("newGameReset");
     };
 
     document.getElementById("manualAddBtn").onclick = () => {
-      if (!isHost) return;
       const name = playerSelect.value;
       const points = Number(manualPointsInput.value) || 0;
       if (!name || points <= 0) return;
@@ -985,14 +1024,12 @@
     };
 
     document.getElementById("manualSubtractBtn").onclick = () => {
-      if (!isHost) return;
       const name = playerSelect.value;
       const points = Number(manualPointsInput.value) || 0;
       if (!name || points <= 0) return;
       socket.emit("manualSubtractPoints", { name, points });
     };
 
-    setHostUI(false);
     renderCategoriesForBoard();
     updateBoardButtons();
     buildBoard();
