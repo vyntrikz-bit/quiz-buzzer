@@ -12,7 +12,6 @@
       color: white;
       font-family: Arial, sans-serif;
     }
-
     .topbar {
       display: flex;
       gap: 10px;
@@ -24,14 +23,12 @@
       z-index: 20;
       align-items: center;
     }
-
     button, select, input, textarea {
       border: none;
       border-radius: 10px;
       font-size: 15px;
       box-sizing: border-box;
     }
-
     button {
       padding: 12px 16px;
       font-weight: bold;
@@ -39,26 +36,22 @@
       background: #334155;
       color: white;
     }
-
     input, select, textarea {
       background: #1f2937;
       color: white;
       padding: 12px;
     }
-
     textarea {
       resize: vertical;
       min-height: 90px;
       width: 100%;
     }
-
     .primary { background: #2563eb; }
     .danger { background: #dc2626; }
     .success { background: #16a34a; }
     .warn { background: #e67e22; }
     .purple { background: #9333ea; }
     .active-board { background: #16a34a; }
-
     .volume-wrap {
       display: flex;
       align-items: center;
@@ -68,17 +61,14 @@
       border-radius: 10px;
       font-weight: bold;
     }
-
     .volume-wrap input[type="range"] {
       width: 130px;
       padding: 0;
       background: transparent;
     }
-
     .wrap {
       padding: 14px;
     }
-
     .board-switch {
       display: flex;
       gap: 8px;
@@ -86,14 +76,12 @@
       align-items: center;
       flex-wrap: wrap;
     }
-
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       margin-bottom: 8px;
     }
-
     .category {
       background: #162038;
       border-radius: 10px;
@@ -103,13 +91,11 @@
       font-weight: 700;
       min-height: 28px;
     }
-
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
-
     .cell {
       height: 94px;
       background: #f2a7c2;
@@ -124,22 +110,18 @@
       user-select: none;
       transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
     }
-
     .cell:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0,0,0,0.22);
     }
-
     .cell.used {
       opacity: 0.28;
       cursor: default;
     }
-
     .cell.selected {
       outline: 4px solid #60a5fa;
       outline-offset: -4px;
     }
-
     .grid-2 {
       display: grid;
       grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
@@ -147,33 +129,28 @@
       margin-top: 18px;
       align-items: start;
     }
-
     .score-grid {
       margin-top: 16px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
-
     .score-card {
       background: #162038;
       border-radius: 10px;
       padding: 12px;
       text-align: center;
     }
-
     .score-name {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 6px;
     }
-
     .score-points {
       font-size: 28px;
       font-weight: 800;
       color: #ffd54a;
     }
-
     .panel {
       background: #111827;
       border-radius: 14px;
@@ -181,42 +158,34 @@
       min-width: 0;
       overflow: hidden;
     }
-
     .panel-title {
       font-size: 18px;
       font-weight: 800;
       margin-bottom: 12px;
       color: #93c5fd;
     }
-
     .muted {
       color: #cbd5e1;
       font-size: 14px;
     }
-
     .hidden {
       display: none;
     }
-
     .editor-grid {
       display: grid;
       gap: 10px;
     }
-
     .editor-row {
       display: grid;
       gap: 10px;
     }
-
     .editor-row.two {
       grid-template-columns: minmax(0, 1fr) 120px;
       align-items: end;
     }
-
     .editor-row.five {
       grid-template-columns: repeat(5, 1fr);
     }
-
     .simple-label {
       display: block;
       font-size: 13px;
@@ -224,40 +193,30 @@
       color: #cbd5e1;
       margin-bottom: 6px;
     }
-
-    #editorCategory,
-    #editorValue,
-    #editorQuestion,
-    #editorAnswer,
-    #editorImage {
+    #editorCategory, #editorValue, #editorQuestion, #editorAnswer, #editorImage {
       width: 100%;
       min-width: 0;
     }
-
     #editorValue {
       text-align: center;
       font-weight: 700;
     }
-
     .preview-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 14px;
     }
-
     .preview-block {
       background: #0f172a;
       border-radius: 16px;
       padding: 14px;
     }
-
     .preview-title {
       font-size: 18px;
       font-weight: 800;
       margin-bottom: 10px;
       color: #93c5fd;
     }
-
     .big-preview {
       background: #e8a4bc;
       color: #111;
@@ -267,7 +226,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .preview-category {
       position: absolute;
       top: 16px;
@@ -275,7 +233,6 @@
       font-size: 28px;
       font-weight: 800;
     }
-
     .preview-value {
       position: absolute;
       top: 16px;
@@ -283,7 +240,6 @@
       font-size: 28px;
       font-weight: 800;
     }
-
     .preview-center {
       height: 100%;
       min-height: 260px;
@@ -297,14 +253,12 @@
       font-weight: 800;
       line-height: 1.2;
     }
-
     .preview-image {
       max-width: 100%;
       max-height: 220px;
       object-fit: contain;
       border-radius: 8px;
     }
-
     .preview-answer {
       position: absolute;
       left: 50%;
@@ -320,7 +274,6 @@
       max-width: 80%;
       text-align: center;
     }
-
     .manual-box {
       margin-top: 14px;
       display: flex;
@@ -328,26 +281,19 @@
       flex-wrap: wrap;
       align-items: center;
     }
-
     .status-line {
       margin-top: 12px;
       color: #ffd54a;
       font-size: 18px;
       min-height: 28px;
     }
-
     @media (max-width: 1200px) {
       .grid-2 {
         grid-template-columns: 1fr;
       }
-
-      .categories,
-      .board,
-      .score-grid,
-      .editor-row.five {
+      .categories, .board, .score-grid, .editor-row.five {
         grid-template-columns: repeat(2, 1fr);
       }
-
       .editor-row.two {
         grid-template-columns: 1fr;
       }
@@ -362,7 +308,6 @@
     <button class="success" id="correctBtn">Correct</button>
     <button class="danger" id="wrongBtn">Wrong</button>
     <button class="warn" id="resetBuzzerBtn">Reset Buzzer</button>
-    <button class="purple" id="undoBtn">Undo</button>
     <button id="timer20Btn">20s Timer</button>
     <button id="timerStopBtn">Stop Timer</button>
     <button id="timerResetBtn">Reset Timer</button>
@@ -382,10 +327,8 @@
       <strong>Switch board:</strong>
       <button id="board1Btn">Board 1</button>
       <button id="board2Btn">Board 2</button>
-
       <button id="toggleCategoryEditorBtn">Edit Categories</button>
       <button id="toggleQuestionEditorBtn">Edit Question</button>
-
       <span class="muted" id="boardInfo"></span>
     </div>
 
@@ -407,7 +350,6 @@
         <div id="categoryEditor" class="hidden">
           <div class="editor-grid">
             <div class="muted">Edit the 5 categories for the current board, then save.</div>
-
             <div class="editor-row five">
               <input id="cat1" type="text" />
               <input id="cat2" type="text" />
@@ -415,7 +357,6 @@
               <input id="cat4" type="text" />
               <input id="cat5" type="text" />
             </div>
-
             <div>
               <button class="success" id="saveCategoriesBtn">Save Categories</button>
             </div>
@@ -552,8 +493,8 @@
     const volumeSlider = document.getElementById("volumeSlider");
     const volumeValue = document.getElementById("volumeValue");
 
-    let masterVolume = 0.35;
     let audioCtx = null;
+    let masterVolume = 0.35;
 
     function getAudioCtx() {
       if (!audioCtx) {
@@ -572,7 +513,6 @@
     function playBuzzer() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -586,7 +526,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.22);
     }
@@ -594,7 +533,6 @@
     function playCorrect() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -608,7 +546,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.25);
     }
@@ -616,7 +553,6 @@
     function playWrong() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -630,7 +566,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.31);
     }
@@ -704,12 +639,14 @@
     function renderPlayerSelect(players) {
       const currentValue = playerSelect.value;
       playerSelect.innerHTML = "";
+
       players.forEach((player) => {
         const option = document.createElement("option");
         option.value = player.name;
         option.textContent = `${player.name} (Slot ${player.slot})`;
         playerSelect.appendChild(option);
       });
+
       if (currentValue && [...playerSelect.options].some((o) => o.value === currentValue)) {
         playerSelect.value = currentValue;
       }
@@ -720,7 +657,6 @@
         privateCategory.textContent = "";
         privateValue.textContent = "";
         privateCenter.innerHTML = "";
-        privateCenter.textContent = "";
         privateAnswer.style.display = "none";
         privateAnswer.textContent = "";
         return;
@@ -739,34 +675,32 @@
       privateAnswer.textContent = question.answer || "";
     }
 
-    function renderPublicPreview(stateQuestion, state) {
-      if (!stateQuestion) {
+    function renderPublicPreview(question, runtimeState) {
+      if (!question) {
         publicCategory.textContent = "";
         publicValue.textContent = "";
         publicCenter.innerHTML = "";
-        publicCenter.textContent = "";
         publicAnswer.style.display = "none";
         publicAnswer.textContent = "";
         return;
       }
 
-      publicCategory.textContent = stateQuestion.category || "";
-      publicValue.textContent = stateQuestion.value || "";
+      publicCategory.textContent = question.category || "";
+      publicValue.textContent = question.value || "";
 
-      if (state && state.questionVisible) {
-        if (stateQuestion.image) {
-          publicCenter.innerHTML = `<img class="preview-image" src="${stateQuestion.image}" alt="">`;
+      if (runtimeState?.questionVisible) {
+        if (question.image) {
+          publicCenter.innerHTML = `<img class="preview-image" src="${question.image}" alt="">`;
         } else {
-          publicCenter.textContent = stateQuestion.question || "";
+          publicCenter.textContent = question.question || "";
         }
       } else {
         publicCenter.innerHTML = "";
-        publicCenter.textContent = "";
       }
 
-      if (state && state.answerVisible) {
+      if (runtimeState?.answerVisible) {
         publicAnswer.style.display = "block";
-        publicAnswer.textContent = stateQuestion.answer || "";
+        publicAnswer.textContent = question.answer || "";
       } else {
         publicAnswer.style.display = "none";
         publicAnswer.textContent = "";
@@ -844,18 +778,18 @@
 
       refreshEditorCategoryOptions();
 
-      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${categoryValue} | ${values[row]}`;
       editorCategory.value = categoryValue;
       editorValue.value = selectedQuestion.value;
       editorQuestion.value = selectedQuestion.question;
       editorAnswer.value = selectedQuestion.answer;
       editorImage.value = selectedQuestion.image;
 
+      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${categoryValue} | ${values[row]}`;
       renderPrivatePreview(selectedQuestion);
     }
 
     function saveCategoriesFromInputs() {
-      const categories = catInputs.map(input => input.value.trim() || "Category");
+      const categories = catInputs.map((input) => input.value.trim() || "Category");
       socket.emit("saveCategories", { board: activeBoard, categories });
     }
 
@@ -875,6 +809,8 @@
           image: editorImage.value.trim()
         }
       });
+
+      statusLine.textContent = `Question saved for Board ${activeBoard}`;
     }
 
     function switchBoard(boardNumber) {
@@ -885,7 +821,6 @@
       updateBoardButtons();
       buildBoard();
       loadSelectedIntoEditor();
-      renderPublicPreview(null, null);
       socket.emit("setCurrentBoard", boardNumber);
       statusLine.textContent = `Board ${boardNumber} selected`;
     }
@@ -905,7 +840,7 @@
     document.getElementById("saveCategoriesBtn").onclick = saveCategoriesFromInputs;
     document.getElementById("saveQuestionBtn").onclick = saveSelectedQuestion;
     document.getElementById("clearImageBtn").onclick = () => { editorImage.value = ""; };
-    document.getElementById("loadSelectedBtn").onclick = () => { loadSelectedIntoEditor(); };
+    document.getElementById("loadSelectedBtn").onclick = () => loadSelectedIntoEditor();
 
     socket.on("quizData", (data) => {
       quizData = data;
@@ -922,10 +857,7 @@
     socket.on("syncState", (runtimeState) => {
       boardUsedCells = runtimeState.usedCellsBoards || { 1: [], 2: [] };
       activeBoard = runtimeState.currentBoard || 1;
-
-      if (runtimeState.categoriesBoards) {
-        boardCategories = runtimeState.categoriesBoards;
-      }
+      boardCategories = runtimeState.categoriesBoards || boardCategories;
 
       renderCategoriesForBoard();
       updateBoardButtons();
@@ -966,51 +898,37 @@
     document.getElementById("board1Btn").onclick = () => switchBoard(1);
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
 
-   document.getElementById("showQuestionBtn").onclick = () => {
-  if (selectedIndex === null) {
-    statusLine.textContent = "Please select a cell first";
-    return;
-  }
+    document.getElementById("showQuestionBtn").onclick = () => {
+      if (selectedIndex === null) {
+        statusLine.textContent = "Please select a cell first";
+        return;
+      }
 
-  const row = Math.floor(selectedIndex / 5);
-  const col = selectedIndex % 5;
-  const item = getQuestionItem(activeBoard, selectedIndex);
+      const row = Math.floor(selectedIndex / 5);
+      const col = selectedIndex % 5;
+      const item = getQuestionItem(activeBoard, selectedIndex);
 
-  selectedQuestion = {
-    board: activeBoard,
-    index: selectedIndex,
-    category: item.category || boardCategories[activeBoard][col],
-    value: values[row],
-    question: item.question || "",
-    answer: item.answer || "",
-    image: item.image || ""
-  };
+      selectedQuestion = {
+        board: activeBoard,
+        index: selectedIndex,
+        category: item.category || boardCategories[activeBoard][col],
+        value: values[row],
+        question: item.question || "",
+        answer: item.answer || "",
+        image: item.image || ""
+      };
 
-  renderPrivatePreview(selectedQuestion);
-
-  socket.emit("openQuestion", selectedQuestion);
-
-  setTimeout(() => {
-    socket.emit("showQuestion");
-  }, 80);
-
-  statusLine.textContent = "Question shown publicly";
-};
-
-    document.getElementById("showAnswerBtn").onclick = () => {
-      socket.emit("showAnswer");
-      statusLine.textContent = "Answer shown publicly";
+      renderPrivatePreview(selectedQuestion);
+      socket.emit("showSelectedQuestion", selectedQuestion);
+      statusLine.textContent = "Question shown publicly";
+      getAudioCtx();
     };
 
-    document.getElementById("hideAnswerBtn").onclick = () => {
-      socket.emit("hideAnswer");
-      statusLine.textContent = "Answer hidden";
-    };
-
+    document.getElementById("showAnswerBtn").onclick = () => socket.emit("showAnswer");
+    document.getElementById("hideAnswerBtn").onclick = () => socket.emit("hideAnswer");
     document.getElementById("correctBtn").onclick = () => socket.emit("markCorrect");
     document.getElementById("wrongBtn").onclick = () => socket.emit("markWrong");
     document.getElementById("resetBuzzerBtn").onclick = () => socket.emit("resetBuzzer");
-    document.getElementById("undoBtn").onclick = () => socket.emit("undoLastAction");
     document.getElementById("timer20Btn").onclick = () => socket.emit("timerStart", 20);
     document.getElementById("timerStopBtn").onclick = () => socket.emit("timerStop");
     document.getElementById("timerResetBtn").onclick = () => socket.emit("timerReset");
