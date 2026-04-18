@@ -966,31 +966,36 @@
     document.getElementById("board1Btn").onclick = () => switchBoard(1);
     document.getElementById("board2Btn").onclick = () => switchBoard(2);
 
-    document.getElementById("showQuestionBtn").onclick = () => {
-      if (selectedIndex === null) {
-        statusLine.textContent = "Please select a cell first";
-        return;
-      }
+   document.getElementById("showQuestionBtn").onclick = () => {
+  if (selectedIndex === null) {
+    statusLine.textContent = "Please select a cell first";
+    return;
+  }
 
-      const row = Math.floor(selectedIndex / 5);
-      const col = selectedIndex % 5;
-      const item = getQuestionItem(activeBoard, selectedIndex);
+  const row = Math.floor(selectedIndex / 5);
+  const col = selectedIndex % 5;
+  const item = getQuestionItem(activeBoard, selectedIndex);
 
-      selectedQuestion = {
-        board: activeBoard,
-        index: selectedIndex,
-        category: item.category || boardCategories[activeBoard][col],
-        value: values[row],
-        question: item.question || "",
-        answer: item.answer || "",
-        image: item.image || ""
-      };
+  selectedQuestion = {
+    board: activeBoard,
+    index: selectedIndex,
+    category: item.category || boardCategories[activeBoard][col],
+    value: values[row],
+    question: item.question || "",
+    answer: item.answer || "",
+    image: item.image || ""
+  };
 
-      renderPrivatePreview(selectedQuestion);
-      socket.emit("openQuestion", selectedQuestion);
-      socket.emit("showQuestion");
-      statusLine.textContent = "Question shown publicly";
-    };
+  renderPrivatePreview(selectedQuestion);
+
+  socket.emit("openQuestion", selectedQuestion);
+
+  setTimeout(() => {
+    socket.emit("showQuestion");
+  }, 80);
+
+  statusLine.textContent = "Question shown publicly";
+};
 
     document.getElementById("showAnswerBtn").onclick = () => {
       socket.emit("showAnswer");
