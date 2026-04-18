@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Player</title>
   <script src="/socket.io/socket.io.js"></script>
-
   <style>
     html, body {
       margin: 0;
@@ -16,13 +15,11 @@
       font-family: Arial, sans-serif;
       color: white;
     }
-
     .stage {
       width: 100vw;
       height: 100vh;
       position: relative;
     }
-
     .canvas {
       position: absolute;
       width: 1920px;
@@ -30,7 +27,6 @@
       transform-origin: top left;
       background: url("background.png") center / cover no-repeat;
     }
-
     .topbar {
       position: absolute;
       top: 18px;
@@ -41,7 +37,6 @@
       align-items: center;
       flex-wrap: wrap;
     }
-
     input {
       padding: 12px;
       border-radius: 10px;
@@ -51,7 +46,6 @@
       width: 240px;
       font-size: 16px;
     }
-
     button {
       padding: 12px 16px;
       border-radius: 10px;
@@ -62,7 +56,6 @@
       cursor: pointer;
       font-size: 15px;
     }
-
     .volume-wrap {
       position: absolute;
       left: 18px;
@@ -77,12 +70,10 @@
       font-weight: bold;
       box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     }
-
     .volume-wrap input[type="range"] {
       width: 120px;
       padding: 0;
     }
-
     .status {
       position: absolute;
       top: 72px;
@@ -93,7 +84,6 @@
       min-height: 30px;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
-
     .hint {
       position: absolute;
       left: 18px;
@@ -103,7 +93,6 @@
       color: #cbd5e1;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
-
     .board-indicator {
       position: absolute;
       left: 18px;
@@ -113,20 +102,17 @@
       color: #93c5fd;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
-
     .board-wrap {
       position: absolute;
       top: 20px;
       left: 550px;
       width: 1100px;
     }
-
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
-
     .category {
       text-align: center;
       font-size: 28px;
@@ -134,13 +120,11 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.45);
     }
-
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
-
     .cell {
       height: 90px;
       background: #f2a7c2;
@@ -152,11 +136,9 @@
       border-radius: 8px;
       color: #111;
     }
-
     .cell.used {
       opacity: 0.3;
     }
-
     .question-wrap {
       position: absolute;
       top: 20px;
@@ -169,7 +151,6 @@
       box-sizing: border-box;
       overflow: hidden;
     }
-
     .question-category {
       position: absolute;
       top: 14px;
@@ -179,7 +160,6 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
-
     .question-value {
       position: absolute;
       top: 14px;
@@ -189,7 +169,6 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
-
     .question-center {
       position: absolute;
       top: 70px;
@@ -205,14 +184,12 @@
       color: black;
       line-height: 1.15;
     }
-
     .question-image {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
       border-radius: 8px;
     }
-
     .answer-box {
       position: absolute;
       bottom: 15px;
@@ -233,7 +210,6 @@
 <body>
   <div class="stage">
     <div class="canvas" id="canvas">
-
       <div class="topbar">
         <input id="nameInput" placeholder="Your name">
         <button id="saveBtn">Save Name</button>
@@ -266,7 +242,6 @@
         <div class="question-center" id="qCenter"></div>
         <div class="answer-box" id="answerBox"></div>
       </div>
-
     </div>
   </div>
 
@@ -310,7 +285,6 @@
     function playBuzzer() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -324,7 +298,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.22);
     }
@@ -332,7 +305,6 @@
     function playCorrect() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -346,7 +318,6 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.25);
     }
@@ -354,7 +325,6 @@
     function playWrong() {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -368,14 +338,12 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
       osc.stop(now + 0.31);
     }
 
     const savedVolume = localStorage.getItem("playerVolume");
     const startVolume = savedVolume !== null ? Number(savedVolume) : 0.25;
-
     volumeSlider.value = Math.round(startVolume * 100);
     volumeValue.textContent = `${Math.round(startVolume * 100)}%`;
     applyVolume(startVolume);
