@@ -3,8 +3,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Server } = require("socket.io");
 
-const HOST_PASSWORD = process.env.HOST_PASSWORD || "changeme123";
-
 const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "data");
 const quizDataPath = path.join(dataDir, "quizData.json");
@@ -48,6 +46,21 @@ function loadQuizData() {
     if (!parsed.categories || !parsed.questions) {
       throw new Error("Invalid quizData.json structure");
     }
+
+    for (const board of [1, 2]) {
+      if (!Array.isArray(parsed.questions[board])) {
+        parsed.questions[board] = getDefaultQuizData().questions[board];
+      }
+      while (parsed.questions[board].length < 25) {
+        parsed.questions[board].push({
+          category: "",
+          question: "",
+          answer: "",
+          image: ""
+        });
+      }
+    }
+
     return parsed;
   } catch {
     const defaults = getDefaultQuizData();
@@ -71,7 +84,6 @@ function createInitialState() {
     },
 
     currentQuestion: null,
-    questionPanelOpen: false,
     questionVisible: false,
     answerVisible: false,
 
@@ -149,13 +161,6 @@ function emitState(target = null) {
   else io.emit("syncState", payload);
 }
 
-function requireHost(socket, fn) {
-  return (...args) => {
-    if (!socket.data.isHost) return;
-    fn(...args);
-  };
-}
-
 function upsertLobbyPlayer(socketId, name) {
   const cleanName = String(name || "").trim().slice(0, 24);
   if (!cleanName) return null;
@@ -225,18 +230,9 @@ const server = http.createServer((req, res) => {
 const io = new Server(server);
 
 io.on("connection", (socket) => {
-  socket.data.isHost = false;
-
   emitQuizData(socket);
   emitState(socket);
   emitLobby();
-  socket.emit("hostAuthStatus", { ok: false });
-
-  socket.on("hostLogin", ({ password }) => {
-    const ok = String(password || "") === HOST_PASSWORD;
-    socket.data.isHost = ok;
-    socket.emit("hostAuthStatus", { ok });
-  });
 
   socket.on("joinLobby", (playerName) => {
     const player = upsertLobbyPlayer(socket.id, playerName);
@@ -248,14 +244,14 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("setCurrentBoard", requireHost(socket, (boardNumber) => {
+  socket.on("setCurrentBoard", (boardNumber) => {
     const board = Number(boardNumber);
     if (board !== 1 && board !== 2) return;
     state.currentBoard = board;
     emitState();
-  }));
+  });
 
-  socket.on("saveCategories", requireHost(socket, ({ board, categories }) => {
+  socket.on("saveCategories", ({ board, categories }) => {
     const boardNum = Number(board);
     if (boardNum !== 1 && boardNum !== 2) return;
     if (!Array.isArray(categories) || categories.length !== 5) return;
@@ -267,9 +263,9 @@ io.on("connection", (socket) => {
     saveQuizData(quizData);
     emitQuizData();
     emitState();
-  }));
+  });
 
-  socket.on("saveQuestion", requireHost(socket, ({ board, index, data }) => {
+  socket.on("saveQuestion", ({ board, index, data }) => {
     const boardNum = Number(board);
     const idx = Number(index);
     if (boardNum !== 1 && boardNum !== 2) return;
@@ -286,9 +282,9 @@ io.on("connection", (socket) => {
     saveQuizData(quizData);
     emitQuizData();
     emitState();
-  }));
+  });
 
-  socket.on("openQuestion", requireHost(socket, (payload) => {
+  socket.on("showSelectedQuestion", (payload) => {
     const board = Number(payload?.board);
     const index = Number(payload?.index);
 
@@ -310,8 +306,7 @@ io.on("connection", (socket) => {
       state.usedCellsBoards[board].push(index);
     }
 
-    state.questionPanelOpen = true;
-    state.questionVisible = false;
+    state.questionVisible = true;
     state.answerVisible = false;
     state.firstBuzz = null;
     state.buzzLocked = false;
@@ -323,28 +318,21 @@ io.on("connection", (socket) => {
     state.timer.remaining = 0;
 
     emitState();
-  }));
+  });
 
-  socket.on("showQuestion", requireHost(socket, () => {
-    if (!state.currentQuestion) return;
-    state.questionVisible = true;
-    emitState();
-  }));
-
-  socket.on("showAnswer", requireHost(socket, () => {
+  socket.on("showAnswer", () => {
     if (!state.currentQuestion) return;
     state.answerVisible = true;
     emitState();
-  }));
+  });
 
-  socket.on("hideAnswer", requireHost(socket, () => {
+  socket.on("hideAnswer", () => {
     state.answerVisible = false;
     emitState();
-  }));
+  });
 
-  socket.on("closeQuestion", requireHost(socket, () => {
+  socket.on("closeQuestion", () => {
     state.currentQuestion = null;
-    state.questionPanelOpen = false;
     state.questionVisible = false;
     state.answerVisible = false;
     state.firstBuzz = null;
@@ -357,16 +345,16 @@ io.on("connection", (socket) => {
     state.timer.remaining = 0;
 
     emitState();
-  }));
+  });
 
-  socket.on("resetBuzzer", requireHost(socket, () => {
+  socket.on("resetBuzzer", () => {
     if (!state.currentQuestion) return;
     state.firstBuzz = null;
     state.buzzLocked = false;
     emitState();
-  }));
+  });
 
-  socket.on("timerStart", requireHost(socket, (seconds) => {
+  socket.on("timerStart", (seconds) => {
     const secs = Number(seconds) || 0;
     if (!state.currentQuestion || secs <= 0) return;
 
@@ -389,18 +377,18 @@ io.on("connection", (socket) => {
 
       emitState();
     }, 1000);
-  }));
+  });
 
-  socket.on("timerStop", requireHost(socket, () => {
+  socket.on("timerStop", () => {
     stopTimer();
     emitState();
-  }));
+  });
 
-  socket.on("timerReset", requireHost(socket, () => {
+  socket.on("timerReset", () => {
     stopTimer();
     state.timer.remaining = state.timer.total;
     emitState();
-  }));
+  });
 
   socket.on("buzz", (playerName) => {
     const name = String(playerName || "").trim().slice(0, 24);
@@ -424,7 +412,7 @@ io.on("connection", (socket) => {
     emitState();
   });
 
-  socket.on("markCorrect", requireHost(socket, () => {
+  socket.on("markCorrect", () => {
     if (!state.currentQuestion || !state.firstBuzz) return;
 
     saveLastAction();
@@ -437,9 +425,9 @@ io.on("connection", (socket) => {
 
     io.emit("answerResult", { result: "correct", name, points });
     emitState();
-  }));
+  });
 
-  socket.on("markWrong", requireHost(socket, () => {
+  socket.on("markWrong", () => {
     if (!state.currentQuestion || !state.firstBuzz) return;
 
     saveLastAction();
@@ -459,9 +447,9 @@ io.on("connection", (socket) => {
 
     io.emit("answerResult", { result: "wrong", name, points });
     emitState();
-  }));
+  });
 
-  socket.on("manualAddPoints", requireHost(socket, ({ name, points }) => {
+  socket.on("manualAddPoints", ({ name, points }) => {
     const cleanName = String(name || "").trim().slice(0, 24);
     const amount = Number(points) || 0;
     if (!cleanName || amount <= 0) return;
@@ -478,9 +466,9 @@ io.on("connection", (socket) => {
     });
 
     emitState();
-  }));
+  });
 
-  socket.on("manualSubtractPoints", requireHost(socket, ({ name, points }) => {
+  socket.on("manualSubtractPoints", ({ name, points }) => {
     const cleanName = String(name || "").trim().slice(0, 24);
     const amount = Number(points) || 0;
     if (!cleanName || amount <= 0) return;
@@ -497,9 +485,9 @@ io.on("connection", (socket) => {
     });
 
     emitState();
-  }));
+  });
 
-  socket.on("undoLastAction", requireHost(socket, () => {
+  socket.on("undoLastAction", () => {
     if (!state.lastAction) return;
 
     state.scores = { ...state.lastAction.scores };
@@ -509,14 +497,13 @@ io.on("connection", (socket) => {
     state.lastAction = null;
 
     emitState();
-  }));
+  });
 
-  socket.on("resetCurrentBoard", requireHost(socket, () => {
+  socket.on("resetCurrentBoard", () => {
     state.usedCellsBoards[state.currentBoard] = [];
 
     if (state.currentQuestion && state.currentQuestion.board === state.currentBoard) {
       state.currentQuestion = null;
-      state.questionPanelOpen = false;
       state.questionVisible = false;
       state.answerVisible = false;
       state.firstBuzz = null;
@@ -529,9 +516,9 @@ io.on("connection", (socket) => {
     state.timer.remaining = 0;
 
     emitState();
-  }));
+  });
 
-  socket.on("newGameReset", requireHost(socket, () => {
+  socket.on("newGameReset", () => {
     const oldPlayers = [...state.lobbyPlayers];
     state = createInitialState();
     state.lobbyPlayers = oldPlayers;
@@ -543,7 +530,7 @@ io.on("connection", (socket) => {
     stopTimer();
     emitLobby();
     emitState();
-  }));
+  });
 
   socket.on("disconnect", () => {
     const before = state.lobbyPlayers.length;
@@ -556,7 +543,6 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
