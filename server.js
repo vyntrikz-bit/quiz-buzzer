@@ -3,6 +3,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Server } = require("socket.io");
 
+const PORT = process.env.PORT || 3000;
+
 const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "data");
 const quizDataPath = path.join(dataDir, "quizData.json");
