@@ -1,1 +1,10 @@
-
+{
+  "categories": {
+    "1": ["Basics", "Warframes", "Weapons", "Enemies", "Mods"],
+    "2": ["Planets & Locations", "Resources & Crafting", "Abilities & Energie", "Companions", "Game Modes"]
+  },
+  "questions": {
+    "1": [],
+    "2": []
+  }
+}
