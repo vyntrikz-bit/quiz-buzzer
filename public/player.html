@@ -15,7 +15,13 @@
       font-family: Arial, sans-serif;
       color: white;
     }
-    .stage { width: 100vw; height: 100vh; position: relative; }
+
+    .stage {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
     .canvas {
       position: absolute;
       width: 1920px;
@@ -23,6 +29,7 @@
       transform-origin: top left;
       background: url("background.png") center / cover no-repeat;
     }
+
     .topbar {
       position: absolute;
       top: 18px;
@@ -33,6 +40,7 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
     input {
       padding: 12px;
       border-radius: 10px;
@@ -42,6 +50,7 @@
       width: 240px;
       font-size: 16px;
     }
+
     button {
       padding: 12px 16px;
       border-radius: 10px;
@@ -52,6 +61,7 @@
       cursor: pointer;
       font-size: 15px;
     }
+
     .volume-wrap {
       position: absolute;
       left: 18px;
@@ -66,10 +76,12 @@
       font-weight: bold;
       box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     }
+
     .volume-wrap input[type="range"] {
       width: 120px;
       padding: 0;
     }
+
     .status {
       position: absolute;
       top: 72px;
@@ -80,6 +92,7 @@
       min-height: 30px;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
+
     .hint {
       position: absolute;
       left: 18px;
@@ -89,6 +102,7 @@
       color: #cbd5e1;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
+
     .board-indicator {
       position: absolute;
       left: 18px;
@@ -98,17 +112,20 @@
       color: #93c5fd;
       text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
+
     .board-wrap {
       position: absolute;
       top: 20px;
       left: 550px;
       width: 1100px;
     }
+
     .categories {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
+
     .category {
       text-align: center;
       font-size: 28px;
@@ -116,11 +133,13 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.45);
     }
+
     .board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
+
     .cell {
       height: 90px;
       background: #f2a7c2;
@@ -132,7 +151,11 @@
       border-radius: 8px;
       color: #111;
     }
-    .cell.used { opacity: 0.3; }
+
+    .cell.used {
+      opacity: 0.3;
+    }
+
     .question-wrap {
       position: absolute;
       top: 20px;
@@ -145,6 +168,7 @@
       box-sizing: border-box;
       overflow: hidden;
     }
+
     .question-category {
       position: absolute;
       top: 14px;
@@ -154,6 +178,7 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
+
     .question-value {
       position: absolute;
       top: 14px;
@@ -163,6 +188,7 @@
       color: white;
       text-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
+
     .question-center {
       position: absolute;
       top: 70px;
@@ -178,12 +204,14 @@
       color: black;
       line-height: 1.15;
     }
+
     .question-image {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
       border-radius: 8px;
     }
+
     .answer-box {
       position: absolute;
       bottom: 15px;
@@ -239,10 +267,6 @@
     </div>
   </div>
 
-  <audio id="buzzerSound" src="/buzzer.mp3" preload="auto"></audio>
-  <audio id="correctSound" src="/correct.mp3" preload="auto"></audio>
-  <audio id="wrongSound" src="/wrong.mp3" preload="auto"></audio>
-
   <script>
     const socket = io();
 
@@ -257,22 +281,93 @@
     const board = document.getElementById("board");
     const values = [200, 300, 400, 500, 600];
 
-    const buzzerSound = document.getElementById("buzzerSound");
-    const correctSound = document.getElementById("correctSound");
-    const wrongSound = document.getElementById("wrongSound");
-
     const volumeSlider = document.getElementById("volumeSlider");
     const volumeValue = document.getElementById("volumeValue");
 
     let playerName = localStorage.getItem("playerName") || "";
+    let audioCtx = null;
+    let masterVolume = 0.25;
 
     document.getElementById("nameInput").value = playerName;
 
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
     function applyVolume(volume) {
-      const v = Math.max(0, Math.min(1, volume));
-      buzzerSound.volume = v;
-      correctSound.volume = v;
-      wrongSound.volume = v;
+      masterVolume = Math.max(0, Math.min(1, volume));
+    }
+
+    function playBuzzer() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "square";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.45), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.22);
+    }
+
+    function playCorrect() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.linearRampToValueAtTime(860, now + 0.2);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.35), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+
+    function playWrong() {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(85, now + 0.28);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001, masterVolume * 0.35), now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.31);
     }
 
     const savedVolume = localStorage.getItem("playerVolume");
@@ -287,13 +382,6 @@
       localStorage.setItem("playerVolume", String(newVolume));
       applyVolume(newVolume);
     });
-
-    function playSound(el) {
-      if (!el) return;
-      el.pause();
-      el.currentTime = 0;
-      el.play().catch(() => {});
-    }
 
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
@@ -316,6 +404,7 @@
       localStorage.setItem("playerName", playerName);
       socket.emit("joinLobby", playerName);
       statusEl.textContent = "Name saved";
+      getAudioCtx();
     };
 
     socket.on("syncState", (state) => {
@@ -389,15 +478,15 @@
     });
 
     socket.on("playerBuzzed", () => {
-      playSound(buzzerSound);
+      playBuzzer();
     });
 
     socket.on("answerResult", ({ result, name }) => {
       if (!playerName) return;
       if (!name || name.trim().toLowerCase() !== playerName.trim().toLowerCase()) return;
 
-      if (result === "correct") playSound(correctSound);
-      if (result === "wrong") playSound(wrongSound);
+      if (result === "correct") playCorrect();
+      if (result === "wrong") playWrong();
     });
 
     window.addEventListener("keydown", (event) => {
@@ -409,6 +498,7 @@
         return;
       }
 
+      getAudioCtx();
       socket.emit("buzz", playerName);
     });
 
