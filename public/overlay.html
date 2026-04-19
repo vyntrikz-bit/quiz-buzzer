@@ -1,441 +1,302 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
 <meta charset="UTF-8">
 <title>OBS Overlay</title>
 <script src="/socket.io/socket.io.js"></script>
+
 <style>
 html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-  font-family: Arial, sans-serif;
+margin: 0;
+@@ -14,21 +13,18 @@
+background: #000;
+font-family: Arial, sans-serif;
 }
+
 .stage {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
+width: 100vw;
+height: 100vh;
+position: relative;
 }
+
 .canvas {
-  position: absolute;
-  width: 1920px;
-  height: 1080px;
-  transform-origin: top left;
-  background: url("background.png") center/cover no-repeat;
+position: absolute;
+width: 1920px;
+height: 1080px;
+transform-origin: top left;
+background: url("background.png") center/cover no-repeat;
 }
+
 .host-box {
-  position: absolute;
-  left: 20px;
-  top: 255px;
-  width: 500px;
-  height: 280px;
-  border: none;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: transparent;
+position: absolute;
+left: 20px;
+@@ -40,14 +36,12 @@
+box-sizing: border-box;
+background: transparent;
 }
+
 #avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+width: 100%;
+height: 100%;
+object-fit: cover;
+display: block;
 }
+
 .board-indicator {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-size: 26px;
-  font-weight: 800;
-  color: white;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+position: absolute;
+top: 20px;
+@@ -57,33 +51,28 @@
+color: white;
+text-shadow: 0 2px 8px rgba(0,0,0,0.45);
 }
+
 .board-wrap {
-  position: absolute;
-  top: 20px;
-  left: 550px;
-  width: 1100px;
+position: absolute;
+top: 20px;
+left: 550px;
+width: 1100px;
 }
+
 .categories {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 8px;
 }
+
 .category {
-  text-align: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: white;
+text-align: center;
+font-size: 28px;
+font-weight: bold;
+color: white;
 }
+
 .board {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 8px;
 }
+
 .cell {
-  height: 90px;
-  background: #f2a7c2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 50px;
-  font-weight: bold;
-  border-radius: 8px;
-  color: #111;
+height: 90px;
+background: #f2a7c2;
+@@ -95,11 +84,9 @@
+border-radius: 8px;
+color: #111;
 }
+
 .cell.used {
-  opacity: 0.3;
+opacity: 0.3;
 }
+
 .question-wrap {
-  position: absolute;
-  top: 20px;
-  left: 550px;
-  width: 1100px;
-  height: 500px;
-  background: #e8a4bc;
-  border-radius: 20px;
-  display: none;
-  box-sizing: border-box;
-  overflow: hidden;
+position: absolute;
+top: 20px;
+@@ -112,7 +99,6 @@
+box-sizing: border-box;
+overflow: hidden;
 }
+
 .question-category {
-  position: absolute;
-  top: 14px;
-  left: 18px;
-  font-size: 30px;
-  font-weight: bold;
-  color: white;
+position: absolute;
+top: 14px;
+@@ -121,7 +107,6 @@
+font-weight: bold;
+color: white;
 }
+
 .question-value {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  font-size: 30px;
-  font-weight: bold;
-  color: white;
+position: absolute;
+top: 14px;
+@@ -130,7 +115,6 @@
+font-weight: bold;
+color: white;
 }
+
 .question-center {
-  position: absolute;
-  top: 70px;
-  left: 25px;
-  right: 25px;
-  bottom: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 50px;
-  font-weight: bold;
-  color: black;
+position: absolute;
+top: 70px;
+@@ -145,14 +129,12 @@
+font-weight: bold;
+color: black;
 }
+
 .question-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
+max-width: 100%;
+max-height: 100%;
+object-fit: contain;
+border-radius: 8px;
 }
+
 .answer-box {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  color: black;
-  padding: 10px 25px;
-  border-radius: 10px;
-  font-size: 30px;
-  display: none;
-  max-width: 80%;
-  text-align: center;
-  font-weight: bold;
+position: absolute;
+bottom: 15px;
+@@ -168,7 +150,6 @@
+text-align: center;
+font-weight: bold;
 }
+
 .players-row {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 20px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+position: absolute;
+left: 10px;
+@@ -178,20 +159,17 @@
+grid-template-columns: repeat(5, 1fr);
+gap: 10px;
 }
+
 .player-column {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+display: flex;
+flex-direction: column;
+gap: 6px;
 }
+
 .player-cam {
-  height: 275px;
-  border: 4px solid white;
-  border-radius: 20px;
-  box-sizing: border-box;
+height: 275px;
+border: 4px solid white;
+border-radius: 20px;
+box-sizing: border-box;
 }
+
 .name-box {
-  background: white;
-  color: black;
-  text-align: center;
-  font-weight: bold;
-  padding: 6px;
-  border-radius: 10px;
-  font-size: 22px;
-  transition: all 0.2s ease;
+background: white;
+color: black;
+@@ -202,24 +180,15 @@
+font-size: 22px;
+transition: all 0.2s ease;
 }
+
 .name-box.active {
-  background: #ff3b3b;
-  color: white;
-  animation: buzzGlow 0.8s infinite alternate;
+background: #ff3b3b;
+color: white;
+animation: buzzGlow 0.8s infinite alternate;
 }
+
 @keyframes buzzGlow {
+  from {
+    transform: scale(1.04);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.65);
+  }
+  to {
+    transform: scale(1.10);
+    box-shadow: 0 0 24px rgba(255, 0, 0, 0.95);
+  }
   from { transform: scale(1.04); box-shadow: 0 0 10px rgba(255, 0, 0, 0.65); }
   to { transform: scale(1.10); box-shadow: 0 0 24px rgba(255, 0, 0, 0.95); }
 }
+
 .score-box {
-  background: black;
-  border: 3px solid white;
-  text-align: center;
-  font-size: 22px;
-  border-radius: 10px;
-  color: white;
-  font-weight: bold;
-  padding: 4px 0;
-  box-sizing: border-box;
+background: black;
+border: 3px solid white;
+@@ -233,11 +202,9 @@
 }
 </style>
 </head>
+
 <body>
 <div class="stage">
 <div class="canvas" id="canvas">
-  <div class="board-indicator" id="boardIndicator"></div>
 
-  <div class="board-wrap" id="boardWrap">
-    <div class="categories" id="categories">
-      <div class="category">Category 1</div>
-      <div class="category">Category 2</div>
-      <div class="category">Category 3</div>
-      <div class="category">Category 4</div>
-      <div class="category">Category 5</div>
+<div class="board-indicator" id="boardIndicator"></div>
+
+<div class="board-wrap" id="boardWrap">
+@@ -263,33 +230,12 @@
+</div>
+
+<div class="players-row">
+    <div class="player-column">
+      <div class="player-cam" id="cam1"></div>
+      <div class="name-box" id="name1">Empty</div>
+      <div class="score-box" id="score1">0</div>
     </div>
-    <div class="board" id="board"></div>
-  </div>
-
-  <div class="question-wrap" id="questionWrap">
-    <div class="question-category" id="qCategory"></div>
-    <div class="question-value" id="qValue"></div>
-    <div class="question-center" id="qCenter"></div>
-    <div class="answer-box" id="answerBox"></div>
-  </div>
-
-  <div class="host-box">
-    <img src="avatar.png" id="avatar" alt="" onerror="this.style.display='none'">
-  </div>
-
-  <div class="players-row">
+    <div class="player-column">
+      <div class="player-cam" id="cam2"></div>
+      <div class="name-box" id="name2">Empty</div>
+      <div class="score-box" id="score2">0</div>
+    </div>
+    <div class="player-column">
+      <div class="player-cam" id="cam3"></div>
+      <div class="name-box" id="name3">Empty</div>
+      <div class="score-box" id="score3">0</div>
+    </div>
+    <div class="player-column">
+      <div class="player-cam" id="cam4"></div>
+      <div class="name-box" id="name4">Empty</div>
+      <div class="score-box" id="score4">0</div>
+    </div>
+    <div class="player-column">
+      <div class="player-cam" id="cam5"></div>
+      <div class="name-box" id="name5">Empty</div>
+      <div class="score-box" id="score5">0</div>
+    </div>
     <div class="player-column"><div class="player-cam" id="cam1"></div><div class="name-box" id="name1">Empty</div><div class="score-box" id="score1">0</div></div>
     <div class="player-column"><div class="player-cam" id="cam2"></div><div class="name-box" id="name2">Empty</div><div class="score-box" id="score2">0</div></div>
     <div class="player-column"><div class="player-cam" id="cam3"></div><div class="name-box" id="name3">Empty</div><div class="score-box" id="score3">0</div></div>
     <div class="player-column"><div class="player-cam" id="cam4"></div><div class="name-box" id="name4">Empty</div><div class="score-box" id="score4">0</div></div>
     <div class="player-column"><div class="player-cam" id="cam5"></div><div class="name-box" id="name5">Empty</div><div class="score-box" id="score5">0</div></div>
-  </div>
+</div>
+
 </div>
 </div>
 
-<script>
-const socket = io();
-
+@@ -303,7 +249,6 @@
 const boardWrap = document.getElementById("boardWrap");
 const questionWrap = document.getElementById("questionWrap");
 const boardIndicator = document.getElementById("boardIndicator");
+
 const qCategory = document.getElementById("qCategory");
 const qValue = document.getElementById("qValue");
 const qCenter = document.getElementById("qCenter");
-const answerBox = document.getElementById("answerBox");
-
-const values = [200, 300, 400, 500, 600];
-const board = document.getElementById("board");
-let slotPlayers = {1:null,2:null,3:null,4:null,5:null};
-
-let audioCtx = null;
-const overlayVolume = 0.22;
-
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume().catch(() => {});
-  }
-  return audioCtx;
-}
-
-function playBuzzer() {
-  const ctx = getAudioCtx();
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "square";
-  osc.frequency.setValueAtTime(180, now);
-  osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.001, overlayVolume * 0.45), now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.22);
-}
-
-function playCorrect() {
-  const ctx = getAudioCtx();
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(420, now);
-  osc.frequency.linearRampToValueAtTime(860, now + 0.2);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.001, overlayVolume * 0.35), now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.25);
-}
-
-function playWrong() {
-  const ctx = getAudioCtx();
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(220, now);
-  osc.frequency.linearRampToValueAtTime(85, now + 0.28);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.001, overlayVolume * 0.35), now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.31);
-}
-
-for (let r = 0; r < 5; r++) {
-  for (let c = 0; c < 5; c++) {
-    const div = document.createElement("div");
-    div.className = "cell";
-    div.innerText = values[r];
-    board.appendChild(div);
-  }
-}
+@@ -335,11 +280,9 @@
 
 socket.on("lobbyUpdate", (players) => {
-  slotPlayers = {1:null,2:null,3:null,4:null,5:null};
+slotPlayers = {1:null,2:null,3:null,4:null,5:null};
 
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById("name" + i).innerText = "Empty";
-  }
+for (let i = 1; i <= 5; i++) {
+document.getElementById("name" + i).innerText = "Empty";
+}
 
-  players.forEach((p) => {
-    slotPlayers[p.slot] = p.name;
-    document.getElementById("name" + p.slot).innerText = p.name;
-  });
-});
-
-socket.on("syncState", (state) => {
-  boardIndicator.textContent = `Board ${state.currentBoard}`;
-
-  const categoryNodes = document.querySelectorAll(".category");
-  if (state.categories && state.categories.length === 5) {
-    state.categories.forEach((cat, i) => {
-      if (categoryNodes[i]) categoryNodes[i].innerText = cat;
-    });
-  }
-
-  const allCells = document.querySelectorAll(".cell");
-  allCells.forEach((cell, i) => {
-    cell.classList.toggle("used", (state.usedCells || []).includes(i));
-  });
-
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById("name" + i).classList.remove("active");
-  }
-
-  if (state.firstBuzz) {
-    for (let i = 1; i <= 5; i++) {
-      const player = slotPlayers[i];
+players.forEach((p) => {
+slotPlayers[p.slot] = p.name;
+document.getElementById("name" + p.slot).innerText = p.name;
+@@ -368,22 +311,15 @@
+if (state.firstBuzz) {
+for (let i = 1; i <= 5; i++) {
+const player = slotPlayers[i];
+      if (
+        player &&
+        state.firstBuzz &&
+        player.trim().toLowerCase() === state.firstBuzz.trim().toLowerCase()
+      ) {
       if (player && player.trim().toLowerCase() === state.firstBuzz.trim().toLowerCase()) {
-        document.getElementById("name" + i).classList.add("active");
-      }
-    }
-  }
+document.getElementById("name" + i).classList.add("active");
+}
+}
+}
 
-  for (let i = 1; i <= 5; i++) {
-    const name = slotPlayers[i];
+for (let i = 1; i <= 5; i++) {
+const name = slotPlayers[i];
+    const scoreValue =
+      name && typeof state.scores[name] !== "undefined"
+        ? state.scores[name]
+        : 0;
     const scoreValue = name && typeof state.scores[name] !== "undefined" ? state.scores[name] : 0;
-    document.getElementById("score" + i).innerText = scoreValue;
-  }
+document.getElementById("score" + i).innerText = scoreValue;
+}
 
-  if (state.currentQuestion) {
-    boardWrap.style.display = "none";
-    questionWrap.style.display = "block";
-
-    qCategory.innerText = state.currentQuestion.category || "";
-    qValue.innerText = state.currentQuestion.value || "";
-
-    if (state.questionVisible) {
-      if (state.currentQuestion.image) {
-        qCenter.innerHTML = `<img src="${state.currentQuestion.image}" class="question-image" alt="">`;
-      } else {
-        qCenter.innerText = state.currentQuestion.question || "";
-      }
-    } else {
-      qCenter.innerHTML = "";
-    }
-
-    if (state.answerVisible) {
-      answerBox.style.display = "block";
-      answerBox.innerText = state.currentQuestion.answer || "";
-    } else {
-      answerBox.style.display = "none";
-    }
-  } else {
-    boardWrap.style.display = "block";
-    questionWrap.style.display = "none";
-  }
-});
-
-socket.on("playerBuzzed", () => {
-  playBuzzer();
+@@ -421,11 +357,8 @@
 });
 
 socket.on("answerResult", ({ result }) => {
-  if (result === "correct") playCorrect();
-  if (result === "wrong") playWrong();
+  if (result === "correct") {
+    playSound(correctSound);
+  } else if (result === "wrong") {
+    playSound(wrongSound);
+  }
+  if (result === "correct") playSound(correctSound);
+  if (result === "wrong") playSound(wrongSound);
 });
 
 function fit() {
-  const canvas = document.getElementById("canvas");
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-  canvas.style.transform = `scale(${scale}) translate(-50%, -50%)`;
-  canvas.style.left = "50%";
-  canvas.style.top = "50%";
-}
-
-window.addEventListener("resize", fit);
-window.addEventListener("load", () => {
-  fit();
-  getAudioCtx();
-});
-
+@@ -440,6 +373,5 @@
+window.addEventListener("load", fit);
 fit();
 </script>
+
 </body>
 </html>
