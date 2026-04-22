@@ -45,6 +45,7 @@ function loadQuizData() {
 
   try {
     const parsed = JSON.parse(fs.readFileSync(quizDataPath, "utf8"));
+
     if (!parsed.categories || !parsed.questions) {
       throw new Error("Invalid quizData.json structure");
     }
@@ -53,6 +54,7 @@ function loadQuizData() {
       if (!Array.isArray(parsed.questions[board])) {
         parsed.questions[board] = getDefaultQuizData().questions[board];
       }
+
       while (parsed.questions[board].length < 25) {
         parsed.questions[board].push({
           category: "",
@@ -142,9 +144,8 @@ function saveLastAction() {
 }
 
 function emitQuizData(target = null) {
-  const payload = quizData;
-  if (target) target.emit("quizData", payload);
-  else io.emit("quizData", payload);
+  if (target) target.emit("quizData", quizData);
+  else io.emit("quizData", quizData);
 }
 
 function emitLobby() {
@@ -195,7 +196,7 @@ function upsertLobbyPlayer(socketId, name) {
 }
 
 const server = http.createServer((req, res) => {
-  let requestedPath = req.url === "/" ? "/host.html" : req.url;
+  const requestedPath = req.url === "/" ? "/host.html" : req.url;
   const filePath = path.join(publicDir, requestedPath);
 
   const ext = path.extname(filePath).toLowerCase();
@@ -249,6 +250,7 @@ io.on("connection", (socket) => {
   socket.on("setCurrentBoard", (boardNumber) => {
     const board = Number(boardNumber);
     if (board !== 1 && board !== 2) return;
+
     state.currentBoard = board;
     emitState();
   });
@@ -270,6 +272,7 @@ io.on("connection", (socket) => {
   socket.on("saveQuestion", ({ board, index, data }) => {
     const boardNum = Number(board);
     const idx = Number(index);
+
     if (boardNum !== 1 && boardNum !== 2) return;
     if (!Number.isInteger(idx) || idx < 0 || idx > 24) return;
     if (!data) return;
