@@ -4,80 +4,7 @@ const path = require("node:path");
 const { Server } = require("socket.io");
 
 const PORT = process.env.PORT || 3000;
-
 const publicDir = path.join(__dirname, "public");
-const dataDir = path.join(__dirname, "data");
-const quizDataPath = path.join(dataDir, "quizData.json");
-
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-function getDefaultQuizData() {
-  return {
-    categories: {
-      1: ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"],
-      2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
-    },
-    questions: {
-      1: Array.from({ length: 25 }, (_, i) => ({
-        category: "",
-        question: `Question ${i + 1}`,
-        answer: `Answer ${i + 1}`,
-        image: ""
-      })),
-      2: Array.from({ length: 25 }, (_, i) => ({
-        category: "",
-        question: `Question ${i + 26}`,
-        answer: `Answer ${i + 26}`,
-        image: ""
-      }))
-    }
-  };
-}
-
-function loadQuizData() {
-  if (!fs.existsSync(quizDataPath)) {
-    const defaults = getDefaultQuizData();
-    fs.writeFileSync(quizDataPath, JSON.stringify(defaults, null, 2), "utf8");
-    return defaults;
-  }
-
-  try {
-    const parsed = JSON.parse(fs.readFileSync(quizDataPath, "utf8"));
-
-    if (!parsed.categories || !parsed.questions) {
-      throw new Error("Invalid quizData.json structure");
-    }
-
-    for (const board of [1, 2]) {
-      if (!Array.isArray(parsed.questions[board])) {
-        parsed.questions[board] = getDefaultQuizData().questions[board];
-      }
-
-      while (parsed.questions[board].length < 25) {
-        parsed.questions[board].push({
-          category: "",
-          question: "",
-          answer: "",
-          image: ""
-        });
-      }
-    }
-
-    return parsed;
-  } catch {
-    const defaults = getDefaultQuizData();
-    fs.writeFileSync(quizDataPath, JSON.stringify(defaults, null, 2), "utf8");
-    return defaults;
-  }
-}
-
-function saveQuizData(data) {
-  fs.writeFileSync(quizDataPath, JSON.stringify(data, null, 2), "utf8");
-}
-
-let quizData = loadQuizData();
 
 function createInitialState() {
   return {
@@ -118,14 +45,6 @@ function stopTimer() {
   state.timer.running = false;
 }
 
-function getCurrentBoardCategories() {
-  return quizData.categories[state.currentBoard] || [];
-}
-
-function getCurrentBoardUsedCells() {
-  return state.usedCellsBoards[state.currentBoard] || [];
-}
-
 function getFreeSlot() {
   const usedSlots = state.lobbyPlayers.map((p) => p.slot);
   for (let i = 1; i <= 5; i++) {
@@ -143,23 +62,12 @@ function saveLastAction() {
   };
 }
 
-function emitQuizData(target = null) {
-  if (target) target.emit("quizData", quizData);
-  else io.emit("quizData", quizData);
-}
-
 function emitLobby() {
   io.emit("lobbyUpdate", state.lobbyPlayers);
 }
 
 function emitState(target = null) {
-  const payload = {
-    ...state,
-    categories: getCurrentBoardCategories(),
-    usedCells: getCurrentBoardUsedCells(),
-    categoriesBoards: quizData.categories
-  };
-
+  const payload = { ...state };
   if (target) target.emit("syncState", payload);
   else io.emit("syncState", payload);
 }
@@ -233,7 +141,6 @@ const server = http.createServer((req, res) => {
 const io = new Server(server);
 
 io.on("connection", (socket) => {
-  emitQuizData(socket);
   emitState(socket);
   emitLobby();
 
@@ -252,40 +159,6 @@ io.on("connection", (socket) => {
     if (board !== 1 && board !== 2) return;
 
     state.currentBoard = board;
-    emitState();
-  });
-
-  socket.on("saveCategories", ({ board, categories }) => {
-    const boardNum = Number(board);
-    if (boardNum !== 1 && boardNum !== 2) return;
-    if (!Array.isArray(categories) || categories.length !== 5) return;
-
-    quizData.categories[boardNum] = categories.map((c) =>
-      String(c || "").trim().slice(0, 40) || "Category"
-    );
-
-    saveQuizData(quizData);
-    emitQuizData();
-    emitState();
-  });
-
-  socket.on("saveQuestion", ({ board, index, data }) => {
-    const boardNum = Number(board);
-    const idx = Number(index);
-
-    if (boardNum !== 1 && boardNum !== 2) return;
-    if (!Number.isInteger(idx) || idx < 0 || idx > 24) return;
-    if (!data) return;
-
-    quizData.questions[boardNum][idx] = {
-      category: String(data.category || "").trim().slice(0, 40),
-      question: String(data.question || "").trim(),
-      answer: String(data.answer || "").trim(),
-      image: String(data.image || "").trim()
-    };
-
-    saveQuizData(quizData);
-    emitQuizData();
     emitState();
   });
 
