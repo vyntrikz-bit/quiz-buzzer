@@ -25,7 +25,7 @@
       align-items: center;
     }
 
-    button, select, input, textarea {
+    button, select, input {
       border: none;
       border-radius: 10px;
       font-size: 15px;
@@ -40,16 +40,10 @@
       color: white;
     }
 
-    input, select, textarea {
+    input, select {
       background: #1f2937;
       color: white;
       padding: 12px;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 90px;
-      width: 100%;
     }
 
     .primary { background: #2563eb; }
@@ -194,51 +188,6 @@
       font-size: 14px;
     }
 
-    .hidden {
-      display: none;
-    }
-
-    .editor-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-    .editor-row {
-      display: grid;
-      gap: 10px;
-    }
-
-    .editor-row.two {
-      grid-template-columns: minmax(0, 1fr) 120px;
-      align-items: end;
-    }
-
-    .editor-row.five {
-      grid-template-columns: repeat(5, 1fr);
-    }
-
-    .simple-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      color: #cbd5e1;
-      margin-bottom: 6px;
-    }
-
-    #editorCategory,
-    #editorValue,
-    #editorQuestion,
-    #editorAnswer,
-    #editorImage {
-      width: 100%;
-      min-width: 0;
-    }
-
-    #editorValue {
-      text-align: center;
-      font-weight: 700;
-    }
-
     .preview-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -336,6 +285,13 @@
       min-height: 28px;
     }
 
+    .help-box {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      color: #e5e7eb;
+      font-size: 14px;
+    }
+
     @media (max-width: 1200px) {
       .grid-2 {
         grid-template-columns: 1fr;
@@ -343,13 +299,8 @@
 
       .categories,
       .board,
-      .score-grid,
-      .editor-row.five {
+      .score-grid {
         grid-template-columns: repeat(2, 1fr);
-      }
-
-      .editor-row.two {
-        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -382,17 +333,15 @@
       <strong>Switch board:</strong>
       <button id="board1Btn">Board 1</button>
       <button id="board2Btn">Board 2</button>
-      <button id="toggleCategoryEditorBtn">Edit Categories</button>
-      <button id="toggleQuestionEditorBtn">Edit Question</button>
       <span class="muted" id="boardInfo"></span>
     </div>
 
     <div class="categories" id="categories">
-      <div class="category">Dragons</div>
-      <div class="category">LCK</div>
-      <div class="category">Lore</div>
-      <div class="category">Riot Pls</div>
-      <div class="category">Order Must Be</div>
+      <div class="category">Category 1</div>
+      <div class="category">Category 2</div>
+      <div class="category">Category 3</div>
+      <div class="category">Category 4</div>
+      <div class="category">Category 5</div>
     </div>
 
     <div class="board" id="board"></div>
@@ -400,61 +349,8 @@
 
     <div class="grid-2">
       <div class="panel">
-        <div class="panel-title">Editor</div>
-
-        <div id="categoryEditor" class="hidden">
-          <div class="editor-grid">
-            <div class="muted">Edit the 5 categories for the current board, then save.</div>
-            <div class="editor-row five">
-              <input id="cat1" type="text" />
-              <input id="cat2" type="text" />
-              <input id="cat3" type="text" />
-              <input id="cat4" type="text" />
-              <input id="cat5" type="text" />
-            </div>
-            <div>
-              <button class="success" id="saveCategoriesBtn">Save Categories</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="questionEditor" class="hidden">
-          <div class="editor-grid">
-            <div class="muted" id="selectedCellInfo">Select a cell first, then edit the question.</div>
-
-            <div class="editor-row two">
-              <div>
-                <label class="simple-label" for="editorCategory">Category</label>
-                <select id="editorCategory"></select>
-              </div>
-              <div>
-                <label class="simple-label" for="editorValue">Value</label>
-                <input id="editorValue" type="text" readonly>
-              </div>
-            </div>
-
-            <div>
-              <label class="simple-label" for="editorQuestion">Question</label>
-              <textarea id="editorQuestion" placeholder="Type the question here..."></textarea>
-            </div>
-
-            <div>
-              <label class="simple-label" for="editorAnswer">Answer</label>
-              <textarea id="editorAnswer" placeholder="Type the answer here..."></textarea>
-            </div>
-
-            <div>
-              <label class="simple-label" for="editorImage">Image URL (optional)</label>
-              <input id="editorImage" type="text" placeholder="/images/example.png">
-            </div>
-
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <button class="success" id="saveQuestionBtn">Save Question</button>
-              <button id="clearImageBtn">Clear Image</button>
-              <button id="loadSelectedBtn">Reload Selected</button>
-            </div>
-          </div>
-        </div>
+        <div class="panel-title">Question Data</div>
+        <div class="help-box" id="questionInfo">Select a cell to preview the question.</div>
 
         <div class="status-line" id="statusLine"></div>
 
@@ -498,17 +394,80 @@
   <script>
     const socket = io();
 
-    let quizData = null;
-    let activeBoard = 1;
-    let selectedIndex = null;
-    let selectedQuestion = null;
-    let boardUsedCells = { 1: [], 2: [] };
-    let boardCategories = {
-      1: ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"],
-      2: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"]
+    const QUIZ = {
+      1: {
+        categories: ["Dragons", "LCK", "Lore", "Riot Pls", "Order Must Be"],
+        questions: [
+          { category: "Dragons", value: 200, question: "Question 1", answer: "Answer 1", image: "" },
+          { category: "LCK", value: 200, question: "Question 2", answer: "Answer 2", image: "" },
+          { category: "Lore", value: 200, question: "Question 3", answer: "Answer 3", image: "" },
+          { category: "Riot Pls", value: 200, question: "Question 4", answer: "Answer 4", image: "" },
+          { category: "Order Must Be", value: 200, question: "Question 5", answer: "Answer 5", image: "" },
+
+          { category: "Dragons", value: 300, question: "Question 6", answer: "Answer 6", image: "" },
+          { category: "LCK", value: 300, question: "Question 7", answer: "Answer 7", image: "" },
+          { category: "Lore", value: 300, question: "Question 8", answer: "Answer 8", image: "" },
+          { category: "Riot Pls", value: 300, question: "Question 9", answer: "Answer 9", image: "" },
+          { category: "Order Must Be", value: 300, question: "Question 10", answer: "Answer 10", image: "" },
+
+          { category: "Dragons", value: 400, question: "Question 11", answer: "Answer 11", image: "" },
+          { category: "LCK", value: 400, question: "Question 12", answer: "Answer 12", image: "" },
+          { category: "Lore", value: 400, question: "Question 13", answer: "Answer 13", image: "" },
+          { category: "Riot Pls", value: 400, question: "Question 14", answer: "Answer 14", image: "" },
+          { category: "Order Must Be", value: 400, question: "Question 15", answer: "Answer 15", image: "" },
+
+          { category: "Dragons", value: 500, question: "Question 16", answer: "Answer 16", image: "" },
+          { category: "LCK", value: 500, question: "Question 17", answer: "Answer 17", image: "" },
+          { category: "Lore", value: 500, question: "Question 18", answer: "Answer 18", image: "" },
+          { category: "Riot Pls", value: 500, question: "Question 19", answer: "Answer 19", image: "" },
+          { category: "Order Must Be", value: 500, question: "Question 20", answer: "Answer 20", image: "" },
+
+          { category: "Dragons", value: 600, question: "Question 21", answer: "Answer 21", image: "" },
+          { category: "LCK", value: 600, question: "Question 22", answer: "Answer 22", image: "" },
+          { category: "Lore", value: 600, question: "Question 23", answer: "Answer 23", image: "" },
+          { category: "Riot Pls", value: 600, question: "Question 24", answer: "Answer 24", image: "" },
+          { category: "Order Must Be", value: 600, question: "Question 25", answer: "Answer 25", image: "" }
+        ]
+      },
+      2: {
+        categories: ["Champion Details", "Pick & Ban", "Who Am I", "Abilities", "Ingame Quest"],
+        questions: [
+          { category: "Champion Details", value: 200, question: "Question 26", answer: "Answer 26", image: "" },
+          { category: "Pick & Ban", value: 200, question: "Question 27", answer: "Answer 27", image: "" },
+          { category: "Who Am I", value: 200, question: "Question 28", answer: "Answer 28", image: "" },
+          { category: "Abilities", value: 200, question: "Question 29", answer: "Answer 29", image: "" },
+          { category: "Ingame Quest", value: 200, question: "Question 30", answer: "Answer 30", image: "" },
+
+          { category: "Champion Details", value: 300, question: "Question 31", answer: "Answer 31", image: "" },
+          { category: "Pick & Ban", value: 300, question: "Question 32", answer: "Answer 32", image: "" },
+          { category: "Who Am I", value: 300, question: "Question 33", answer: "Answer 33", image: "" },
+          { category: "Abilities", value: 300, question: "Question 34", answer: "Answer 34", image: "" },
+          { category: "Ingame Quest", value: 300, question: "Question 35", answer: "Answer 35", image: "" },
+
+          { category: "Champion Details", value: 400, question: "Question 36", answer: "Answer 36", image: "" },
+          { category: "Pick & Ban", value: 400, question: "Question 37", answer: "Answer 37", image: "" },
+          { category: "Who Am I", value: 400, question: "Question 38", answer: "Answer 38", image: "" },
+          { category: "Abilities", value: 400, question: "Question 39", answer: "Answer 39", image: "" },
+          { category: "Ingame Quest", value: 400, question: "Question 40", answer: "Answer 40", image: "" },
+
+          { category: "Champion Details", value: 500, question: "Question 41", answer: "Answer 41", image: "" },
+          { category: "Pick & Ban", value: 500, question: "Question 42", answer: "Answer 42", image: "" },
+          { category: "Who Am I", value: 500, question: "Question 43", answer: "Answer 43", image: "" },
+          { category: "Abilities", value: 500, question: "Question 44", answer: "Answer 44", image: "" },
+          { category: "Ingame Quest", value: 500, question: "Question 45", answer: "Answer 45", image: "" },
+
+          { category: "Champion Details", value: 600, question: "Question 46", answer: "Answer 46", image: "" },
+          { category: "Pick & Ban", value: 600, question: "Question 47", answer: "Answer 47", image: "" },
+          { category: "Who Am I", value: 600, question: "Question 48", answer: "Answer 48", image: "" },
+          { category: "Abilities", value: 600, question: "Question 49", answer: "Answer 49", image: "" },
+          { category: "Ingame Quest", value: 600, question: "Question 50", answer: "Answer 50", image: "" }
+        ]
+      }
     };
 
-    const values = [200, 300, 400, 500, 600];
+    let activeBoard = 1;
+    let selectedIndex = null;
+    let boardUsedCells = { 1: [], 2: [] };
 
     const board = document.getElementById("board");
     const scoreGrid = document.getElementById("scoreGrid");
@@ -516,6 +475,7 @@
     const manualPointsInput = document.getElementById("manualPointsInput");
     const statusLine = document.getElementById("statusLine");
     const boardInfo = document.getElementById("boardInfo");
+    const questionInfo = document.getElementById("questionInfo");
 
     const privateCategory = document.getElementById("privateCategory");
     const privateValue = document.getElementById("privateValue");
@@ -526,24 +486,6 @@
     const publicValue = document.getElementById("publicValue");
     const publicCenter = document.getElementById("publicCenter");
     const publicAnswer = document.getElementById("publicAnswer");
-
-    const categoryEditor = document.getElementById("categoryEditor");
-    const questionEditor = document.getElementById("questionEditor");
-
-    const editorCategory = document.getElementById("editorCategory");
-    const editorValue = document.getElementById("editorValue");
-    const editorQuestion = document.getElementById("editorQuestion");
-    const editorAnswer = document.getElementById("editorAnswer");
-    const editorImage = document.getElementById("editorImage");
-    const selectedCellInfo = document.getElementById("selectedCellInfo");
-
-    const catInputs = [
-      document.getElementById("cat1"),
-      document.getElementById("cat2"),
-      document.getElementById("cat3"),
-      document.getElementById("cat4"),
-      document.getElementById("cat5")
-    ];
 
     const volumeSlider = document.getElementById("volumeSlider");
     const volumeValue = document.getElementById("volumeValue");
@@ -639,35 +581,14 @@
     });
 
     function getQuestionItem(boardNum, index) {
-      return quizData?.questions?.[boardNum]?.[index] || {
-        category: "",
-        question: "",
-        answer: "",
-        image: ""
-      };
-    }
-
-    function refreshEditorCategoryOptions() {
-      editorCategory.innerHTML = "";
-      (boardCategories[activeBoard] || []).forEach((cat) => {
-        const option = document.createElement("option");
-        option.value = cat;
-        option.textContent = cat;
-        editorCategory.appendChild(option);
-      });
+      return QUIZ[boardNum].questions[index];
     }
 
     function renderCategoriesForBoard() {
-      const cats = boardCategories[activeBoard] || [];
+      const cats = QUIZ[activeBoard].categories;
       document.querySelectorAll(".category").forEach((node, i) => {
         node.textContent = cats[i] || "Category";
       });
-
-      catInputs.forEach((input, i) => {
-        input.value = cats[i] || "";
-      });
-
-      refreshEditorCategoryOptions();
     }
 
     function renderScores(scores, players) {
@@ -712,6 +633,7 @@
         privateCenter.innerHTML = "";
         privateAnswer.style.display = "none";
         privateAnswer.textContent = "";
+        questionInfo.textContent = "Select a cell to preview the question.";
         return;
       }
 
@@ -726,6 +648,16 @@
 
       privateAnswer.style.display = "block";
       privateAnswer.textContent = question.answer || "";
+
+      questionInfo.textContent =
+`Category: ${question.category}
+Value: ${question.value}
+
+Question:
+${question.question}
+
+Answer:
+${question.answer}`;
     }
 
     function renderPublicPreview(stateQuestion, state) {
@@ -781,7 +713,7 @@
           const index = row * 5 + col;
           const cell = document.createElement("div");
           cell.className = "cell";
-          cell.textContent = values[row];
+          cell.textContent = [200, 300, 400, 500, 600][row];
 
           if ((boardUsedCells[activeBoard] || []).includes(index)) {
             cell.classList.add("used");
@@ -793,7 +725,7 @@
 
           cell.addEventListener("click", () => {
             selectedIndex = index;
-            loadSelectedIntoEditor();
+            renderPrivatePreview(getQuestionItem(activeBoard, selectedIndex));
             highlightSelectedCell();
             statusLine.textContent = `Cell selected on Board ${activeBoard}`;
           });
@@ -803,105 +735,17 @@
       }
     }
 
-    function loadSelectedIntoEditor() {
-      if (selectedIndex === null) {
-        selectedCellInfo.textContent = "Select a cell first, then edit the question.";
-        editorCategory.value = "";
-        editorValue.value = "";
-        editorQuestion.value = "";
-        editorAnswer.value = "";
-        editorImage.value = "";
-        renderPrivatePreview(null);
-        return;
-      }
-
-      const row = Math.floor(selectedIndex / 5);
-      const col = selectedIndex % 5;
-      const item = getQuestionItem(activeBoard, selectedIndex);
-      const categoryValue = item.category || boardCategories[activeBoard][col];
-
-      selectedQuestion = {
-        board: activeBoard,
-        index: selectedIndex,
-        category: categoryValue,
-        value: values[row],
-        question: item.question || "",
-        answer: item.answer || "",
-        image: item.image || ""
-      };
-
-      refreshEditorCategoryOptions();
-
-      selectedCellInfo.textContent = `Editing Board ${activeBoard} | ${categoryValue} | ${values[row]}`;
-      editorCategory.value = categoryValue;
-      editorValue.value = selectedQuestion.value;
-      editorQuestion.value = selectedQuestion.question;
-      editorAnswer.value = selectedQuestion.answer;
-      editorImage.value = selectedQuestion.image;
-
-      renderPrivatePreview(selectedQuestion);
-    }
-
-    function saveCategoriesFromInputs() {
-      const categories = catInputs.map(input => input.value.trim() || "Category");
-      socket.emit("saveCategories", { board: activeBoard, categories });
-    }
-
-    function saveSelectedQuestion() {
-      if (selectedIndex === null) {
-        statusLine.textContent = "Please select a cell first";
-        return;
-      }
-
-      socket.emit("saveQuestion", {
-        board: activeBoard,
-        index: selectedIndex,
-        data: {
-          category: editorCategory.value.trim(),
-          question: editorQuestion.value.trim(),
-          answer: editorAnswer.value.trim(),
-          image: editorImage.value.trim()
-        }
-      });
-    }
-
     function switchBoard(boardNumber) {
       activeBoard = boardNumber;
       selectedIndex = null;
-      selectedQuestion = null;
       renderCategoriesForBoard();
       updateBoardButtons();
       buildBoard();
-      loadSelectedIntoEditor();
+      renderPrivatePreview(null);
       renderPublicPreview(null, null);
       socket.emit("setCurrentBoard", boardNumber);
       statusLine.textContent = `Board ${boardNumber} selected`;
     }
-
-    function togglePanel(panel) {
-      if (panel === "categories") {
-        categoryEditor.classList.toggle("hidden");
-        questionEditor.classList.add("hidden");
-      } else {
-        questionEditor.classList.toggle("hidden");
-        categoryEditor.classList.add("hidden");
-      }
-    }
-
-    document.getElementById("toggleCategoryEditorBtn").onclick = () => togglePanel("categories");
-    document.getElementById("toggleQuestionEditorBtn").onclick = () => togglePanel("question");
-    document.getElementById("saveCategoriesBtn").onclick = saveCategoriesFromInputs;
-    document.getElementById("saveQuestionBtn").onclick = saveSelectedQuestion;
-    document.getElementById("clearImageBtn").onclick = () => { editorImage.value = ""; };
-    document.getElementById("loadSelectedBtn").onclick = () => { loadSelectedIntoEditor(); };
-
-    socket.on("quizData", (data) => {
-      quizData = data;
-      boardCategories = data.categories || boardCategories;
-      renderCategoriesForBoard();
-      buildBoard();
-      if (selectedIndex !== null) loadSelectedIntoEditor();
-    });
 
     socket.on("lobbyUpdate", (players) => {
       renderPlayerSelect(players);
@@ -910,10 +754,6 @@
     socket.on("syncState", (runtimeState) => {
       boardUsedCells = runtimeState.usedCellsBoards || { 1: [], 2: [] };
       activeBoard = runtimeState.currentBoard || 1;
-
-      if (runtimeState.categoriesBoards) {
-        boardCategories = runtimeState.categoriesBoards;
-      }
 
       renderCategoriesForBoard();
       updateBoardButtons();
@@ -960,20 +800,7 @@
         return;
       }
 
-      const row = Math.floor(selectedIndex / 5);
-      const col = selectedIndex % 5;
-      const item = getQuestionItem(activeBoard, selectedIndex);
-
-      selectedQuestion = {
-        board: activeBoard,
-        index: selectedIndex,
-        category: item.category || boardCategories[activeBoard][col],
-        value: values[row],
-        question: item.question || "",
-        answer: item.answer || "",
-        image: item.image || ""
-      };
-
+      const selectedQuestion = getQuestionItem(activeBoard, selectedIndex);
       renderPrivatePreview(selectedQuestion);
       socket.emit("showSelectedQuestion", selectedQuestion);
       statusLine.textContent = "Question shown publicly";
@@ -1013,7 +840,7 @@
     renderCategoriesForBoard();
     updateBoardButtons();
     buildBoard();
-    loadSelectedIntoEditor();
+    renderPrivatePreview(null);
   </script>
 </body>
 </html>
