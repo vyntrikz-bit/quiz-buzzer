@@ -802,7 +802,10 @@ ${question.answer}`;
 
       const selectedQuestion = getQuestionItem(activeBoard, selectedIndex);
       renderPrivatePreview(selectedQuestion);
-      socket.emit("showSelectedQuestion", selectedQuestion);
+      socket.emit("showSelectedQuestion", {
+  ...selectedQuestion,
+  categories: QUIZ[activeBoard].categories
+});
       statusLine.textContent = "Question shown publicly";
       getAudioCtx();
     };
