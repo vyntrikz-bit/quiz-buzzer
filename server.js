@@ -9,9 +9,15 @@ const publicDir = path.join(__dirname, "public");
 function createInitialState() {
   return {
     currentBoard: 1,
+
     usedCellsBoards: {
       1: [],
       2: []
+    },
+
+    categoriesBoards: {
+      1: ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"],
+      2: ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"]
     },
 
     currentQuestion: null,
@@ -67,7 +73,11 @@ function emitLobby() {
 }
 
 function emitState(target = null) {
-  const payload = { ...state };
+  const payload = {
+    ...state,
+    categories: state.categoriesBoards[state.currentBoard] || []
+  };
+
   if (target) target.emit("syncState", payload);
   else io.emit("syncState", payload);
 }
@@ -150,6 +160,7 @@ io.on("connection", (socket) => {
       socket.emit("lobbyFull");
       return;
     }
+
     emitLobby();
     emitState();
   });
@@ -168,6 +179,16 @@ io.on("connection", (socket) => {
 
     if (board !== 1 && board !== 2) return;
     if (!Number.isInteger(index) || index < 0 || index > 24) return;
+
+    if (
+      payload.categories &&
+      Array.isArray(payload.categories) &&
+      payload.categories.length === 5
+    ) {
+      state.categoriesBoards[board] = payload.categories.map((c) =>
+        String(c || "").trim()
+      );
+    }
 
     state.currentBoard = board;
     state.currentQuestion = {
