@@ -78,8 +78,11 @@ function emitState(target = null) {
     categories: state.categoriesBoards[state.currentBoard] || []
   };
 
-  if (target) target.emit("syncState", payload);
-  else io.emit("syncState", payload);
+  if (target) {
+    target.emit("syncState", payload);
+  } else {
+    io.emit("syncState", payload);
+  }
 }
 
 function upsertLobbyPlayer(socketId, name) {
@@ -114,7 +117,14 @@ function upsertLobbyPlayer(socketId, name) {
 }
 
 const server = http.createServer((req, res) => {
-  const requestedPath = req.url === "/" ? "/host.html" : req.url;
+  let requestedPath = req.url === "/" ? "/host.html" : req.url;
+
+  if (requestedPath.includes("..")) {
+    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end("Forbidden");
+    return;
+  }
+
   const filePath = path.join(publicDir, requestedPath);
 
   const ext = path.extname(filePath).toLowerCase();
@@ -131,7 +141,8 @@ const server = http.createServer((req, res) => {
     ".gif": "image/gif",
     ".mp3": "audio/mpeg",
     ".wav": "audio/wav",
-    ".ogg": "audio/ogg"
+    ".ogg": "audio/ogg",
+    ".ico": "image/x-icon"
   };
 
   fs.readFile(filePath, (err, content) => {
@@ -156,6 +167,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinLobby", (playerName) => {
     const player = upsertLobbyPlayer(socket.id, playerName);
+
     if (!player) {
       socket.emit("lobbyFull");
       return;
@@ -170,6 +182,18 @@ io.on("connection", (socket) => {
     if (board !== 1 && board !== 2) return;
 
     state.currentBoard = board;
+    emitState();
+  });
+
+  socket.on("syncBoardCategories", ({ board, categories }) => {
+    const boardNum = Number(board);
+    if (boardNum !== 1 && boardNum !== 2) return;
+    if (!Array.isArray(categories) || categories.length !== 5) return;
+
+    state.categoriesBoards[boardNum] = categories.map((c) =>
+      String(c || "").trim()
+    );
+
     emitState();
   });
 
@@ -291,6 +315,7 @@ io.on("connection", (socket) => {
 
   socket.on("buzz", (playerName) => {
     const name = String(playerName || "").trim().slice(0, 24);
+
     if (!name) return;
     if (!state.currentQuestion) return;
     if (!state.questionVisible) return;
@@ -351,6 +376,7 @@ io.on("connection", (socket) => {
   socket.on("manualAddPoints", ({ name, points }) => {
     const cleanName = String(name || "").trim().slice(0, 24);
     const amount = Number(points) || 0;
+
     if (!cleanName || amount <= 0) return;
 
     saveLastAction();
@@ -370,6 +396,7 @@ io.on("connection", (socket) => {
   socket.on("manualSubtractPoints", ({ name, points }) => {
     const cleanName = String(name || "").trim().slice(0, 24);
     const amount = Number(points) || 0;
+
     if (!cleanName || amount <= 0) return;
 
     saveLastAction();
@@ -408,6 +435,7 @@ io.on("connection", (socket) => {
       state.firstBuzz = null;
       state.buzzLocked = false;
       state.eliminatedPlayers = [];
+      state.lastAction = null;
     }
 
     stopTimer();
