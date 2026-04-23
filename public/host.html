@@ -136,7 +136,7 @@
 
     .grid-2 {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
       gap: 20px;
       margin-top: 18px;
       align-items: start;
@@ -725,7 +725,19 @@ ${question.answer}`;
 
           cell.addEventListener("click", () => {
             selectedIndex = index;
-            renderPrivatePreview(getQuestionItem(activeBoard, selectedIndex));
+
+            const q = getQuestionItem(activeBoard, selectedIndex);
+            const previewQuestion = {
+              board: activeBoard,
+              index: selectedIndex,
+              category: q.category || QUIZ[activeBoard].categories[selectedIndex % 5],
+              value: Number(q.value) || [200, 300, 400, 500, 600][Math.floor(selectedIndex / 5)],
+              question: q.question || "",
+              answer: q.answer || "",
+              image: q.image || ""
+            };
+
+            renderPrivatePreview(previewQuestion);
             highlightSelectedCell();
             statusLine.textContent = `Cell selected on Board ${activeBoard}`;
           });
@@ -738,12 +750,19 @@ ${question.answer}`;
     function switchBoard(boardNumber) {
       activeBoard = boardNumber;
       selectedIndex = null;
+
       renderCategoriesForBoard();
       updateBoardButtons();
       buildBoard();
       renderPrivatePreview(null);
       renderPublicPreview(null, null);
+
       socket.emit("setCurrentBoard", boardNumber);
+      socket.emit("syncBoardCategories", {
+        board: boardNumber,
+        categories: QUIZ[boardNumber].categories
+      });
+
       statusLine.textContent = `Board ${boardNumber} selected`;
     }
 
@@ -800,12 +819,25 @@ ${question.answer}`;
         return;
       }
 
-      const selectedQuestion = getQuestionItem(activeBoard, selectedIndex);
+      const q = getQuestionItem(activeBoard, selectedIndex);
+
+      const selectedQuestion = {
+        board: activeBoard,
+        index: selectedIndex,
+        category: q.category || QUIZ[activeBoard].categories[selectedIndex % 5],
+        value: Number(q.value) || [200, 300, 400, 500, 600][Math.floor(selectedIndex / 5)],
+        question: q.question || "",
+        answer: q.answer || "",
+        image: q.image || ""
+      };
+
       renderPrivatePreview(selectedQuestion);
+
       socket.emit("showSelectedQuestion", {
-  ...selectedQuestion,
-  categories: QUIZ[activeBoard].categories
-});
+        ...selectedQuestion,
+        categories: QUIZ[activeBoard].categories
+      });
+
       statusLine.textContent = "Question shown publicly";
       getAudioCtx();
     };
@@ -844,6 +876,11 @@ ${question.answer}`;
     updateBoardButtons();
     buildBoard();
     renderPrivatePreview(null);
+
+    socket.emit("syncBoardCategories", {
+      board: activeBoard,
+      categories: QUIZ[activeBoard].categories
+    });
   </script>
 </body>
 </html>
