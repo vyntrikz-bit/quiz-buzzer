@@ -788,9 +788,10 @@ ${question.answer}`;
       renderPublicPreview(runtimeState.currentQuestion, runtimeState);
     });
 
-    socket.on("playerBuzzed", () => {
-      playBuzzer();
-    });
+    socket.on("playerBuzzed", async () => {
+  await getAudioCtx().resume();
+  playBuzzer();
+});
 
     socket.on("answerResult", ({ result, name, points }) => {
       if (result === "correct") {
